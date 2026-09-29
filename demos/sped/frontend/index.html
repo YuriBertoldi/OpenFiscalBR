@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenFiscalBR - SPED Fiscal Demo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>OpenFiscalBR</h1>
+        <p>SPED Fiscal (EFD-ICMS/IPI) - Gerador de Arquivo Digital</p>
+    </header>
+
+    <main>
+        <form id="spedForm">
+            <fieldset>
+                <legend>Registro 0000 - Identificacao da Entidade</legend>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cod_ver">Versao do Leiaute</label>
+                        <select id="cod_ver" name="cod_ver">
+                            <option value="0">000 - Versao 100</option>
+                            <option value="1">001 - Versao 101</option>
+                            <option value="2">002 - Versao 102</option>
+                            <option value="3">003 - Versao 103</option>
+                            <option value="4">004 - Versao 104</option>
+                            <option value="5">005 - Versao 105</option>
+                            <option value="6">006 - Versao 106</option>
+                            <option value="7">007 - Versao 107</option>
+                            <option value="8">008 - Versao 108</option>
+                            <option value="9">009 - Versao 109</option>
+                            <option value="10">010 - Versao 110</option>
+                            <option value="11">011 - Versao 111</option>
+                            <option value="12">012 - Versao 112</option>
+                            <option value="13">013 - Versao 113</option>
+                            <option value="14">014 - Versao 114</option>
+                            <option value="15" selected>015 - Versao 115</option>
+                            <option value="16">016 - Versao 116</option>
+                            <option value="17">017 - Versao 117</option>
+                            <option value="18">018 - Versao 118</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="cod_fin">Finalidade</label>
+                        <select id="cod_fin" name="cod_fin">
+                            <option value="0">0 - Original</option>
+                            <option value="1">1 - Substituto</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="dt_ini">Data Inicial</label>
+                        <input type="date" id="dt_ini" name="dt_ini" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="dt_fin">Data Final</label>
+                        <input type="date" id="dt_fin" name="dt_fin" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full">
+                        <label for="nome">Razao Social</label>
+                        <input type="text" id="nome" name="nome" required placeholder="Nome empresarial da entidade">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cnpj">CNPJ</label>
+                        <input type="text" id="cnpj" name="cnpj" required placeholder="00000000000000" maxlength="14">
+                    </div>
+                    <div class="form-group">
+                        <label for="cpf">CPF (responsavel)</label>
+                        <input type="text" id="cpf" name="cpf" placeholder="00000000000" maxlength="11">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="uf">UF</label>
+                        <select id="uf" name="uf">
+                            <option value="">Selecione...</option>
+                            <option value="AC">AC</option><option value="AL">AL</option>
+                            <option value="AM">AM</option><option value="AP">AP</option>
+                            <option value="BA">BA</option><option value="CE">CE</option>
+                            <option value="DF">DF</option><option value="ES">ES</option>
+                            <option value="GO">GO</option><option value="MA">MA</option>
+                            <option value="MG">MG</option><option value="MS">MS</option>
+                            <option value="MT">MT</option><option value="PA">PA</option>
+                            <option value="PB">PB</option><option value="PE">PE</option>
+                            <option value="PI">PI</option><option value="PR">PR</option>
+                            <option value="RJ">RJ</option><option value="RN">RN</option>
+                            <option value="RO">RO</option><option value="RR">RR</option>
+                            <option value="RS">RS</option><option value="SC">SC</option>
+                            <option value="SE">SE</option><option value="SP" selected>SP</option>
+                            <option value="TO">TO</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="ie">Inscricao Estadual</label>
+                        <input type="text" id="ie" name="ie" placeholder="Inscricao Estadual">
+                    </div>
+                    <div class="form-group">
+                        <label for="cod_mun">Cod. Municipio (IBGE)</label>
+                        <input type="number" id="cod_mun" name="cod_mun" placeholder="3550308">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="im">Inscricao Municipal</label>
+                        <input type="text" id="im" name="im" placeholder="Inscricao Municipal">
+                    </div>
+                    <div class="form-group">
+                        <label for="suframa">SUFRAMA</label>
+                        <input type="text" id="suframa" name="suframa" placeholder="Inscricao SUFRAMA">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="ind_perfil">Perfil</label>
+                        <select id="ind_perfil" name="ind_perfil">
+                            <option value="0">A - Completo</option>
+                            <option value="1">B - Intermediario</option>
+                            <option value="2">C - Simplificado</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="ind_ativ">Tipo de Atividade</label>
+                        <select id="ind_ativ" name="ind_ativ">
+                            <option value="0">0 - Industrial ou equiparado</option>
+                            <option value="1">1 - Outros</option>
+                        </select>
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Registro 0005 - Dados Complementares (Opcional)</legend>
+
+                <div class="form-row">
+                    <div class="form-group full">
+                        <label for="fantasia">Nome Fantasia</label>
+                        <input type="text" id="fantasia" name="fantasia" placeholder="Nome fantasia">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cep">CEP</label>
+                        <input type="text" id="cep" name="cep" placeholder="00000000" maxlength="8">
+                    </div>
+                    <div class="form-group full">
+                        <label for="endereco">Endereco</label>
+                        <input type="text" id="endereco" name="endereco" placeholder="Logradouro">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="num">Numero</label>
+                        <input type="text" id="num" name="num" placeholder="Numero">
+                    </div>
+                    <div class="form-group">
+                        <label for="compl">Complemento</label>
+                        <input type="text" id="compl" name="compl" placeholder="Complemento">
+                    </div>
+                    <div class="form-group">
+                        <label for="bairro">Bairro</label>
+                        <input type="text" id="bairro" name="bairro" placeholder="Bairro">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fone">Telefone</label>
+                        <input type="text" id="fone" name="fone" placeholder="1100000000">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">E-mail</label>
+                        <input type="email" id="email" name="email" placeholder="contato@empresa.com.br">
+                    </div>
+                </div>
+            </fieldset>
+
+            <button type="submit" id="btnGerar">Gerar Arquivo SPED</button>
+        </form>
+
+        <section id="resultado" class="hidden">
+            <h2>Resultado</h2>
+            <div id="mensagem"></div>
+            <div id="conteudoWrapper">
+                <div class="toolbar">
+                    <span id="nomeArquivo"></span>
+                    <button type="button" id="btnDownload">Download TXT</button>
+                </div>
+                <pre id="conteudo"></pre>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>OpenFiscalBR - Derivado do <a href="http://projetoacbr.com.br" target="_blank">Projeto ACBr</a> - LGPL 2.1+</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
