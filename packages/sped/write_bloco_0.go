@@ -11,6 +11,54 @@
 
 package sped
 
+import "time"
+
+// codNatCCValidos lista os codigos aceitos em COD_NAT_CC do registro 0500
+// (natureza da conta ou grupo de contas).
+// Ref.: ACBrEFDBloco_0_Class.pas, WriteRegistro0500.
+var codNatCCValidos = map[string]bool{
+	"01": true, "02": true, "03": true, "04": true,
+	"05": true, "09": true, "10": true, "99": true,
+}
+
+// codPaisBrasil e o codigo BACEN do Brasil na tabela de paises. Participante
+// com qualquer outro codigo e do exterior e tem tratamento proprio no 0150.
+// O ACBr aceita as duas grafias, com e sem zero a esquerda.
+func participanteDoExterior(codPais string) bool {
+	return codPais != "01058" && codPais != "1058"
+}
+
+// codMun0150 devolve o campo COD_MUN do registro 0150. Participante do
+// exterior nao tem municipio do IBGE: o layout exige o literal 9999999.
+// Ref.: ACBrEFDBloco_0_Class.pas, WriteRegistro0150.
+func codMun0150(b *Bloco0, r *Registro0150) string {
+	if participanteDoExterior(r.CodPais) {
+		return b.LFillStr("9999999", 0, false, '0')
+	}
+	return b.LFillInt(int64(r.CodMun), 7, false, '0')
+}
+
+// cest0200 devolve o campo CEST do registro 0200. O campo so passou a existir
+// no layout em 01/01/2017; antes disso nao e emitido -- nem o delimitador.
+// Ref.: ACBrEFDBloco_0_Class.pas, WriteRegistro0200.
+func cest0200(b *Bloco0, r *Registro0200) string {
+	inicioCEST := time.Date(2017, 1, 1, 0, 0, 0, 0, time.UTC)
+	if b.DtIni.Before(inicioCEST) {
+		return ""
+	}
+	return b.LFillStr(r.CEST, 0, false, '0')
+}
+
+// codBarra0220 devolve o campo COD_BARRA do registro 0220, que so existe a
+// partir da versao 115 do leiaute. Ate a 114 o registro tem tres campos.
+// Ref.: ACBrEFDBloco_0_Class.pas, WriteRegistro0220.
+func codBarra0220(b *Bloco0, r *Registro0220) string {
+	if b.Registro0000 != nil && b.Registro0000.CodVer <= VlVersao114 {
+		return ""
+	}
+	return b.LFillStr(r.CodBarra, 0, false, '0')
+}
+
 // ---------------------------------------------------------------------------
 // WriteRegistro0000 - Abertura do arquivo digital e identificacao da entidade
 // ---------------------------------------------------------------------------
@@ -177,6 +225,7 @@ func (b *Bloco0) writeRegistro0100() {
 		b.LFillInt(int64(r.CodMun), 7, false, '0')
 	b.Add(linha, true)
 	b.Registro0990.QtdLin0++
+	b.Registro0100Count++
 }
 
 // ---------------------------------------------------------------------------
@@ -195,7 +244,7 @@ func (b *Bloco0) writeRegistro0150() {
 			b.LFillStr(r.CNPJ, 0, false, '0') +
 			b.LFillStr(r.CPF, 0, false, '0') +
 			b.LFillStr(r.IE, 0, false, '0') +
-			b.LFillInt(int64(r.CodMun), 7, false, '0') +
+			codMun0150(b, r) +
 			b.LFillStr(r.Suframa, 0, false, '0') +
 			b.LFillStr(r.Endereco, 0, false, '0') +
 			b.LFillStr(r.Num, 0, false, '0') +
@@ -203,6 +252,7 @@ func (b *Bloco0) writeRegistro0150() {
 			b.LFillStr(r.Bairro, 0, false, '0')
 		b.Add(linha, true)
 		b.Registro0990.QtdLin0++
+		b.Registro0150Count++
 
 		b.writeRegistro0175(r)
 	}
@@ -222,6 +272,7 @@ func (b *Bloco0) writeRegistro0175(parent *Registro0150) {
 			b.LFillStr(r.ContAnt, 0, false, '0')
 		b.Add(linha, true)
 		b.Registro0990.QtdLin0++
+		b.Registro0175Count++
 	}
 }
 
@@ -238,6 +289,7 @@ func (b *Bloco0) writeRegistro0190() {
 			b.LFillStr(r.Descr, 0, false, '0')
 		b.Add(linha, true)
 		b.Registro0990.QtdLin0++
+		b.Registro0190Count++
 	}
 }
 
@@ -262,9 +314,10 @@ func (b *Bloco0) writeRegistro0200() {
 			b.LFillStr(r.CodGen, 0, false, '0') +
 			b.LFillStr(r.CodLst, 0, false, '0') +
 			b.DFill(r.AliqICMS, 2, true) +
-			b.LFillStr(r.CEST, 0, false, '0')
+			cest0200(b, r)
 		b.Add(linha, true)
 		b.Registro0990.QtdLin0++
+		b.Registro0200Count++
 
 		b.writeRegistro0205(r)
 		b.writeRegistro0206(r)
@@ -289,6 +342,7 @@ func (b *Bloco0) writeRegistro0205(parent *Registro0200) {
 			b.LFillStr(r.CodAntItem, 0, false, '0')
 		b.Add(linha, true)
 		b.Registro0990.QtdLin0++
+		b.Registro0205Count++
 	}
 }
 
@@ -304,6 +358,7 @@ func (b *Bloco0) writeRegistro0206(parent *Registro0200) {
 			b.LFillStr(r.CodComb, 0, false, '0')
 		b.Add(linha, true)
 		b.Registro0990.QtdLin0++
+		b.Registro0206Count++
 	}
 }
 
@@ -321,6 +376,7 @@ func (b *Bloco0) writeRegistro0210(parent *Registro0200) {
 			b.DFill(r.Perda, 2, false)
 		b.Add(linha, true)
 		b.Registro0990.QtdLin0++
+		b.Registro0210Count++
 	}
 }
 
@@ -330,14 +386,18 @@ func (b *Bloco0) writeRegistro0210(parent *Registro0200) {
 
 // writeRegistro0220 itera sobre os sub-registros 0220 de um Registro0200.
 // Formato: |0220|UNID_CONV|FAT_CONV|COD_BARRA|
+//
+// COD_BARRA so existe no layout a partir da versao 115; ate a 114 o registro
+// tem apenas tres campos. Ref.: ACBrEFDBloco_0_Class.pas, WriteRegistro0220.
 func (b *Bloco0) writeRegistro0220(parent *Registro0200) {
 	for _, r := range parent.Registro0220 {
 		linha := b.LFillStr("0220", 0, false, '0') +
 			b.LFillStr(r.UnidConv, 0, false, '0') +
 			b.DFill(r.FatConv, 6, false) +
-			b.LFillStr(r.CodBarra, 0, false, '0')
+			codBarra0220(b, r)
 		b.Add(linha, true)
 		b.Registro0990.QtdLin0++
+		b.Registro0220Count++
 	}
 }
 
@@ -354,6 +414,7 @@ func (b *Bloco0) writeRegistro0221(parent *Registro0200) {
 			b.DFill(r.QtdeContida, 2, false)
 		b.Add(linha, true)
 		b.Registro0990.QtdLin0++
+		b.Registro0221Count++
 	}
 }
 
@@ -375,6 +436,7 @@ func (b *Bloco0) writeRegistro0300() {
 			b.DFill(r.NrParc, 0, false)
 		b.Add(linha, true)
 		b.Registro0990.QtdLin0++
+		b.Registro0300Count++
 
 		b.writeRegistro0305(r)
 	}
@@ -397,6 +459,7 @@ func (b *Bloco0) writeRegistro0305(parent *Registro0300) {
 		b.LFillInt(int64(r.VidaUtil), 0, false, '0')
 	b.Add(linha, true)
 	b.Registro0990.QtdLin0++
+	b.Registro0305Count++
 }
 
 // ---------------------------------------------------------------------------
@@ -412,6 +475,7 @@ func (b *Bloco0) writeRegistro0400() {
 			b.LFillStr(r.DescrNat, 0, false, '0')
 		b.Add(linha, true)
 		b.Registro0990.QtdLin0++
+		b.Registro0400Count++
 	}
 }
 
@@ -428,6 +492,7 @@ func (b *Bloco0) writeRegistro0450() {
 			b.LFillStr(r.Txt, 0, false, '0')
 		b.Add(linha, true)
 		b.Registro0990.QtdLin0++
+		b.Registro0450Count++
 	}
 }
 
@@ -444,6 +509,7 @@ func (b *Bloco0) writeRegistro0460() {
 			b.LFillStr(r.Txt, 0, false, '0')
 		b.Add(linha, true)
 		b.Registro0990.QtdLin0++
+		b.Registro0460Count++
 	}
 }
 
@@ -455,6 +521,13 @@ func (b *Bloco0) writeRegistro0460() {
 // Formato: |0500|DT_ALT|COD_NAT_CC|IND_CTA|NIVEL|COD_CTA|NOME_CTA|
 func (b *Bloco0) writeRegistro0500() {
 	for _, r := range b.Registro0001.Registro0500 {
+		b.Checkf(codNatCCValidos[r.CodNatCC],
+			"(0-0500) O codigo da natureza da conta/grupo de contas %q digitado e invalido!",
+			r.CodNatCC)
+		b.Checkf(r.IndCta == "S" || r.IndCta == "A",
+			"(0-0500) O indicador %q do tipo de conta deve ser informado S ou A!",
+			r.IndCta)
+
 		linha := b.LFillStr("0500", 0, false, '0') +
 			b.LFillDate(r.DtAlt, "02012006", false) +
 			b.LFillStr(r.CodNatCC, 0, false, '0') +
@@ -464,6 +537,7 @@ func (b *Bloco0) writeRegistro0500() {
 			b.LFillStr(r.NomeCta, 0, false, '0')
 		b.Add(linha, true)
 		b.Registro0990.QtdLin0++
+		b.Registro0500Count++
 	}
 }
 
@@ -481,6 +555,7 @@ func (b *Bloco0) writeRegistro0600() {
 			b.LFillStr(r.Ccus, 0, false, '0')
 		b.Add(linha, true)
 		b.Registro0990.QtdLin0++
+		b.Registro0600Count++
 	}
 }
 

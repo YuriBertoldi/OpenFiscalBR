@@ -282,6 +282,17 @@ func (t *TXTClass) Check(condition bool, msg string) {
 	}
 }
 
+// Checkf valida uma condicao com mensagem formatada. Equivale a sobrecarga
+// Delphi Check(Condicao, Msg, Fmt: array of const) de ACBrTXTClass.pas, usada
+// por praticamente toda validacao de registro do ACBr.
+//
+// A formatacao so e aplicada quando a condicao falha.
+func (t *TXTClass) Checkf(condition bool, format string, args ...any) {
+	if !condition {
+		t.Check(false, fmt.Sprintf(format, args...))
+	}
+}
+
 // --------------------------------------------------------------------------
 // Internal helpers
 // --------------------------------------------------------------------------

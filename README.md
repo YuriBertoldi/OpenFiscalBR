@@ -9,7 +9,7 @@ Licenciado sob **LGPL 2.1+** (obra derivada do Projeto ACBr).
 | Package | Descricao | Status |
 |---------|-----------|--------|
 | `packages/comum` | Base: TXTClass, utils, erros, FormatFloatBR | Completo |
-| `packages/sped` | SPED Fiscal (EFD-ICMS/IPI): tipos, registros, blocos, geracao TXT | Completo |
+| `packages/sped` | SPED Fiscal (EFD-ICMS/IPI): tipos, registros, blocos, geracao TXT | Parcial (100 registros com writer, de 198 structs declarados) |
 | `packages/pcn` | Gerador/Leitor XML (PCNComum) | Pendente |
 | `packages/dfe` | DFe base, SSL, config | Pendente |
 | `packages/nfe` | NFe (Nota Fiscal Eletronica) | Pendente |
@@ -107,17 +107,32 @@ packages/
   ...
 demos/
   sped/          Demo SPED Fiscal (API REST + Frontend + Docker)
+ferramentas/     Scripts de apoio ao port (nao fazem parte do modulo Go)
 ```
 
-## Convertendo novos componentes
+## Skills do projeto
 
-Use a skill `/convert` para portar componentes Delphi para Go:
+O repositorio traz skills do Claude Code em `.claude/skills/`, carregadas automaticamente ao
+abrir uma sessao na raiz do projeto:
+
+| Skill | Para que serve |
+|-------|----------------|
+| `/convert <Componente> <FontesDelphi>` | Porta um componente ACBr de Delphi para Go |
+| `/validar-package [pkg]` | gofmt, build, vet, testes, header de licenca, module path |
+| `/adicionar-registro-sped <registro>` | Acrescenta um registro ao `packages/sped` |
+| `/gerar-demo <pkg>` | Gera a demo em `demos/<pkg>/` |
+| `/sincronizar-meta` | Atualiza `.openfiscalbr-meta.json` e o status dos packages |
+
+Ha tambem o subagente `revisor-go` (`.claude/agents/revisor-go.md`), que revisa codigo portado
+quanto a fidelidade ao Delphi de origem e as convencoes do projeto.
+
+Exemplo:
 
 ```
 /convert ACBrNFe C:\MeusACBr\Fontes
 ```
 
-Veja `.claude/skills/convert.md` para detalhes do workflow.
+Veja `.claude/skills/convert/SKILL.md` para detalhes do workflow.
 
 ## Ordem de Dependencias
 

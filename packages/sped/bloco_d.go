@@ -141,16 +141,16 @@ type RegistroD140 struct {
 
 // RegistroD150 - Complemento do Conhecimento Aereo de Cargas (codigo 10)
 type RegistroD150 struct {
-	CodMunOrig   string
-	CodMunDest   string
-	VeicID       string
-	ViagNac      string
-	VlLiqFrt     float64
-	VlDesp       float64
-	VlTot        float64
-	IndNFCarga   string
-	VlPesoBrt    float64
-	VlPesoLiq    float64
+	CodMunOrig string
+	CodMunDest string
+	VeicID     string
+	ViagNac    string
+	VlLiqFrt   float64
+	VlDesp     float64
+	VlTot      float64
+	IndNFCarga string
+	VlPesoBrt  float64
+	VlPesoLiq  float64
 }
 
 // RegistroD160 - Complemento do CT-e (codigo 57), CT-e Avulso e
@@ -169,13 +169,13 @@ type RegistroD160 struct {
 
 // RegistroD161 - Local da Coleta e Entrega (CT-e)
 type RegistroD161 struct {
-	IndCarga     string
-	CNPJCPFCol   string
-	IECol        string
-	CodMunCol    string
-	CNPJCPFEntg  string
-	IEEntg       string
-	CodMunEntg   string
+	IndCarga    string
+	CNPJCPFCol  string
+	IECol       string
+	CodMunCol   string
+	CNPJCPFEntg string
+	IEEntg      string
+	CodMunEntg  string
 }
 
 // RegistroD162 - Identificacao dos Documentos Fiscais (CT-e)
@@ -206,35 +206,35 @@ type RegistroD170 struct {
 
 // RegistroD180 - Modais (CT-e)
 type RegistroD180 struct {
-	NumSeq  string
-	IndEmit IndEmit
+	NumSeq      string
+	IndEmit     IndEmit
 	CNPJCPFEmit string
-	UFEmit  string
-	IEEmit  string
-	CodMunEmit string
-	CNPJCPF string
-	UF      string
-	IE      string
-	CodMun  string
-	CodMod  string
-	Ser     string
-	Sub     string
-	NumDoc  string
-	DtDoc   time.Time
-	VlDoc   float64
+	UFEmit      string
+	IEEmit      string
+	CodMunEmit  string
+	CNPJCPF     string
+	UF          string
+	IE          string
+	CodMun      string
+	CodMod      string
+	Ser         string
+	Sub         string
+	NumDoc      string
+	DtDoc       time.Time
+	VlDoc       float64
 }
 
 // RegistroD190 - Registro Analitico dos Documentos (codigo 07, 08, 8B, 09, 10,
 // 11, 26, 27, 57, 67)
 type RegistroD190 struct {
-	CstICMS    CstIcms
-	CFOP       string
-	AliqICMS   float64
-	VlOpr      float64
-	VlBcICMS   float64
-	VlICMS     float64
-	VlRedBC    float64
-	CodObs     string
+	CstICMS  CstIcms
+	CFOP     string
+	AliqICMS float64
+	VlOpr    float64
+	VlBcICMS float64
+	VlICMS   float64
+	VlRedBC  float64
+	CodObs   string
 }
 
 // RegistroD195 - Observacoes do Lancamento Fiscal (codigo 07, 08, 8B, 09, 10,
@@ -261,20 +261,20 @@ type RegistroD197 struct {
 // Aquaviario (codigo 09), Aereo (codigo 10), Ferroviario (codigo 11)
 // consolidados
 type RegistroD300 struct {
-	CodMod     string
-	Ser        string
-	Sub        string
-	NumDocIni  string
-	NumDocFin  string
-	CstICMS    CstIcms
-	CFOP       string
-	AliqICMS   float64
-	DtDoc      time.Time
-	VlOpr      float64
-	VlDesc     float64
-	VlServ     float64
-	VlBcICMS   float64
-	VlICMS     float64
+	CodMod    string
+	Ser       string
+	Sub       string
+	NumDocIni string
+	NumDocFin string
+	CstICMS   CstIcms
+	CFOP      string
+	AliqICMS  float64
+	DtDoc     time.Time
+	VlOpr     float64
+	VlDesc    float64
+	VlServ    float64
+	VlBcICMS  float64
+	VlICMS    float64
 }
 
 // RegistroD350 - Equipamento ECF (codigos 2E, 13, 14, 15, 16)
@@ -287,70 +287,70 @@ type RegistroD350 struct {
 
 // RegistroD400 - Resumo de Movimento Diario (codigo 18)
 type RegistroD400 struct {
-	CodPart    string
-	CodMod     string
-	CodSit     CodSit
-	Ser        string
-	Sub        string
-	NumDoc     string
-	DtDoc      time.Time
-	VlDoc      float64
-	VlDesc     float64
-	VlServ     float64
-	VlBcICMS   float64
-	VlICMS     float64
-	VlPIS      float64
-	VlCOFINS   float64
-	CodCta     string
+	CodPart  string
+	CodMod   string
+	CodSit   CodSit
+	Ser      string
+	Sub      string
+	NumDoc   string
+	DtDoc    time.Time
+	VlDoc    float64
+	VlDesc   float64
+	VlServ   float64
+	VlBcICMS float64
+	VlICMS   float64
+	VlPIS    float64
+	VlCOFINS float64
+	CodCta   string
 }
 
 // RegistroD500 - Nota Fiscal de Servico de Comunicacao (codigo 21),
 // Nota Fiscal de Servico de Telecomunicacao (codigo 22)
 type RegistroD500 struct {
-	IndOper    IndOper
-	IndEmit    IndEmit
-	CodPart    string
-	CodMod     string
-	CodSit     CodSit
-	Ser        string
-	Sub        string
-	NumDoc     string
-	DtDoc      time.Time
-	DtAP       time.Time
-	VlDoc      float64
-	VlDesc     float64
-	VlServ     float64
-	VlServNT   float64
-	VlTerc     float64
-	VlDa       float64
-	VlBcICMS   float64
-	VlICMS     float64
-	CodInf     string
-	VlPIS      float64
-	VlCOFINS   float64
-	CodCta     string
+	IndOper     IndOper
+	IndEmit     IndEmit
+	CodPart     string
+	CodMod      string
+	CodSit      CodSit
+	Ser         string
+	Sub         string
+	NumDoc      string
+	DtDoc       time.Time
+	DtAP        time.Time
+	VlDoc       float64
+	VlDesc      float64
+	VlServ      float64
+	VlServNT    float64
+	VlTerc      float64
+	VlDa        float64
+	VlBcICMS    float64
+	VlICMS      float64
+	CodInf      string
+	VlPIS       float64
+	VlCOFINS    float64
+	CodCta      string
 	TpAssinante TpAssinante
 }
 
 // RegistroD600 - Consolidacao da Prestacao de Servicos - Notas Fiscais de
 // Servico de Comunicacao (codigo 21) e de Servico de Telecomunicacao (codigo 22)
 type RegistroD600 struct {
-	CodMod     string
-	CodMun     string
-	Ser        string
-	Sub        string
-	CodCons    ClasseConsumo
-	QtdCons    int
-	QtdCanc    int
-	DtDoc      time.Time
-	VlDoc      float64
-	VlDesc     float64
-	VlServ     float64
-	VlServNT   float64
-	VlTerc     float64
-	VlDa       float64
-	VlBcICMS   float64
-	VlICMS     float64
+	CodMod   string
+	CodMun   string
+	Ser      string
+	Sub      string
+	CodCons  ClasseConsumo
+	QtdCons  int
+	QtdCanc  int
+	DtDoc    time.Time
+	VlDoc    float64
+	VlDesc   float64
+	VlServ   float64
+	VlServNT float64
+	VlTerc   float64
+	VlDa     float64
+	VlBcICMS float64
+	VlICMS   float64
 }
 
 // RegistroD695 - Consolidacao da Prestacao de Servicos - Notas Fiscais de
@@ -393,47 +393,47 @@ type RegistroD697 struct {
 // RegistroD700 - Nota Fiscal Fatura Eletronica de Servicos de Comunicacao - NFCom
 // (codigo 62)
 type RegistroD700 struct {
-	IndOper      IndOper
-	IndEmit      IndEmit
-	CodPart      string
-	CodMod       string
-	CodSit       CodSit
-	Ser          string
-	NumDoc       string
-	DtDoc        time.Time
-	DtES         time.Time
-	VlDoc        float64
-	VlDesc       float64
-	VlServ       float64
-	VlServNT     float64
-	VlTerc       float64
-	VlDa         float64
-	VlBcICMS     float64
-	VlICMS       float64
-	VlPIS        float64
-	VlCOFINS     float64
-	CodInf       string
-	ChvNFCom     string
-	FinNFCom     FinEmissaoFaturaEletronica
-	TpFat        TipoFaturamentoDocEletronico
+	IndOper       IndOper
+	IndEmit       IndEmit
+	CodPart       string
+	CodMod        string
+	CodSit        CodSit
+	Ser           string
+	NumDoc        string
+	DtDoc         time.Time
+	DtES          time.Time
+	VlDoc         float64
+	VlDesc        float64
+	VlServ        float64
+	VlServNT      float64
+	VlTerc        float64
+	VlDa          float64
+	VlBcICMS      float64
+	VlICMS        float64
+	VlPIS         float64
+	VlCOFINS      float64
+	CodInf        string
+	ChvNFCom      string
+	FinNFCom      FinEmissaoFaturaEletronica
+	TpFat         TipoFaturamentoDocEletronico
 	CodMod_DocRef string
-	ChvNFComRef  string
-	IndDest      IndDestinatarioAcessante
-	CodMunDest   string
-	RegistroD730 []*RegistroD730
-	RegistroD735 []*RegistroD735
+	ChvNFComRef   string
+	IndDest       IndDestinatarioAcessante
+	CodMunDest    string
+	RegistroD730  []*RegistroD730
+	RegistroD735  []*RegistroD735
 }
 
 // RegistroD730 - Registro Analitico da NFCom (codigo 62)
 type RegistroD730 struct {
-	CstICMS    CstIcms
-	CFOP       string
-	AliqICMS   float64
-	VlOpr      float64
-	VlBcICMS   float64
-	VlICMS     float64
-	VlRedBC    float64
-	CodObs     string
+	CstICMS      CstIcms
+	CFOP         string
+	AliqICMS     float64
+	VlOpr        float64
+	VlBcICMS     float64
+	VlICMS       float64
+	VlRedBC      float64
+	CodObs       string
 	RegistroD731 []*RegistroD731
 }
 

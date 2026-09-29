@@ -208,7 +208,7 @@ type RegistroC185 struct {
 	VlBcICMSST float64
 	VlICMSST   float64
 	VlFCP      float64
-	VlFCPST   float64
+	VlFCPST    float64
 }
 
 // RegistroC186 - Informacoes complementares das operacoes de entrada de
@@ -226,7 +226,7 @@ type RegistroC186 struct {
 	VlBcICMSST float64
 	VlICMSST   float64
 	VlFCP      float64
-	VlFCPST   float64
+	VlFCPST    float64
 }
 
 // RegistroC190 - Registro Analitico do Documento (codigo 01, 1B, 04, 55, 65)
@@ -269,16 +269,16 @@ type RegistroC197 struct {
 
 // RegistroC300 - Resumo Diario das Notas Fiscais de Venda a Consumidor (codigo 02)
 type RegistroC300 struct {
-	CodMod     string
-	Ser        string
-	Sub        string
-	NumDocIni  string
-	NumDocFin  string
-	DtDoc      time.Time
-	VlDoc      float64
-	VlPIS      float64
-	VlCOFINS   float64
-	CodCta     string
+	CodMod    string
+	Ser       string
+	Sub       string
+	NumDocIni string
+	NumDocFin string
+	DtDoc     time.Time
+	VlDoc     float64
+	VlPIS     float64
+	VlCOFINS  float64
+	CodCta    string
 }
 
 // RegistroC350 - Nota Fiscal de Venda a Consumidor (codigo 02)
@@ -307,68 +307,68 @@ type RegistroC400 struct {
 
 // RegistroC405 - Reducao Z (codigo 02, 2D)
 type RegistroC405 struct {
-	DtDoc  time.Time
-	Cro    int
-	Crz    int
+	DtDoc     time.Time
+	Cro       int
+	Crz       int
 	NumCooFin int
-	GtFin  float64
-	VlBrt  float64
+	GtFin     float64
+	VlBrt     float64
 }
 
 // RegistroC495 - Resumo Mensal de Itens do ECF por Estabelecimento (codigo 02, 2D)
 type RegistroC495 struct {
-	AliqICMS   float64
-	CodItem    string
-	Qtd        float64
-	QtdCanc    float64
-	Unid       string
-	VlItem     float64
-	VlDesc     float64
-	VlCanc     float64
-	VlAcmo     float64
-	VlBcICMS   float64
-	VlICMS     float64
-	VlISEN     float64
-	VlNT       float64
-	VlICMSST   float64
+	AliqICMS float64
+	CodItem  string
+	Qtd      float64
+	QtdCanc  float64
+	Unid     string
+	VlItem   float64
+	VlDesc   float64
+	VlCanc   float64
+	VlAcmo   float64
+	VlBcICMS float64
+	VlICMS   float64
+	VlISEN   float64
+	VlNT     float64
+	VlICMSST float64
 }
 
 // RegistroC500 - Nota Fiscal/Conta de Energia Eletrica (codigo 06),
 // Nota Fiscal/Conta de Fornecimento d'Agua Canalizada (codigo 29),
 // Nota Fiscal Consumo de Gas (codigo 28) e NF3e (codigo 66)
 type RegistroC500 struct {
-	IndOper       IndOper
-	IndEmit       IndEmit
-	CodPart       string
-	CodMod        string
-	CodSit        CodSit
-	Ser           string
-	Sub           string
-	CodCons       ClasseConsumo
-	NumDoc        string
-	DtDoc         time.Time
-	DtES          time.Time
-	VlDoc         float64
-	VlDesc        float64
-	VlFornEC      float64
-	VlServNT      float64
-	VlTerc        float64
-	VlDa          float64
-	VlBcICMS      float64
-	VlICMS        float64
-	VlBcICMSST    float64
-	VlICMSST      float64
-	CodInf        string
-	VlPIS         float64
-	VlCOFINS      float64
-	TpLigacao     TpLigacao
+	IndOper        IndOper
+	IndEmit        IndEmit
+	CodPart        string
+	CodMod         string
+	CodSit         CodSit
+	Ser            string
+	Sub            string
+	CodCons        ClasseConsumo
+	NumDoc         string
+	DtDoc          time.Time
+	DtES           time.Time
+	VlDoc          float64
+	VlDesc         float64
+	VlFornEC       float64
+	VlServNT       float64
+	VlTerc         float64
+	VlDa           float64
+	VlBcICMS       float64
+	VlICMS         float64
+	VlBcICMSST     float64
+	VlICMSST       float64
+	CodInf         string
+	VlPIS          float64
+	VlCOFINS       float64
+	TpLigacao      TpLigacao
 	CodGrupoTensao GrupoTensao
-	ChvDOCe       string
-	FinDOCe       FinalidadeEmissaoDocEletronico
-	ChvDOCeRef    string
-	IndDest       IndDestinatarioAcessante
-	CodMunDest    string
-	CodCContab    string
+	ChvDOCe        string
+	FinDOCe        FinalidadeEmissaoDocEletronico
+	ChvDOCeRef     string
+	IndDest        IndDestinatarioAcessante
+	CodMunDest     string
+	CodCContab     string
 }
 
 // RegistroC600 - Consolidacao Diaria de Notas Fiscais/Contas de Energia Eletrica
@@ -401,41 +401,41 @@ type RegistroC600 struct {
 // (codigo 06), NF/Conta de Fornecimento d'Agua (codigo 29) e
 // NF/Conta de Fornecimento de Gas (codigo 28) - documentos de saida
 type RegistroC700 struct {
-	CodMod     string
-	Ser        string
-	NroOrdIni  string
-	NroOrdFin  string
-	DtDocIni   time.Time
-	DtDocFin   time.Time
-	NomMest    string
-	ChvCodDig  string
+	CodMod    string
+	Ser       string
+	NroOrdIni string
+	NroOrdFin string
+	DtDocIni  time.Time
+	DtDocFin  time.Time
+	NomMest   string
+	ChvCodDig string
 }
 
 // RegistroC800 - Cupom Fiscal Eletronico - SAT (CF-e-SAT) (codigo 59)
 type RegistroC800 struct {
-	CodMod    string
-	CodSit    CodSit
-	NumCFe    string
-	DtDoc     time.Time
-	VlCFe     float64
-	VlPIS     float64
-	VlCOFINS  float64
-	CNPJCPFOp string
-	VlDesc    float64
-	VlMerc    float64
-	VlOutDa   float64
-	VlICMS    float64
-	VlPISST   float64
+	CodMod     string
+	CodSit     CodSit
+	NumCFe     string
+	DtDoc      time.Time
+	VlCFe      float64
+	VlPIS      float64
+	VlCOFINS   float64
+	CNPJCPFOp  string
+	VlDesc     float64
+	VlMerc     float64
+	VlOutDa    float64
+	VlICMS     float64
+	VlPISST    float64
 	VlCOFINSST float64
 }
 
 // RegistroC860 - Identificacao do Equipamento SAT-CF-e
 type RegistroC860 struct {
-	CodMod   string
-	NrSat    string
-	DtDoc    time.Time
-	DocIni   string
-	DocFin   string
+	CodMod string
+	NrSat  string
+	DtDoc  time.Time
+	DocIni string
+	DocFin string
 }
 
 // RegistroC990 - Encerramento do Bloco C

@@ -27,8 +27,8 @@ type GerarRequest struct {
 	// Registro 0000
 	CodVer    int    `json:"cod_ver"`
 	CodFin    int    `json:"cod_fin"`
-	DtIni     string `json:"dt_ini"`     // yyyy-MM-dd
-	DtFin     string `json:"dt_fin"`     // yyyy-MM-dd
+	DtIni     string `json:"dt_ini"` // yyyy-MM-dd
+	DtFin     string `json:"dt_fin"` // yyyy-MM-dd
 	Nome      string `json:"nome"`
 	CNPJ      string `json:"cnpj"`
 	CPF       string `json:"cpf"`
@@ -41,14 +41,14 @@ type GerarRequest struct {
 	IndAtiv   int    `json:"ind_ativ"`   // 0=Industrial, 1=Outros
 
 	// Registro 0005 (optional)
-	Fantasia  string `json:"fantasia"`
-	CEP       string `json:"cep"`
-	Endereco  string `json:"endereco"`
-	Num       string `json:"num"`
-	Compl     string `json:"compl"`
-	Bairro    string `json:"bairro"`
-	Fone      string `json:"fone"`
-	Email     string `json:"email"`
+	Fantasia string `json:"fantasia"`
+	CEP      string `json:"cep"`
+	Endereco string `json:"endereco"`
+	Num      string `json:"num"`
+	Compl    string `json:"compl"`
+	Bairro   string `json:"bairro"`
+	Fone     string `json:"fone"`
+	Email    string `json:"email"`
 }
 
 // GerarResponse is the JSON response from POST /api/gerar.
@@ -61,9 +61,9 @@ type GerarResponse struct {
 
 // StatusResponse is the JSON response from GET /api/status.
 type StatusResponse struct {
-	Status  string `json:"status"`
-	Versao  string `json:"versao"`
-	Modulo  string `json:"modulo"`
+	Status string `json:"status"`
+	Versao string `json:"versao"`
+	Modulo string `json:"modulo"`
 }
 
 func handleStatus(w http.ResponseWriter, r *http.Request) {

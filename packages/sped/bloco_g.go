@@ -33,11 +33,13 @@ func NewRegistroG001() *RegistroG001 {
 type RegistroG110 struct {
 	DtIni        time.Time
 	DtFin        time.Time
-	SldInICMS    float64
-	SomParcl     float64
+	ModoCiap     string
+	SaldoInICMS  float64
+	SaldoFnICMS  float64
+	SomParc      float64
 	VlTribExp    float64
 	VlTotal      float64
-	IndPerSai    int
+	IndPerSai    float64
 	ICMSAprop    float64
 	SomICMSOC    float64
 	RegistroG125 []*RegistroG125
@@ -45,54 +47,55 @@ type RegistroG110 struct {
 
 // RegistroG125 - Movimentacao de Bem ou Componente do Ativo Imobilizado
 type RegistroG125 struct {
-	CodItem      string
-	DtMoviment   time.Time
-	TipoMov      string
-	VlImobICMS   float64
-	VlICMSOp     float64
-	VlICMSST     float64
-	VlFCP        float64
-	NumParcl     int
-	VlParcl      float64
-	RegistroG126 []*RegistroG126
-	RegistroG130 []*RegistroG130
-	RegistroG140 []*RegistroG140
+	CodIndBem     string
+	DtMov         time.Time
+	TipoMov       MovimentoBens
+	VlImobICMSOp  float64
+	VlImobICMSST  float64
+	VlImobICMSFrt float64
+	VlImobICMSDif float64
+	NumParc       string
+	VlParcPass    float64
+	VlParcApr     float64
+	RegistroG126  []*RegistroG126
+	RegistroG130  []*RegistroG130
 }
 
 // RegistroG126 - Outros Creditos CIAP
 type RegistroG126 struct {
-	DtIni    time.Time
-	DtFin    time.Time
-	NumParcl int
-	VlParcl  float64
-	VlTribOC float64
-	VlTotOC  float64
-	IndPerOC int
-	VlICMSOC float64
+	DtIni      time.Time
+	DtFin      time.Time
+	NumParc    string
+	VlParcPass float64
+	VlTribOC   float64
+	VlTotal    float64
+	IndPerSai  float64
+	VlParcApr  float64
 }
 
 // RegistroG130 - Identificacao do Documento Fiscal
 type RegistroG130 struct {
-	IndEmit IndEmit
-	CodPart string
-	CodMod  string
-	Ser     string
-	NumDoc  string
-	ChvNFe  string
-	DtDoc   time.Time
-	NumDA   string
+	IndEmit      IndEmit
+	CodPart      string
+	CodMod       string
+	Serie        string
+	NumDoc       string
+	ChvNFeCTe    string
+	DtDoc        time.Time
+	NumDA        string
+	RegistroG140 []*RegistroG140
 }
 
 // RegistroG140 - Identificacao do Item do Documento Fiscal
 type RegistroG140 struct {
-	NumItem   string
-	CodItem   string
-	Qtd       float64
-	Unid      string
-	VlICMSOPr float64
-	VlBcICMSST float64
-	VlICMSST  float64
-	VlFCP     float64
+	NumItem           string
+	CodItem           string
+	Qtde              float64
+	Unid              string
+	VlICMSOpAplicado  float64
+	VlICMSSTAplicado  float64
+	VlICMSFrtAplicado float64
+	VlICMSDifAplicado float64
 }
 
 // RegistroG990 - Encerramento do Bloco G

@@ -47,11 +47,19 @@ func NewRegistro1001() *Registro1001 {
 
 // Registro1010 - Obrigatoriedade de Registros do Bloco 1
 type Registro1010 struct {
-	IndExp    string
-	IndCCAJ   string
-	IndProc   string
-	IndApur   string
-	IndInfoEV string
+	IndExp                  string
+	IndCCRF                 string
+	IndComb                 string
+	IndUsina                string
+	IndVA                   string
+	IndEE                   string
+	IndCart                 string
+	IndForm                 string
+	IndAer                  string
+	IndGIAF1                string
+	IndGIAF3                string
+	IndGIAF4                string
+	IndRestRessarcComplICMS string
 }
 
 // Registro1100 - Registro de Informacoes sobre Exportacao
@@ -81,15 +89,15 @@ type Registro1105 struct {
 
 // Registro1110 - Operacoes de Exportacao Indireta - Mercadorias de Terceiros
 type Registro1110 struct {
-	CodPart  string
-	CodMod   string
-	Ser      string
-	NumDoc   string
-	DtDoc    time.Time
-	ChvNFe   string
-	NroMemo  string
-	Qtd      float64
-	Unid     string
+	CodPart string
+	CodMod  string
+	Ser     string
+	NumDoc  string
+	DtDoc   time.Time
+	ChvNFe  string
+	NroMemo string
+	Qtd     float64
+	Unid    string
 }
 
 // Registro1200 - Controle de Creditos Fiscais - ICMS
@@ -105,37 +113,37 @@ type Registro1200 struct {
 
 // Registro1210 - Utilizacao de Creditos Fiscais - ICMS
 type Registro1210 struct {
-	TipoUtil string
-	NrDoc    string
+	TipoUtil   string
+	NrDoc      string
 	VlCredUtil float64
-	ChvDOCe  string
+	ChvDOCe    string
 }
 
 // Registro1250 - Informacoes Consolidadas de Saldos de Restituicao,
 // Ressarcimento e Complementacao do ICMS
 type Registro1250 struct {
-	VlCredICMSOp   float64
-	VlICMSST       float64
-	VlFCPST        float64
-	VlCredICMSPfcp float64
-	VlGlosaOp      float64
-	VlGlosaST      float64
-	VlGlosaFcp     float64
+	VlCredICMSOp    float64
+	VlICMSST        float64
+	VlFCPST         float64
+	VlCredICMSPfcp  float64
+	VlGlosaOp       float64
+	VlGlosaST       float64
+	VlGlosaFcp      float64
 	VlCredICMSCompl float64
-	Registro1255   []*Registro1255
+	Registro1255    []*Registro1255
 }
 
 // Registro1255 - Informacoes Consolidadas de Saldos de Restituicao,
 // Ressarcimento e Complementacao do ICMS por Motivo
 type Registro1255 struct {
-	CodMot         MotivoRessarcimento
-	VlCredICMSOp   float64
-	VlICMSST       float64
-	VlFCPST        float64
-	VlCredICMSPfcp float64
-	VlGlosaOp      float64
-	VlGlosaST      float64
-	VlGlosaFcp     float64
+	CodMot          MotivoRessarcimento
+	VlCredICMSOp    float64
+	VlICMSST        float64
+	VlFCPST         float64
+	VlCredICMSPfcp  float64
+	VlGlosaOp       float64
+	VlGlosaST       float64
+	VlGlosaFcp      float64
 	VlCredICMSCompl float64
 }
 
@@ -144,7 +152,7 @@ type Registro1300 struct {
 	CodItem      string
 	DtFech       time.Time
 	EstqAbert    float64
-	VolEntr       float64
+	VolEntr      float64
 	VolDisp      float64
 	VolSaidas    float64
 	EstqFech     float64
@@ -191,9 +199,9 @@ type Registro1360 struct {
 
 // Registro1370 - Bicos da Bomba
 type Registro1370 struct {
-	NumBico  string
-	CodItem  string
-	CodComb  string
+	NumBico string
+	CodItem string
+	CodComb string
 }
 
 // Registro1390 - Controle de Producao de Usina
@@ -204,72 +212,72 @@ type Registro1390 struct {
 
 // Registro1391 - Producao Diaria da Usina
 type Registro1391 struct {
-	DtRegistro         time.Time
-	QtdMoidaDia        float64
-	EstqIni            float64
-	QtdProduzDia       float64
-	IndTipoEstq        string
-	QtdSaidaDia        float64
-	EstqFin            float64
-	QtdPerdaDia        float64
-	QtdEntDia          float64
-	QtdDevolDia        float64
+	DtRegistro   time.Time
+	QtdMoidaDia  float64
+	EstqIni      float64
+	QtdProduzDia float64
+	IndTipoEstq  string
+	QtdSaidaDia  float64
+	EstqFin      float64
+	QtdPerdaDia  float64
+	QtdEntDia    float64
+	QtdDevolDia  float64
 }
 
 // Registro1400 - Informacao sobre Valores Agregados
 type Registro1400 struct {
-	CodItem  string
-	MunOrig  string
-	VlItem   float64
-	IndApur  string
+	CodItem string
+	MunOrig string
+	VlItem  float64
+	IndApur string
 }
 
 // Registro1500 - Nota Fiscal/Conta de Energia Eletrica (codigo 06) -
 // Operacoes Interestaduais
 type Registro1500 struct {
-	IndOper    IndOper
-	IndEmit    IndEmit
-	CodPart    string
-	CodMod     string
-	CodSit     CodSit
-	Ser        string
-	Sub        string
-	CodCons    ClasseConsumo
-	NumDoc     string
-	DtDoc      time.Time
-	DtES       time.Time
-	VlDoc      float64
-	VlDesc     float64
-	VlFornEC   float64
-	VlServNT   float64
-	VlTerc     float64
-	VlDa       float64
-	VlBcICMS   float64
-	VlICMS     float64
-	VlBcICMSST float64
-	VlICMSST   float64
-	CodInf     string
-	VlPIS      float64
-	VlCOFINS   float64
-	TpLigacao  TpLigacao
+	IndOper        IndOper
+	IndEmit        IndEmit
+	CodPart        string
+	CodMod         string
+	CodSit         CodSit
+	Ser            string
+	Sub            string
+	CodCons        ClasseConsumo
+	NumDoc         string
+	DtDoc          time.Time
+	DtES           time.Time
+	VlDoc          float64
+	VlDesc         float64
+	VlFornEC       float64
+	VlServNT       float64
+	VlTerc         float64
+	VlDa           float64
+	VlBcICMS       float64
+	VlICMS         float64
+	VlBcICMSST     float64
+	VlICMSST       float64
+	CodInf         string
+	VlPIS          float64
+	VlCOFINS       float64
+	TpLigacao      TpLigacao
 	CodGrupoTensao GrupoTensao
 }
 
 // Registro1600 - Total das Operacoes com Cartao de Credito e/ou Debito,
 // Loja (Private Label) e Demais Instrumentos de Pagamento Eletronico
 type Registro1600 struct {
-	CodPart   string
+	CodPart    string
 	TotCredito float64
 	TotDebito  float64
 }
 
 // Registro1601 - Complemento da Operacao - Instrumentos de Pagamento Eletronico
 type Registro1601 struct {
-	CodPartIP  string
-	CodPartIT  string
-	TotVS      float64
-	TotISS     float64
-	TotOutros  float64
+	CodPartIP string
+	CodPartIT string
+	TotVS     float64
+	TotISS    float64
+	TotOutros float64
 }
 
 // Registro1700 - Documentos Fiscais Utilizados
@@ -292,25 +300,25 @@ type Registro1710 struct {
 
 // Registro1800 - DCTA - Demonstrativo de Credito do ICMS sobre Transporte Aereo
 type Registro1800 struct {
-	VlCargaTrib   float64
-	VlCargaNT     float64
-	VlReceitas    float64
-	IndRatio      float64
-	VlCREDICMS    float64
+	VlCargaTrib float64
+	VlCargaNT   float64
+	VlReceitas  float64
+	IndRatio    float64
+	VlCREDICMS  float64
 }
 
 // Registro1900 - Indicador de Sub-Apuracao do ICMS
 type Registro1900 struct {
-	IndApurICMS    string
-	DescrComplAj   string
-	Registro1910   []*Registro1910
+	IndApurICMS  string
+	DescrComplAj string
+	Registro1910 []*Registro1910
 }
 
 // Registro1910 - Periodo da Sub-Apuracao do ICMS
 type Registro1910 struct {
-	DtIni          time.Time
-	DtFin          time.Time
-	Registro1920   []*Registro1920
+	DtIni        time.Time
+	DtFin        time.Time
+	Registro1920 []*Registro1920
 }
 
 // Registro1920 - Sub-Apuracao do ICMS
@@ -366,33 +374,33 @@ type Registro1926 struct {
 // Registro1960 - GIAF 1 - Guia de Informacao e Apuracao do ICMS -
 // ICMS Diferido
 type Registro1960 struct {
-	IndAp      string
-	G1_01      string
-	G1_02      string
-	G1_03      string
-	G1_04      string
-	G1_05      float64
-	G1_06      float64
-	G1_07      float64
-	G1_08      float64
-	G1_09      float64
-	G1_10      float64
-	G1_11      float64
+	IndAp string
+	G1_01 string
+	G1_02 string
+	G1_03 string
+	G1_04 string
+	G1_05 float64
+	G1_06 float64
+	G1_07 float64
+	G1_08 float64
+	G1_09 float64
+	G1_10 float64
+	G1_11 float64
 }
 
 // Registro1970 - GIAF 3 - Guia de Informacao e Apuracao do ICMS -
 // ICMS Incentivado (Pernambuco)
 type Registro1970 struct {
-	IndAp          string
-	G3_01          string
-	G3_02          string
-	G3_03          string
-	G3_04          string
-	G3_05          string
-	G3_T           float64
-	G3_08          float64
-	G3_09          float64
-	Registro1975   []*Registro1975
+	IndAp        string
+	G3_01        string
+	G3_02        string
+	G3_03        string
+	G3_04        string
+	G3_05        string
+	G3_T         float64
+	G3_08        float64
+	G3_09        float64
+	Registro1975 []*Registro1975
 }
 
 // Registro1975 - GIAF 3 - Guia de Informacao e Apuracao do ICMS -
@@ -407,14 +415,14 @@ type Registro1975 struct {
 // Registro1980 - GIAF 4 - Guia de Informacao e Apuracao do ICMS -
 // ICMS a Recuperar PRODEPE
 type Registro1980 struct {
-	IndAp  string
-	G4_01  string
-	G4_02  string
-	G4_03  string
-	G4_04  string
-	G4_05  float64
-	G4_06  float64
-	G4_07  float64
+	IndAp string
+	G4_01 string
+	G4_02 string
+	G4_03 string
+	G4_04 string
+	G4_05 float64
+	G4_06 float64
+	G4_07 float64
 }
 
 // Registro1990 - Encerramento do Bloco 1

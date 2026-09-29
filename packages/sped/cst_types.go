@@ -34,116 +34,116 @@ const (
 	CstIcmsCobradoAnteriormentePorST                                                          // 060 - ICMS cobrado anteriormente por substituicao tributaria
 	CstIcmsComReducaoPorST                                                                    // 070 - Com reducao de base de calculo e cobranca do ICMS por substituicao tributaria
 	CstIcmsOutros                                                                             // 090 - Outros
-	CstIcmsEstrangeiraImportacaoDiretaTributadaIntegralmente                                   // 100 - Estrangeira - Importacao direta - Tributada integralmente
-	CstIcmsEstrangeiraImportacaoDiretaTributadaComCobracaPorST                                 // 110 - Estrangeira - Importacao direta - Tributada e com cobranca do ICMS por ST
-	CstIcmsEstrangeiraImportacaoDiretaComReducao                                               // 120 - Estrangeira - Importacao direta - Com reducao de base de calculo
-	CstIcmsEstrangeiraImportacaoDiretaIsentaComCobracaPorST                                    // 130 - Estrangeira - Importacao direta - Isenta ou nao tributada e com cobranca do ICMS por ST
-	CstIcmsEstrangeiraImportacaoDiretaIsenta                                                   // 140 - Estrangeira - Importacao direta - Isenta
-	CstIcmsEstrangeiraImportacaoDiretaNaoTributada                                             // 141 - Estrangeira - Importacao direta - Nao tributada
-	CstIcmsEstrangeiraImportacaoDiretaSuspensao                                                // 150 - Estrangeira - Importacao direta - Suspensao
-	CstIcmsEstrangeiraImportacaoDiretaDiferimento                                              // 151 - Estrangeira - Importacao direta - Diferimento
-	CstIcmsEstrangeiraImportacaoDiretaCobradoAnteriormentePorST                                // 160 - Estrangeira - Importacao direta - ICMS cobrado anteriormente por ST
-	CstIcmsEstrangeiraImportacaoDiretaComReducaoPorST                                          // 170 - Estrangeira - Importacao direta - Com reducao de base de calculo e cobranca do ICMS por ST
-	CstIcmsEstrangeiraImportacaoDiretaOutros                                                   // 190 - Estrangeira - Importacao direta - Outras
-	CstIcmsEstrangeiraAdqMercIntTributadaIntegralmente                                         // 200 - Estrangeira - Adquirida no mercado interno - Tributada integralmente
-	CstIcmsEstrangeiraAdqMercIntTributadaComCobracaPorST                                       // 210 - Estrangeira - Adquirida no mercado interno - Tributada e com cobranca do ICMS por ST
-	CstIcmsEstrangeiraAdqMercIntComReducao                                                     // 220 - Estrangeira - Adquirida no mercado interno - Com reducao de base de calculo
-	CstIcmsEstrangeiraAdqMercIntIsentaComCobracaPorST                                          // 230 - Estrangeira - Adquirida no mercado interno - Isenta ou nao tributada e com cobranca do ICMS por ST
-	CstIcmsEstrangeiraAdqMercIntIsenta                                                         // 240 - Estrangeira - Adquirida no mercado interno - Isenta
-	CstIcmsEstrangeiraAdqMercIntNaoTributada                                                   // 241 - Estrangeira - Adquirida no mercado interno - Nao tributada
-	CstIcmsEstrangeiraAdqMercIntSuspensao                                                      // 250 - Estrangeira - Adquirida no mercado interno - Suspensao
-	CstIcmsEstrangeiraAdqMercIntDiferimento                                                    // 251 - Estrangeira - Adquirida no mercado interno - Diferimento
-	CstIcmsEstrangeiraAdqMercIntCobradoAnteriormentePorST                                      // 260 - Estrangeira - Adquirida no mercado interno - ICMS cobrado anteriormente por ST
-	CstIcmsEstrangeiraAdqMercIntComReducaoPorST                                                // 270 - Estrangeira - Adquirida no mercado interno - Com reducao de base de calculo e cobranca do ICMS por ST
-	CstIcmsEstrangeiraAdqMercIntOutros                                                         // 290 - Estrangeira - Adquirida no mercado interno - Outras
-	CstIcms300                                                                                 // 300
-	CstIcms310                                                                                 // 310
-	CstIcms320                                                                                 // 320
-	CstIcms330                                                                                 // 330
-	CstIcms340                                                                                 // 340
-	CstIcms341                                                                                 // 341
-	CstIcms350                                                                                 // 350
-	CstIcms351                                                                                 // 351
-	CstIcms360                                                                                 // 360
-	CstIcms370                                                                                 // 370
-	CstIcms390                                                                                 // 390
-	CstIcms400                                                                                 // 400
-	CstIcms410                                                                                 // 410
-	CstIcms420                                                                                 // 420
-	CstIcms430                                                                                 // 430
-	CstIcms440                                                                                 // 440
-	CstIcms441                                                                                 // 441
-	CstIcms450                                                                                 // 450
-	CstIcms451                                                                                 // 451
-	CstIcms460                                                                                 // 460
-	CstIcms470                                                                                 // 470
-	CstIcms490                                                                                 // 490
-	CstIcms500                                                                                 // 500
-	CstIcms510                                                                                 // 510
-	CstIcms520                                                                                 // 520
-	CstIcms530                                                                                 // 530
-	CstIcms540                                                                                 // 540
-	CstIcms541                                                                                 // 541
-	CstIcms550                                                                                 // 550
-	CstIcms551                                                                                 // 551
-	CstIcms560                                                                                 // 560
-	CstIcms570                                                                                 // 570
-	CstIcms590                                                                                 // 590
-	CstIcms600                                                                                 // 600
-	CstIcms610                                                                                 // 610
-	CstIcms620                                                                                 // 620
-	CstIcms630                                                                                 // 630
-	CstIcms640                                                                                 // 640
-	CstIcms641                                                                                 // 641
-	CstIcms650                                                                                 // 650
-	CstIcms651                                                                                 // 651
-	CstIcms660                                                                                 // 660
-	CstIcms670                                                                                 // 670
-	CstIcms690                                                                                 // 690
-	CstIcms700                                                                                 // 700
-	CstIcms710                                                                                 // 710
-	CstIcms720                                                                                 // 720
-	CstIcms730                                                                                 // 730
-	CstIcms740                                                                                 // 740
-	CstIcms741                                                                                 // 741
-	CstIcms750                                                                                 // 750
-	CstIcms751                                                                                 // 751
-	CstIcms760                                                                                 // 760
-	CstIcms770                                                                                 // 770
-	CstIcms790                                                                                 // 790
-	CstIcms800                                                                                 // 800
-	CstIcms810                                                                                 // 810
-	CstIcms820                                                                                 // 820
-	CstIcms830                                                                                 // 830
-	CstIcms840                                                                                 // 840
-	CstIcms841                                                                                 // 841
-	CstIcms850                                                                                 // 850
-	CstIcms851                                                                                 // 851
-	CstIcms860                                                                                 // 860
-	CstIcms870                                                                                 // 870
-	CstIcms890                                                                                 // 890
-	CstIcmsSimplesNacionalTributadaComPermissaoCredito                                         // 101 - Simples Nacional - Tributada com permissao de credito
-	CstIcmsSimplesNacionalTributadaSemPermissaoCredito                                         // 102 - Simples Nacional - Tributada sem permissao de credito
-	CstIcmsSimplesNacionalIsencaoPorFaixaReceitaBruta                                          // 103 - Simples Nacional - Isencao do ICMS para faixa de receita bruta
-	CstIcmsSimplesNacionalTributadaComPermissaoCreditoComST                                    // 201 - Simples Nacional - Tributada com permissao de credito e com cobranca do ICMS por ST
-	CstIcmsSimplesNacionalTributadaSemPermissaoCreditoComST                                    // 202 - Simples Nacional - Tributada sem permissao de credito e com cobranca do ICMS por ST
-	CstIcmsSimplesNacionalIsencaoPorFaixaReceitaBrutaComST                                     // 203 - Simples Nacional - Isencao para faixa de receita bruta e com cobranca do ICMS por ST
-	CstIcmsSimplesNacionalImune                                                                // 300 - Simples Nacional - Imune
-	CstIcmsSimplesNacionalNaoTributada                                                         // 400 - Simples Nacional - Nao tributada
-	CstIcmsSimplesNacionalCobradoAnteriormentePorST                                            // 500 - Simples Nacional - ICMS cobrado anteriormente por ST ou por antecipacao
-	CstIcmsSimplesNacionalOutros                                                               // 900 - Simples Nacional - Outros
-	CstIcmsTributacaoMonofasicaPropriaCombustiveis                                             // 002 - Tributacao Monofasica Propria do ICMS nas operacoes com combustiveis
-	CstIcmsTributacaoMonofasicaPropriaComRetencaoCombustiveis                                  // 015 - Tributacao Monofasica Propria e com responsabilidade pela retencao do ICMS nas operacoes com combustiveis
-	CstIcmsTributacaoMonofasicaRecolhimentoDiferidoCombustiveis                                // 053 - Tributacao Monofasica com recolhimento diferido do ICMS nas operacoes com combustiveis
-	CstIcmsTributacaoMonofasicaCombustiveisCobradoAnteriormente                                // 061 - Tributacao Monofasica sobre combustiveis com ICMS cobrado anteriormente
-	CstIcmsEstrangeiraImpDiretaTribMonofasicaPropriaCombustiveis                               // 102 - Estrangeira - Tributacao Monofasica Propria do ICMS nas operacoes com combustiveis
-	CstIcmsEstrangeiraImpDiretaTribMonofasicaPropriaComRetencaoCombustiveis                    // 115 - Estrangeira - Tributacao Monofasica Propria e com responsabilidade pela retencao do ICMS
-	CstIcmsEstrangeiraImpDiretaTribMonofasicaRecolhimentoDiferidoCombustiveis                  // 153 - Estrangeira - Tributacao Monofasica com recolhimento diferido do ICMS
-	CstIcmsEstrangeiraImpDiretaTribMonofasicaCombustiveisCobradoAnteriormente                  // 161 - Estrangeira - Tributacao Monofasica sobre combustiveis com ICMS cobrado anteriormente
-	CstIcmsEstrangeiraAdqMercIntTribMonofasicaPropriaCombustiveis                              // 202 - Estrangeira - Adq. mercado interno - Tributacao Monofasica Propria do ICMS
-	CstIcmsEstrangeiraAdqMercIntTribMonofasicaPropriaComRetencaoCombustiveis                   // 215 - Estrangeira - Adq. mercado interno - Tributacao Monofasica Propria e com retencao
-	CstIcmsEstrangeiraAdqMercIntTribMonofasicaRecolhimentoDiferidoCombustiveis                 // 253 - Estrangeira - Adq. mercado interno - Tributacao Monofasica com recolhimento diferido
-	CstIcmsEstrangeiraAdqMercIntTribMonofasicaCombustiveisCobradoAnteriormente                 // 261 - Estrangeira - Adq. mercado interno - Tributacao Monofasica com ICMS cobrado anteriormente
+	CstIcmsEstrangeiraImportacaoDiretaTributadaIntegralmente                                  // 100 - Estrangeira - Importacao direta - Tributada integralmente
+	CstIcmsEstrangeiraImportacaoDiretaTributadaComCobracaPorST                                // 110 - Estrangeira - Importacao direta - Tributada e com cobranca do ICMS por ST
+	CstIcmsEstrangeiraImportacaoDiretaComReducao                                              // 120 - Estrangeira - Importacao direta - Com reducao de base de calculo
+	CstIcmsEstrangeiraImportacaoDiretaIsentaComCobracaPorST                                   // 130 - Estrangeira - Importacao direta - Isenta ou nao tributada e com cobranca do ICMS por ST
+	CstIcmsEstrangeiraImportacaoDiretaIsenta                                                  // 140 - Estrangeira - Importacao direta - Isenta
+	CstIcmsEstrangeiraImportacaoDiretaNaoTributada                                            // 141 - Estrangeira - Importacao direta - Nao tributada
+	CstIcmsEstrangeiraImportacaoDiretaSuspensao                                               // 150 - Estrangeira - Importacao direta - Suspensao
+	CstIcmsEstrangeiraImportacaoDiretaDiferimento                                             // 151 - Estrangeira - Importacao direta - Diferimento
+	CstIcmsEstrangeiraImportacaoDiretaCobradoAnteriormentePorST                               // 160 - Estrangeira - Importacao direta - ICMS cobrado anteriormente por ST
+	CstIcmsEstrangeiraImportacaoDiretaComReducaoPorST                                         // 170 - Estrangeira - Importacao direta - Com reducao de base de calculo e cobranca do ICMS por ST
+	CstIcmsEstrangeiraImportacaoDiretaOutros                                                  // 190 - Estrangeira - Importacao direta - Outras
+	CstIcmsEstrangeiraAdqMercIntTributadaIntegralmente                                        // 200 - Estrangeira - Adquirida no mercado interno - Tributada integralmente
+	CstIcmsEstrangeiraAdqMercIntTributadaComCobracaPorST                                      // 210 - Estrangeira - Adquirida no mercado interno - Tributada e com cobranca do ICMS por ST
+	CstIcmsEstrangeiraAdqMercIntComReducao                                                    // 220 - Estrangeira - Adquirida no mercado interno - Com reducao de base de calculo
+	CstIcmsEstrangeiraAdqMercIntIsentaComCobracaPorST                                         // 230 - Estrangeira - Adquirida no mercado interno - Isenta ou nao tributada e com cobranca do ICMS por ST
+	CstIcmsEstrangeiraAdqMercIntIsenta                                                        // 240 - Estrangeira - Adquirida no mercado interno - Isenta
+	CstIcmsEstrangeiraAdqMercIntNaoTributada                                                  // 241 - Estrangeira - Adquirida no mercado interno - Nao tributada
+	CstIcmsEstrangeiraAdqMercIntSuspensao                                                     // 250 - Estrangeira - Adquirida no mercado interno - Suspensao
+	CstIcmsEstrangeiraAdqMercIntDiferimento                                                   // 251 - Estrangeira - Adquirida no mercado interno - Diferimento
+	CstIcmsEstrangeiraAdqMercIntCobradoAnteriormentePorST                                     // 260 - Estrangeira - Adquirida no mercado interno - ICMS cobrado anteriormente por ST
+	CstIcmsEstrangeiraAdqMercIntComReducaoPorST                                               // 270 - Estrangeira - Adquirida no mercado interno - Com reducao de base de calculo e cobranca do ICMS por ST
+	CstIcmsEstrangeiraAdqMercIntOutros                                                        // 290 - Estrangeira - Adquirida no mercado interno - Outras
+	CstIcms300                                                                                // 300
+	CstIcms310                                                                                // 310
+	CstIcms320                                                                                // 320
+	CstIcms330                                                                                // 330
+	CstIcms340                                                                                // 340
+	CstIcms341                                                                                // 341
+	CstIcms350                                                                                // 350
+	CstIcms351                                                                                // 351
+	CstIcms360                                                                                // 360
+	CstIcms370                                                                                // 370
+	CstIcms390                                                                                // 390
+	CstIcms400                                                                                // 400
+	CstIcms410                                                                                // 410
+	CstIcms420                                                                                // 420
+	CstIcms430                                                                                // 430
+	CstIcms440                                                                                // 440
+	CstIcms441                                                                                // 441
+	CstIcms450                                                                                // 450
+	CstIcms451                                                                                // 451
+	CstIcms460                                                                                // 460
+	CstIcms470                                                                                // 470
+	CstIcms490                                                                                // 490
+	CstIcms500                                                                                // 500
+	CstIcms510                                                                                // 510
+	CstIcms520                                                                                // 520
+	CstIcms530                                                                                // 530
+	CstIcms540                                                                                // 540
+	CstIcms541                                                                                // 541
+	CstIcms550                                                                                // 550
+	CstIcms551                                                                                // 551
+	CstIcms560                                                                                // 560
+	CstIcms570                                                                                // 570
+	CstIcms590                                                                                // 590
+	CstIcms600                                                                                // 600
+	CstIcms610                                                                                // 610
+	CstIcms620                                                                                // 620
+	CstIcms630                                                                                // 630
+	CstIcms640                                                                                // 640
+	CstIcms641                                                                                // 641
+	CstIcms650                                                                                // 650
+	CstIcms651                                                                                // 651
+	CstIcms660                                                                                // 660
+	CstIcms670                                                                                // 670
+	CstIcms690                                                                                // 690
+	CstIcms700                                                                                // 700
+	CstIcms710                                                                                // 710
+	CstIcms720                                                                                // 720
+	CstIcms730                                                                                // 730
+	CstIcms740                                                                                // 740
+	CstIcms741                                                                                // 741
+	CstIcms750                                                                                // 750
+	CstIcms751                                                                                // 751
+	CstIcms760                                                                                // 760
+	CstIcms770                                                                                // 770
+	CstIcms790                                                                                // 790
+	CstIcms800                                                                                // 800
+	CstIcms810                                                                                // 810
+	CstIcms820                                                                                // 820
+	CstIcms830                                                                                // 830
+	CstIcms840                                                                                // 840
+	CstIcms841                                                                                // 841
+	CstIcms850                                                                                // 850
+	CstIcms851                                                                                // 851
+	CstIcms860                                                                                // 860
+	CstIcms870                                                                                // 870
+	CstIcms890                                                                                // 890
+	CstIcmsSimplesNacionalTributadaComPermissaoCredito                                        // 101 - Simples Nacional - Tributada com permissao de credito
+	CstIcmsSimplesNacionalTributadaSemPermissaoCredito                                        // 102 - Simples Nacional - Tributada sem permissao de credito
+	CstIcmsSimplesNacionalIsencaoPorFaixaReceitaBruta                                         // 103 - Simples Nacional - Isencao do ICMS para faixa de receita bruta
+	CstIcmsSimplesNacionalTributadaComPermissaoCreditoComST                                   // 201 - Simples Nacional - Tributada com permissao de credito e com cobranca do ICMS por ST
+	CstIcmsSimplesNacionalTributadaSemPermissaoCreditoComST                                   // 202 - Simples Nacional - Tributada sem permissao de credito e com cobranca do ICMS por ST
+	CstIcmsSimplesNacionalIsencaoPorFaixaReceitaBrutaComST                                    // 203 - Simples Nacional - Isencao para faixa de receita bruta e com cobranca do ICMS por ST
+	CstIcmsSimplesNacionalImune                                                               // 300 - Simples Nacional - Imune
+	CstIcmsSimplesNacionalNaoTributada                                                        // 400 - Simples Nacional - Nao tributada
+	CstIcmsSimplesNacionalCobradoAnteriormentePorST                                           // 500 - Simples Nacional - ICMS cobrado anteriormente por ST ou por antecipacao
+	CstIcmsSimplesNacionalOutros                                                              // 900 - Simples Nacional - Outros
+	CstIcmsTributacaoMonofasicaPropriaCombustiveis                                            // 002 - Tributacao Monofasica Propria do ICMS nas operacoes com combustiveis
+	CstIcmsTributacaoMonofasicaPropriaComRetencaoCombustiveis                                 // 015 - Tributacao Monofasica Propria e com responsabilidade pela retencao do ICMS nas operacoes com combustiveis
+	CstIcmsTributacaoMonofasicaRecolhimentoDiferidoCombustiveis                               // 053 - Tributacao Monofasica com recolhimento diferido do ICMS nas operacoes com combustiveis
+	CstIcmsTributacaoMonofasicaCombustiveisCobradoAnteriormente                               // 061 - Tributacao Monofasica sobre combustiveis com ICMS cobrado anteriormente
+	CstIcmsEstrangeiraImpDiretaTribMonofasicaPropriaCombustiveis                              // 102 - Estrangeira - Tributacao Monofasica Propria do ICMS nas operacoes com combustiveis
+	CstIcmsEstrangeiraImpDiretaTribMonofasicaPropriaComRetencaoCombustiveis                   // 115 - Estrangeira - Tributacao Monofasica Propria e com responsabilidade pela retencao do ICMS
+	CstIcmsEstrangeiraImpDiretaTribMonofasicaRecolhimentoDiferidoCombustiveis                 // 153 - Estrangeira - Tributacao Monofasica com recolhimento diferido do ICMS
+	CstIcmsEstrangeiraImpDiretaTribMonofasicaCombustiveisCobradoAnteriormente                 // 161 - Estrangeira - Tributacao Monofasica sobre combustiveis com ICMS cobrado anteriormente
+	CstIcmsEstrangeiraAdqMercIntTribMonofasicaPropriaCombustiveis                             // 202 - Estrangeira - Adq. mercado interno - Tributacao Monofasica Propria do ICMS
+	CstIcmsEstrangeiraAdqMercIntTribMonofasicaPropriaComRetencaoCombustiveis                  // 215 - Estrangeira - Adq. mercado interno - Tributacao Monofasica Propria e com retencao
+	CstIcmsEstrangeiraAdqMercIntTribMonofasicaRecolhimentoDiferidoCombustiveis                // 253 - Estrangeira - Adq. mercado interno - Tributacao Monofasica com recolhimento diferido
+	CstIcmsEstrangeiraAdqMercIntTribMonofasicaCombustiveisCobradoAnteriormente                // 261 - Estrangeira - Adq. mercado interno - Tributacao Monofasica com ICMS cobrado anteriormente
 )
 
 // cstIcmsStrings mapeia o indice ordinal do enum para o codigo de texto SPED.
@@ -291,14 +291,14 @@ func (c CstIcms) String() string {
 type CstPisCofins int
 
 const (
-	CstPisCofinsOperTribComAliqBasica            CstPisCofins = iota // 01 - Operacao Tributavel com Aliquota Basica
-	CstPisCofinsOperTribAliqZero                                    // 06 - Operacao Tributavel a Aliquota Zero
-	CstPisCofinsOperIsentaContribuicao                              // 07 - Operacao Isenta da Contribuicao
-	CstPisCofinsOperSemIncidenciaContribuicao                       // 08 - Operacao sem Incidencia da Contribuicao
-	CstPisCofinsOperComSuspensaoContribuicao                        // 09 - Operacao com Suspensao da Contribuicao
-	CstPisCofinsOutrasOperacoesSaida                                // 49 - Outras Operacoes de Saida
-	CstPisCofinsOutrasDespesas                                      // 99 - Outras Operacoes
-	CstPisCofinsNenhum                                              // Nenhum (vazio)
+	CstPisCofinsOperTribComAliqBasica         CstPisCofins = iota // 01 - Operacao Tributavel com Aliquota Basica
+	CstPisCofinsOperTribAliqZero                                  // 06 - Operacao Tributavel a Aliquota Zero
+	CstPisCofinsOperIsentaContribuicao                            // 07 - Operacao Isenta da Contribuicao
+	CstPisCofinsOperSemIncidenciaContribuicao                     // 08 - Operacao sem Incidencia da Contribuicao
+	CstPisCofinsOperComSuspensaoContribuicao                      // 09 - Operacao com Suspensao da Contribuicao
+	CstPisCofinsOutrasOperacoesSaida                              // 49 - Outras Operacoes de Saida
+	CstPisCofinsOutrasDespesas                                    // 99 - Outras Operacoes
+	CstPisCofinsNenhum                                            // Nenhum (vazio)
 )
 
 // cstPisCofinsStrings mapeia o indice ordinal do enum para o codigo de texto SPED.
@@ -384,39 +384,39 @@ type CstPis int
 
 const (
 	CstPisValorAliquotaNormal                           CstPis = iota // 01 - Operacao Tributavel com Aliquota Basica (valor da operacao aliquota normal cumulativo/nao cumulativo)
-	CstPisValorAliquotaDiferenciada                                  // 02 - Operacao Tributavel com Aliquota Diferenciada
-	CstPisQtdeAliquotaUnidade                                        // 03 - Operacao Tributavel com Aliquota por Unidade de Medida de Produto
-	CstPisMonofaticaAliquotaZero                                     // 04 - Operacao Tributavel Monofasica - Revenda a Aliquota Zero
-	CstPisValorAliquotaPorST                                         // 05 - Operacao Tributavel por Substituicao Tributaria
-	CstPisAliquotaZero                                               // 06 - Operacao Tributavel a Aliquota Zero
-	CstPisIsentaContribuicao                                         // 07 - Operacao Isenta da Contribuicao
-	CstPisSemIncidenciaContribuicao                                  // 08 - Operacao sem Incidencia da Contribuicao
-	CstPisSuspensaoContribuicao                                      // 09 - Operacao com Suspensao da Contribuicao
-	CstPisOutrasOperacoesSaida                                       // 49 - Outras Operacoes de Saida
-	CstPisOperCredExcRecTribMercInt                                  // 50 - Operacao com Direito a Credito - Vinculada Exclusivamente a Receita Tributada no Mercado Interno
-	CstPisOperCredExcRecNaoTribMercInt                               // 51 - Operacao com Direito a Credito - Vinculada Exclusivamente a Receita Nao Tributada no Mercado Interno
-	CstPisOperCredExcRecExportacao                                   // 52 - Operacao com Direito a Credito - Vinculada Exclusivamente a Receita de Exportacao
-	CstPisOperCredRecTribNaoTribMercInt                              // 53 - Operacao com Direito a Credito - Vinculada a Receitas Tributadas e Nao-Tributadas no Mercado Interno
-	CstPisOperCredRecTribMercIntEExportacao                          // 54 - Operacao com Direito a Credito - Vinculada a Receitas Tributadas no Mercado Interno e de Exportacao
-	CstPisOperCredRecNaoTribMercIntEExportacao                       // 55 - Operacao com Direito a Credito - Vinculada a Receitas Nao-Tributadas no Mercado Interno e de Exportacao
-	CstPisOperCredRecTribENaoTribMercIntEExportacao                  // 56 - Operacao com Direito a Credito - Vinculada a Receitas Tributadas e Nao-Tributadas no Mercado Interno e de Exportacao
-	CstPisCredPresAquiExcRecTribMercInt                              // 60 - Credito Presumido - Operacao de Aquisicao Vinculada Exclusivamente a Receita Tributada no Mercado Interno
-	CstPisCredPresAquiExcRecNaoTribMercInt                           // 61 - Credito Presumido - Operacao de Aquisicao Vinculada Exclusivamente a Receita Nao-Tributada no Mercado Interno
-	CstPisCredPresAquiExcRecExportacao                               // 62 - Credito Presumido - Operacao de Aquisicao Vinculada Exclusivamente a Receita de Exportacao
-	CstPisCredPresAquiRecTribNaoTribMercInt                          // 63 - Credito Presumido - Operacao de Aquisicao Vinculada a Receitas Tributadas e Nao-Tributadas no Mercado Interno
-	CstPisCredPresAquiRecTribMercIntEExportacao                      // 64 - Credito Presumido - Operacao de Aquisicao Vinculada a Receitas Tributadas no Mercado Interno e de Exportacao
-	CstPisCredPresAquiRecNaoTribMercIntEExportacao                   // 65 - Credito Presumido - Operacao de Aquisicao Vinculada a Receitas Nao-Tributadas no Mercado Interno e de Exportacao
-	CstPisCredPresAquiRecTribENaoTribMercIntEExportacao              // 66 - Credito Presumido - Operacao de Aquisicao Vinculada a Receitas Tributadas e Nao-Tributadas no Mercado Interno e de Exportacao
-	CstPisOutrasOperacoesCredPresumido                               // 67 - Credito Presumido - Outras Operacoes
-	CstPisOperAquiSemDirCredito                                      // 70 - Operacao de Aquisicao sem Direito a Credito
-	CstPisOperAquiComIsencao                                         // 71 - Operacao de Aquisicao com Isencao
-	CstPisOperAquiComSuspensao                                       // 72 - Operacao de Aquisicao com Suspensao
-	CstPisOperAquiAliquotaZero                                       // 73 - Operacao de Aquisicao a Aliquota Zero
-	CstPisOperAquiSemIncidenciaContribuicao                          // 74 - Operacao de Aquisicao sem Incidencia da Contribuicao
-	CstPisOperAquiPorST                                              // 75 - Operacao de Aquisicao por Substituicao Tributaria
-	CstPisOutrasOperacoesEntrada                                     // 98 - Outras Operacoes de Entrada
-	CstPisOutrasOperacoes                                            // 99 - Outras Operacoes
-	CstPisNenhum                                                     // Nenhum (vazio)
+	CstPisValorAliquotaDiferenciada                                   // 02 - Operacao Tributavel com Aliquota Diferenciada
+	CstPisQtdeAliquotaUnidade                                         // 03 - Operacao Tributavel com Aliquota por Unidade de Medida de Produto
+	CstPisMonofaticaAliquotaZero                                      // 04 - Operacao Tributavel Monofasica - Revenda a Aliquota Zero
+	CstPisValorAliquotaPorST                                          // 05 - Operacao Tributavel por Substituicao Tributaria
+	CstPisAliquotaZero                                                // 06 - Operacao Tributavel a Aliquota Zero
+	CstPisIsentaContribuicao                                          // 07 - Operacao Isenta da Contribuicao
+	CstPisSemIncidenciaContribuicao                                   // 08 - Operacao sem Incidencia da Contribuicao
+	CstPisSuspensaoContribuicao                                       // 09 - Operacao com Suspensao da Contribuicao
+	CstPisOutrasOperacoesSaida                                        // 49 - Outras Operacoes de Saida
+	CstPisOperCredExcRecTribMercInt                                   // 50 - Operacao com Direito a Credito - Vinculada Exclusivamente a Receita Tributada no Mercado Interno
+	CstPisOperCredExcRecNaoTribMercInt                                // 51 - Operacao com Direito a Credito - Vinculada Exclusivamente a Receita Nao Tributada no Mercado Interno
+	CstPisOperCredExcRecExportacao                                    // 52 - Operacao com Direito a Credito - Vinculada Exclusivamente a Receita de Exportacao
+	CstPisOperCredRecTribNaoTribMercInt                               // 53 - Operacao com Direito a Credito - Vinculada a Receitas Tributadas e Nao-Tributadas no Mercado Interno
+	CstPisOperCredRecTribMercIntEExportacao                           // 54 - Operacao com Direito a Credito - Vinculada a Receitas Tributadas no Mercado Interno e de Exportacao
+	CstPisOperCredRecNaoTribMercIntEExportacao                        // 55 - Operacao com Direito a Credito - Vinculada a Receitas Nao-Tributadas no Mercado Interno e de Exportacao
+	CstPisOperCredRecTribENaoTribMercIntEExportacao                   // 56 - Operacao com Direito a Credito - Vinculada a Receitas Tributadas e Nao-Tributadas no Mercado Interno e de Exportacao
+	CstPisCredPresAquiExcRecTribMercInt                               // 60 - Credito Presumido - Operacao de Aquisicao Vinculada Exclusivamente a Receita Tributada no Mercado Interno
+	CstPisCredPresAquiExcRecNaoTribMercInt                            // 61 - Credito Presumido - Operacao de Aquisicao Vinculada Exclusivamente a Receita Nao-Tributada no Mercado Interno
+	CstPisCredPresAquiExcRecExportacao                                // 62 - Credito Presumido - Operacao de Aquisicao Vinculada Exclusivamente a Receita de Exportacao
+	CstPisCredPresAquiRecTribNaoTribMercInt                           // 63 - Credito Presumido - Operacao de Aquisicao Vinculada a Receitas Tributadas e Nao-Tributadas no Mercado Interno
+	CstPisCredPresAquiRecTribMercIntEExportacao                       // 64 - Credito Presumido - Operacao de Aquisicao Vinculada a Receitas Tributadas no Mercado Interno e de Exportacao
+	CstPisCredPresAquiRecNaoTribMercIntEExportacao                    // 65 - Credito Presumido - Operacao de Aquisicao Vinculada a Receitas Nao-Tributadas no Mercado Interno e de Exportacao
+	CstPisCredPresAquiRecTribENaoTribMercIntEExportacao               // 66 - Credito Presumido - Operacao de Aquisicao Vinculada a Receitas Tributadas e Nao-Tributadas no Mercado Interno e de Exportacao
+	CstPisOutrasOperacoesCredPresumido                                // 67 - Credito Presumido - Outras Operacoes
+	CstPisOperAquiSemDirCredito                                       // 70 - Operacao de Aquisicao sem Direito a Credito
+	CstPisOperAquiComIsencao                                          // 71 - Operacao de Aquisicao com Isencao
+	CstPisOperAquiComSuspensao                                        // 72 - Operacao de Aquisicao com Suspensao
+	CstPisOperAquiAliquotaZero                                        // 73 - Operacao de Aquisicao a Aliquota Zero
+	CstPisOperAquiSemIncidenciaContribuicao                           // 74 - Operacao de Aquisicao sem Incidencia da Contribuicao
+	CstPisOperAquiPorST                                               // 75 - Operacao de Aquisicao por Substituicao Tributaria
+	CstPisOutrasOperacoesEntrada                                      // 98 - Outras Operacoes de Entrada
+	CstPisOutrasOperacoes                                             // 99 - Outras Operacoes
+	CstPisNenhum                                                      // Nenhum (vazio)
 )
 
 // cstPisStrings mapeia o indice ordinal do enum para o codigo de texto SPED.
@@ -475,39 +475,39 @@ type CstCofins int
 
 const (
 	CstCofinsValorAliquotaNormal                           CstCofins = iota // 01 - Operacao Tributavel com Aliquota Basica (valor da operacao aliquota normal cumulativo/nao cumulativo)
-	CstCofinsValorAliquotaDiferenciada                                     // 02 - Operacao Tributavel com Aliquota Diferenciada
-	CstCofinsQtdeAliquotaUnidade                                           // 03 - Operacao Tributavel com Aliquota por Unidade de Medida de Produto
-	CstCofinsMonofaticaAliquotaZero                                        // 04 - Operacao Tributavel Monofasica - Revenda a Aliquota Zero
-	CstCofinsValorAliquotaPorST                                            // 05 - Operacao Tributavel por Substituicao Tributaria
-	CstCofinsAliquotaZero                                                  // 06 - Operacao Tributavel a Aliquota Zero
-	CstCofinsIsentaContribuicao                                            // 07 - Operacao Isenta da Contribuicao
-	CstCofinsSemIncidenciaContribuicao                                     // 08 - Operacao sem Incidencia da Contribuicao
-	CstCofinsSuspensaoContribuicao                                         // 09 - Operacao com Suspensao da Contribuicao
-	CstCofinsOutrasOperacoesSaida                                          // 49 - Outras Operacoes de Saida
-	CstCofinsOperCredExcRecTribMercInt                                     // 50 - Operacao com Direito a Credito - Vinculada Exclusivamente a Receita Tributada no Mercado Interno
-	CstCofinsOperCredExcRecNaoTribMercInt                                  // 51 - Operacao com Direito a Credito - Vinculada Exclusivamente a Receita Nao-Tributada no Mercado Interno
-	CstCofinsOperCredExcRecExportacao                                      // 52 - Operacao com Direito a Credito - Vinculada Exclusivamente a Receita de Exportacao
-	CstCofinsOperCredRecTribNaoTribMercInt                                 // 53 - Operacao com Direito a Credito - Vinculada a Receitas Tributadas e Nao-Tributadas no Mercado Interno
-	CstCofinsOperCredRecTribMercIntEExportacao                             // 54 - Operacao com Direito a Credito - Vinculada a Receitas Tributadas no Mercado Interno e de Exportacao
-	CstCofinsOperCredRecNaoTribMercIntEExportacao                          // 55 - Operacao com Direito a Credito - Vinculada a Receitas Nao Tributadas no Mercado Interno e de Exportacao
-	CstCofinsOperCredRecTribENaoTribMercIntEExportacao                     // 56 - Operacao com Direito a Credito - Vinculada a Receitas Tributadas e Nao-Tributadas no Mercado Interno e de Exportacao
-	CstCofinsCredPresAquiExcRecTribMercInt                                 // 60 - Credito Presumido - Operacao de Aquisicao Vinculada Exclusivamente a Receita Tributada no Mercado Interno
-	CstCofinsCredPresAquiExcRecNaoTribMercInt                              // 61 - Credito Presumido - Operacao de Aquisicao Vinculada Exclusivamente a Receita Nao-Tributada no Mercado Interno
-	CstCofinsCredPresAquiExcRecExportacao                                  // 62 - Credito Presumido - Operacao de Aquisicao Vinculada Exclusivamente a Receita de Exportacao
-	CstCofinsCredPresAquiRecTribNaoTribMercInt                             // 63 - Credito Presumido - Operacao de Aquisicao Vinculada a Receitas Tributadas e Nao-Tributadas no Mercado Interno
-	CstCofinsCredPresAquiRecTribMercIntEExportacao                         // 64 - Credito Presumido - Operacao de Aquisicao Vinculada a Receitas Tributadas no Mercado Interno e de Exportacao
-	CstCofinsCredPresAquiRecNaoTribMercIntEExportacao                      // 65 - Credito Presumido - Operacao de Aquisicao Vinculada a Receitas Nao-Tributadas no Mercado Interno e de Exportacao
-	CstCofinsCredPresAquiRecTribENaoTribMercIntEExportacao                 // 66 - Credito Presumido - Operacao de Aquisicao Vinculada a Receitas Tributadas e Nao-Tributadas no Mercado Interno e de Exportacao
-	CstCofinsOutrasOperacoesCredPresumido                                  // 67 - Credito Presumido - Outras Operacoes
-	CstCofinsOperAquiSemDirCredito                                         // 70 - Operacao de Aquisicao sem Direito a Credito
-	CstCofinsOperAquiComIsencao                                            // 71 - Operacao de Aquisicao com Isencao
-	CstCofinsOperAquiComSuspensao                                          // 72 - Operacao de Aquisicao com Suspensao
-	CstCofinsOperAquiAliquotaZero                                          // 73 - Operacao de Aquisicao a Aliquota Zero
-	CstCofinsOperAquiSemIncidenciaContribuicao                             // 74 - Operacao de Aquisicao sem Incidencia da Contribuicao
-	CstCofinsOperAquiPorST                                                 // 75 - Operacao de Aquisicao por Substituicao Tributaria
-	CstCofinsOutrasOperacoesEntrada                                        // 98 - Outras Operacoes de Entrada
-	CstCofinsOutrasOperacoes                                               // 99 - Outras Operacoes
-	CstCofinsNenhum                                                        // Nenhum (vazio)
+	CstCofinsValorAliquotaDiferenciada                                      // 02 - Operacao Tributavel com Aliquota Diferenciada
+	CstCofinsQtdeAliquotaUnidade                                            // 03 - Operacao Tributavel com Aliquota por Unidade de Medida de Produto
+	CstCofinsMonofaticaAliquotaZero                                         // 04 - Operacao Tributavel Monofasica - Revenda a Aliquota Zero
+	CstCofinsValorAliquotaPorST                                             // 05 - Operacao Tributavel por Substituicao Tributaria
+	CstCofinsAliquotaZero                                                   // 06 - Operacao Tributavel a Aliquota Zero
+	CstCofinsIsentaContribuicao                                             // 07 - Operacao Isenta da Contribuicao
+	CstCofinsSemIncidenciaContribuicao                                      // 08 - Operacao sem Incidencia da Contribuicao
+	CstCofinsSuspensaoContribuicao                                          // 09 - Operacao com Suspensao da Contribuicao
+	CstCofinsOutrasOperacoesSaida                                           // 49 - Outras Operacoes de Saida
+	CstCofinsOperCredExcRecTribMercInt                                      // 50 - Operacao com Direito a Credito - Vinculada Exclusivamente a Receita Tributada no Mercado Interno
+	CstCofinsOperCredExcRecNaoTribMercInt                                   // 51 - Operacao com Direito a Credito - Vinculada Exclusivamente a Receita Nao-Tributada no Mercado Interno
+	CstCofinsOperCredExcRecExportacao                                       // 52 - Operacao com Direito a Credito - Vinculada Exclusivamente a Receita de Exportacao
+	CstCofinsOperCredRecTribNaoTribMercInt                                  // 53 - Operacao com Direito a Credito - Vinculada a Receitas Tributadas e Nao-Tributadas no Mercado Interno
+	CstCofinsOperCredRecTribMercIntEExportacao                              // 54 - Operacao com Direito a Credito - Vinculada a Receitas Tributadas no Mercado Interno e de Exportacao
+	CstCofinsOperCredRecNaoTribMercIntEExportacao                           // 55 - Operacao com Direito a Credito - Vinculada a Receitas Nao Tributadas no Mercado Interno e de Exportacao
+	CstCofinsOperCredRecTribENaoTribMercIntEExportacao                      // 56 - Operacao com Direito a Credito - Vinculada a Receitas Tributadas e Nao-Tributadas no Mercado Interno e de Exportacao
+	CstCofinsCredPresAquiExcRecTribMercInt                                  // 60 - Credito Presumido - Operacao de Aquisicao Vinculada Exclusivamente a Receita Tributada no Mercado Interno
+	CstCofinsCredPresAquiExcRecNaoTribMercInt                               // 61 - Credito Presumido - Operacao de Aquisicao Vinculada Exclusivamente a Receita Nao-Tributada no Mercado Interno
+	CstCofinsCredPresAquiExcRecExportacao                                   // 62 - Credito Presumido - Operacao de Aquisicao Vinculada Exclusivamente a Receita de Exportacao
+	CstCofinsCredPresAquiRecTribNaoTribMercInt                              // 63 - Credito Presumido - Operacao de Aquisicao Vinculada a Receitas Tributadas e Nao-Tributadas no Mercado Interno
+	CstCofinsCredPresAquiRecTribMercIntEExportacao                          // 64 - Credito Presumido - Operacao de Aquisicao Vinculada a Receitas Tributadas no Mercado Interno e de Exportacao
+	CstCofinsCredPresAquiRecNaoTribMercIntEExportacao                       // 65 - Credito Presumido - Operacao de Aquisicao Vinculada a Receitas Nao-Tributadas no Mercado Interno e de Exportacao
+	CstCofinsCredPresAquiRecTribENaoTribMercIntEExportacao                  // 66 - Credito Presumido - Operacao de Aquisicao Vinculada a Receitas Tributadas e Nao-Tributadas no Mercado Interno e de Exportacao
+	CstCofinsOutrasOperacoesCredPresumido                                   // 67 - Credito Presumido - Outras Operacoes
+	CstCofinsOperAquiSemDirCredito                                          // 70 - Operacao de Aquisicao sem Direito a Credito
+	CstCofinsOperAquiComIsencao                                             // 71 - Operacao de Aquisicao com Isencao
+	CstCofinsOperAquiComSuspensao                                           // 72 - Operacao de Aquisicao com Suspensao
+	CstCofinsOperAquiAliquotaZero                                           // 73 - Operacao de Aquisicao a Aliquota Zero
+	CstCofinsOperAquiSemIncidenciaContribuicao                              // 74 - Operacao de Aquisicao sem Incidencia da Contribuicao
+	CstCofinsOperAquiPorST                                                  // 75 - Operacao de Aquisicao por Substituicao Tributaria
+	CstCofinsOutrasOperacoesEntrada                                         // 98 - Outras Operacoes de Entrada
+	CstCofinsOutrasOperacoes                                                // 99 - Outras Operacoes
+	CstCofinsNenhum                                                         // Nenhum (vazio)
 )
 
 // cstCofinsStrings mapeia o indice ordinal do enum para o codigo de texto SPED.

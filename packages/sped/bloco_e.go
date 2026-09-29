@@ -71,10 +71,10 @@ type RegistroE111 struct {
 
 // RegistroE112 - Informacoes Adicionais dos Ajustes da Apuracao do ICMS
 type RegistroE112 struct {
-	NumDA   string
-	NumProc string
-	IndProc OrigemProcesso
-	Proc    string
+	NumDA    string
+	NumProc  string
+	IndProc  OrigemProcesso
+	Proc     string
 	TxtCompl string
 }
 
@@ -95,8 +95,8 @@ type RegistroE113 struct {
 // RegistroE115 - Informacoes Adicionais da Apuracao do ICMS -
 // Valores Declaratorios
 type RegistroE115 struct {
-	CodInfAdic string
-	VlInfAdic  float64
+	CodInfAdic   string
+	VlInfAdic    float64
 	DescrComplAj string
 }
 
@@ -199,31 +199,31 @@ type RegistroE300 struct {
 // RegistroE310 - Apuracao do ICMS Diferencial de Aliquota - UF Origem/Destino
 // EC 87/15
 type RegistroE310 struct {
-	IndMovDIFAL           MovimentoDIFAL
-	VlSldCredAntDIFAL     float64
-	VlTotDebitosDIFAL     float64
-	VlOutDebDIFAL         float64
-	VlTotCreditosDIFAL    float64
-	VlOutCredDIFAL        float64
-	VlSldDevAntDIFAL      float64
-	VlDeducoesDIFAL       float64
-	VlRecolDIFAL          float64
-	VlSldCredTranspDIFAL  float64
-	DebEspDIFAL           float64
-	VlSldCredAntFCP       float64
-	VlTotDebFCP           float64
-	VlOutDebFCP           float64
-	VlTotCredFCP          float64
-	VlOutCredFCP          float64
-	VlSldDevAntFCP        float64
-	VlDeducoesFCP         float64
-	VlRecolFCP            float64
-	VlSldCredTranspFCP    float64
-	DebEspFCP             float64
-	RegistroE311          []*RegistroE311
-	RegistroE312          []*RegistroE312
-	RegistroE313          []*RegistroE313
-	RegistroE316          []*RegistroE316
+	IndMovDIFAL          MovimentoDIFAL
+	VlSldCredAntDIFAL    float64
+	VlTotDebitosDIFAL    float64
+	VlOutDebDIFAL        float64
+	VlTotCreditosDIFAL   float64
+	VlOutCredDIFAL       float64
+	VlSldDevAntDIFAL     float64
+	VlDeducoesDIFAL      float64
+	VlRecolDIFAL         float64
+	VlSldCredTranspDIFAL float64
+	DebEspDIFAL          float64
+	VlSldCredAntFCP      float64
+	VlTotDebFCP          float64
+	VlOutDebFCP          float64
+	VlTotCredFCP         float64
+	VlOutCredFCP         float64
+	VlSldDevAntFCP       float64
+	VlDeducoesFCP        float64
+	VlRecolFCP           float64
+	VlSldCredTranspFCP   float64
+	DebEspFCP            float64
+	RegistroE311         []*RegistroE311
+	RegistroE312         []*RegistroE312
+	RegistroE313         []*RegistroE313
+	RegistroE316         []*RegistroE316
 }
 
 // RegistroE311 - Ajuste/Beneficio/Incentivo da Apuracao do ICMS Diferencial de
@@ -284,11 +284,11 @@ type RegistroE500 struct {
 
 // RegistroE510 - Consolidacao dos Valores do IPI
 type RegistroE510 struct {
-	CFOP       string
-	CstIPI     CstIpi
-	VlContIPI  float64
-	VlBcIPI    float64
-	VlIPI      float64
+	CFOP      string
+	CstIPI    CstIpi
+	VlContIPI float64
+	VlBcIPI   float64
+	VlIPI     float64
 }
 
 // RegistroE520 - Apuracao do IPI

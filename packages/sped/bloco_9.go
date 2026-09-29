@@ -29,7 +29,7 @@ func NewRegistro9001() *Registro9001 {
 
 // Registro9900 - Registros do Arquivo
 type Registro9900 struct {
-	RegBlc   string
+	RegBlc    string
 	QtdRegBlc int
 }
 

@@ -1,0 +1,96 @@
+# Mapeamento de componentes ACBr
+
+Referência carregada sob demanda pela skill `/convert` (PASSO 1 e PASSO 2).
+
+## Componente → diretório dos fontes Delphi
+
+Caminhos relativos ao `DelphiSourcePath` informado (a pasta `Fontes` do ACBr).
+
+| ComponentName | Diretório |
+|---|---|
+| `ACBrComum` | `<path>/ACBrComum/` |
+| `PCNComum` | `<path>/PCNComum/` |
+| `ACBrDFe` | `<path>/ACBrDFe/` (apenas arquivos da raiz, **não** as subpastas de componentes) |
+| `ACBrNFe` | `<path>/ACBrDFe/ACBrNFe/` |
+| `ACBrCTe` | `<path>/ACBrDFe/ACBrCTe/` |
+| `ACBrMDFe` | `<path>/ACBrDFe/ACBrMDFe/` |
+| `ACBrBPe` | `<path>/ACBrDFe/ACBrBPe/` |
+| `ACBrNFSeX` | `<path>/ACBrDFe/ACBrNFSeX/` |
+| `ACBrNFSe` | `<path>/ACBrDFe/ACBrNFSe/` |
+| `ACBrNF3e` | `<path>/ACBrDFe/ACBrNF3e/` |
+| `ACBrNFCom` | `<path>/ACBrDFe/ACBrNFCom/` |
+| `ACBrGNRE` | `<path>/ACBrDFe/ACBrGNRE/` |
+| `ACBrReinf` | `<path>/ACBrDFe/ACBrReinf/` |
+| `ACBreSocial` | `<path>/ACBrDFe/ACBreSocial/` |
+| `ACBrBoleto` | `<path>/ACBrBoleto/` |
+| `ACBrPIXCD` | `<path>/ACBrPIXCD/` |
+| `ACBrSAT` | `<path>/ACBrSAT/` |
+| `ACBrTEFD` | `<path>/ACBrTEFD/` |
+| `ACBrSerial` | `<path>/ACBrSerial/` |
+| `ACBrTCP` | `<path>/ACBrTCP/` |
+| `ACBrTXT` | `<path>/ACBrTXT/` |
+| `ACBrDiversos` | `<path>/ACBrDiversos/` |
+| `ACBrPagFor` | `<path>/ACBrPagFor/` |
+| `ACBrBaaS` | `<path>/ACBrBaaS/` |
+| `ACBrOpenDelivery` | `<path>/ACBrOpenDelivery/` |
+
+Componente fora da tabela: buscar com Glob `<path>/**/*<ComponentName>*/`. Se ainda assim não
+encontrar, **perguntar o caminho exato ao usuário** — nunca chutar o diretório.
+
+## Componente → package Go de destino
+
+| ComponentName | Package Go | Diretório destino |
+|---|---|---|
+| `ACBrComum` | `comum` | `packages/comum/` |
+| `PCNComum` | `pcn` | `packages/pcn/` |
+| `ACBrDFe` | `dfe` | `packages/dfe/` |
+| `ACBrNFe` | `nfe` | `packages/nfe/` |
+| `ACBrCTe` | `cte` | `packages/cte/` |
+| `ACBrMDFe` | `mdfe` | `packages/mdfe/` |
+| `ACBrBPe` | `bpe` | `packages/bpe/` |
+| `ACBrNFSeX` | `nfsex` | `packages/nfsex/` |
+| `ACBrNFSe` | `nfse` | `packages/nfse/` |
+| `ACBrNF3e` | `nf3e` | `packages/nf3e/` |
+| `ACBrNFCom` | `nfcom` | `packages/nfcom/` |
+| `ACBrBoleto` | `boleto` | `packages/boleto/` |
+| `ACBrPIXCD` | `pixcd` | `packages/pixcd/` |
+| `ACBrSAT` | `sat` | `packages/sat/` |
+| `ACBrGNRE` | `gnre` | `packages/gnre/` |
+| `ACBrReinf` | `reinf` | `packages/reinf/` |
+| `ACBreSocial` | `esocial` | `packages/esocial/` |
+| `ACBrTEFD` | `tefd` | `packages/tefd/` |
+| `ACBrPagFor` | `pagfor` | `packages/pagfor/` |
+| `ACBrBaaS` | `baas` | `packages/baas/` |
+
+## Dependências obrigatórias
+
+A ordem de conversão é imposta por estas dependências — nunca converter um componente cujas
+dependências ainda não existam em `packages/`.
+
+| Package | Depende de |
+|---|---|
+| `comum` | nenhuma |
+| `pcn` | `comum` |
+| `dfe` | `comum`, `pcn` |
+| `nfe`, `cte`, `mdfe`, `bpe`, `nfsex`, `nfse`, `nf3e`, `nfcom`, `gnre`, `reinf`, `esocial` | `comum`, `pcn`, `dfe` |
+| `boleto` | `comum` |
+| `pixcd` | `comum` |
+| `sat` | `comum` |
+| `tefd` | `comum` |
+| `pagfor` | `comum` |
+| `baas` | `comum` |
+
+Dependência considerada satisfeita quando `packages/<dep>/` existe **e** contém arquivos `.go`.
+Diretório vazio não conta.
+
+## Arquivos Delphi a excluir do escaneamento
+
+Estes nunca são convertidos — dependem de engines gráficas ou de infraestrutura de design-time
+do Delphi, que não têm equivalente em Go:
+
+- Pastas de report visual: `DANFE/`, `DACTE/`, `DAMDFE/`, `DANFSe/`, `DACE/`, `DANF3e/`, `DANFCom/`
+- Pastas de engine de report: `Fast/`, `Fortes/`, `LazReport/`, `EscPos/`
+- Arquivos `*Reg.pas` — registradores de componentes de design-time
+
+Dentro dos arquivos convertidos, ignorar blocos `{$IFDEF}` que referenciam GUI (`FMX`, `VCL`,
+`LCL`) ou plataformas específicas.

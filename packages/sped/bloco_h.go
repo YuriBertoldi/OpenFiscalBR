@@ -51,34 +51,29 @@ type RegistroH010 struct {
 	CodCta       string
 	VlItemIR     float64
 	RegistroH011 []*RegistroH011
+	RegistroH020 []*RegistroH020
 	RegistroH030 []*RegistroH030
 }
 
-// RegistroH011 - Informacoes Complementares do Inventario por Estabelecimentos
-// com regime de Substituicao Tributaria
+// RegistroH011 - Proprietario do estoque, quando diferente do informante
 type RegistroH011 struct {
-	VlBcICMS   float64
-	VlICMS     float64
-	VlBcICMSST float64
-	VlICMSST   float64
+	CNPJ string
 }
 
 // RegistroH020 - Informacao Complementar do Inventario
 type RegistroH020 struct {
-	CstICMS    CstIcms
-	VlBcICMS   float64
-	VlICMS     float64
-	VlBcICMSST float64
-	VlICMSST   float64
+	CstICMS CstIcms
+	BcICMS  float64
+	VlICMS  float64
 }
 
 // RegistroH030 - Informacoes Complementares do Inventario das
 // mercadorias sujeitas ao regime de Substituicao Tributaria
 type RegistroH030 struct {
-	VlICMSOp    float64
-	VlBcICMSST  float64
-	VlICMSST    float64
-	VlFCP       float64
+	VlICMSOp   float64
+	VlBcICMSST float64
+	VlICMSST   float64
+	VlFCP      float64
 }
 
 // RegistroH990 - Encerramento do Bloco H

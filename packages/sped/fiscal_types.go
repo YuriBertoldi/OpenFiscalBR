@@ -11,7 +11,10 @@
 
 package sped
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 // intToStrPadded formata um inteiro com zeros a esquerda ate a largura especificada.
 func intToStrPadded(v int, width int) string {
@@ -108,25 +111,25 @@ type VersaoLeiauteFiscal int
 
 const (
 	VlVersao100 VersaoLeiauteFiscal = iota // 001 - 2008
-	VlVersao101                             // 002 - 2009
-	VlVersao102                             // 003 - 2010
-	VlVersao103                             // 004 - 2011
-	VlVersao104                             // 005 - 2012
-	VlVersao105                             // 006 - 2012
-	VlVersao106                             // 007 - 2013
-	VlVersao107                             // 008 - 2014
-	VlVersao108                             // 009 - 2015
-	VlVersao109                             // 010 - 2016
-	VlVersao110                             // 011 - 2017
-	VlVersao111                             // 012 - 2018
-	VlVersao112                             // 013 - 2019
-	VlVersao113                             // 014 - 2020
-	VlVersao114                             // 015 - 2021
-	VlVersao115                             // 016 - 2022
-	VlVersao116                             // 017 - 2023
-	VlVersao117                             // 018 - 2024
-	VlVersao118                             // 019 - 2025
-	VlVersao119                             // 020 - 2026
+	VlVersao101                            // 002 - 2009
+	VlVersao102                            // 003 - 2010
+	VlVersao103                            // 004 - 2011
+	VlVersao104                            // 005 - 2012
+	VlVersao105                            // 006 - 2012
+	VlVersao106                            // 007 - 2013
+	VlVersao107                            // 008 - 2014
+	VlVersao108                            // 009 - 2015
+	VlVersao109                            // 010 - 2016
+	VlVersao110                            // 011 - 2017
+	VlVersao111                            // 012 - 2018
+	VlVersao112                            // 013 - 2019
+	VlVersao113                            // 014 - 2020
+	VlVersao114                            // 015 - 2021
+	VlVersao115                            // 016 - 2022
+	VlVersao116                            // 017 - 2023
+	VlVersao117                            // 018 - 2024
+	VlVersao118                            // 019 - 2025
+	VlVersao119                            // 020 - 2026
 )
 
 // String retorna o codigo de 3 digitos ("001", "002", ..., "020").
@@ -218,7 +221,7 @@ type IndEmit int
 
 const (
 	IndEmitPropria   IndEmit = iota // 0 - Emissao propria
-	IndEmitTerceiros               // 1 - Terceiros
+	IndEmitTerceiros                // 1 - Terceiros
 )
 
 // String retorna o valor para o arquivo SPED ("0" ou "1").
@@ -266,6 +269,44 @@ func (v IndPgto) String() string {
 	}
 }
 
+// StringEm retorna o codigo de IND_PGTO vigente no periodo de dtIni.
+//
+// A partir de 2012-07-01 o valor "9" (sem pagamento) deixou de existir e "2"
+// (outros) passou a valer; antes disso "2" nao existia. Um valor inaplicavel
+// na vigencia sai vazio.
+//
+// Aqui ha divergencia deliberada em relacao ao ACBr: la os case nao cobrem
+// todos os membros e a variavel strIND_PGTO conserva o valor da iteracao
+// anterior do laco, emitindo o codigo de outro documento. Devolver vazio e o
+// que o Guia Pratico prevê para campo inaplicavel.
+//
+// Ref.: ACBrEFDBloco_C_Class.pas, WriteRegistroC100.
+func (v IndPgto) StringEm(dtIni time.Time) string {
+	corte := time.Date(2012, 7, 1, 0, 0, 0, 0, time.UTC)
+
+	if dtIni.Before(corte) {
+		switch v {
+		case PgtoVista:
+			return "0"
+		case PgtoPrazo:
+			return "1"
+		case PgtoSemPagamento:
+			return "9"
+		}
+		return "" // PgtoOutros nao existia antes de 07/2012
+	}
+
+	switch v {
+	case PgtoVista:
+		return "0"
+	case PgtoPrazo:
+		return "1"
+	case PgtoOutros:
+		return "2"
+	}
+	return "" // PgtoSemPagamento deixou de existir em 07/2012
+}
+
 // ===========================================================================
 // Frete (TACBrIndFrt)
 // ===========================================================================
@@ -303,6 +344,50 @@ func (v IndFrt) String() string {
 	default:
 		return fmt.Sprintf("%d", int(v))
 	}
+}
+
+// StringEm retorna o codigo de IND_FRT vigente no periodo de dtIni.
+//
+// O leiaute mudou duas vezes e os codigos foram remanejados, nao apenas
+// acrescentados: o mesmo valor "0" significa "por conta de terceiros" ate 2011
+// e "por conta do emitente" de 2012 em diante. Usar String() para periodo
+// antigo gera codigo errado sem nenhum erro visivel.
+//
+// Ref.: ACBrEFDBloco_C_Class.pas, WriteRegistroC100.
+func (v IndFrt) StringEm(dtIni time.Time) string {
+	if v == FrtNenhum {
+		return ""
+	}
+	if v == FrtSemCobranca {
+		return "9"
+	}
+
+	corte2012 := time.Date(2012, 1, 1, 0, 0, 0, 0, time.UTC)
+	corte2018 := time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	switch {
+	case dtIni.Before(corte2012):
+		switch v {
+		case FrtContaTerceiros:
+			return "0"
+		case FrtContaEmitente, FrtProprioPorContaRemetente:
+			return "1"
+		case FrtContaDestinatario, FrtProprioContaDestinatario:
+			return "2"
+		}
+	case dtIni.Before(corte2018):
+		switch v {
+		case FrtContaEmitente, FrtProprioPorContaRemetente:
+			return "0"
+		case FrtContaDestinatario, FrtProprioContaDestinatario:
+			return "1"
+		case FrtContaTerceiros:
+			return "2"
+		}
+	default:
+		return v.String()
+	}
+	return ""
 }
 
 // ===========================================================================
@@ -383,8 +468,8 @@ type IndTipoOperacaoST int
 
 const (
 	OpSTCombustiveis      IndTipoOperacaoST = iota // 0 - Combustiveis e lubrificantes
-	OpSTLeasingVeiculos                              // 1 - Leasing de veiculos ou faturamento direto
-	OpSTRecusaRecebimento                            // 2 - Recusa de recebimento
+	OpSTLeasingVeiculos                            // 1 - Leasing de veiculos ou faturamento direto
+	OpSTRecusaRecebimento                          // 2 - Recusa de recebimento
 )
 
 // String retorna o valor para o arquivo SPED ("0", "1" ou "2").
@@ -539,6 +624,48 @@ func (v IndMovFisica) String() string {
 // Apuracao IPI (TACBrApuracaoIPI)
 // ===========================================================================
 
+// MovimentoBens indica o tipo de movimentacao do bem ou componente do ativo
+// imobilizado, no registro G125 (CIAP).
+type MovimentoBens int
+
+const (
+	MovBensSaldoInicial      MovimentoBens = iota // SI - Saldo inicial de bens imobilizados
+	MovBensImobilizacao                           // IM - Imobilizacao de bem individual
+	MovBensImobilizacaoAndam                      // IA - Imobilizacao em andamento, componente
+	MovBensConclusaoImob                          // CI - Conclusao de imobilizacao em andamento
+	MovBensOriundaCirculante                      // MC - Imobilizacao oriunda do ativo circulante
+	MovBensBaixaSaldo                             // BA - Baixa do saldo de ICMS, fim da apropriacao
+	MovBensAlienacao                              // AT - Alienacao ou transferencia
+	MovBensPerecimento                            // PE - Perecimento, extravio ou deterioracao
+	MovBensOutrasSaidas                           // OT - Outras saidas do imobilizado
+)
+
+// String retorna a sigla do movimento conforme o layout ("SI", "IM", ...).
+func (v MovimentoBens) String() string {
+	switch v {
+	case MovBensSaldoInicial:
+		return "SI"
+	case MovBensImobilizacao:
+		return "IM"
+	case MovBensImobilizacaoAndam:
+		return "IA"
+	case MovBensConclusaoImob:
+		return "CI"
+	case MovBensOriundaCirculante:
+		return "MC"
+	case MovBensBaixaSaldo:
+		return "BA"
+	case MovBensAlienacao:
+		return "AT"
+	case MovBensPerecimento:
+		return "PE"
+	case MovBensOutrasSaidas:
+		return "OT"
+	default:
+		return ""
+	}
+}
+
 // ApuracaoIPI indica o periodo de apuracao do IPI.
 type ApuracaoIPI int
 
@@ -556,7 +683,9 @@ func (v ApuracaoIPI) String() string {
 	case ApuracaoIPIDecendial:
 		return "1"
 	case ApuracaoIPINenhum:
-		return ""
+		// Espaco, nao vazio: e o que o ACBr emite para iaNenhum
+		// (ACBrEFDBloco_C_Class.pas, WriteRegistroC170).
+		return " "
 	default:
 		return fmt.Sprintf("%d", int(v))
 	}
@@ -571,10 +700,10 @@ type TipoBaseMedicamento int
 
 const (
 	BaseMedTabeladoSugerido TipoBaseMedicamento = iota // 0 - Tabelado/Sugerido
-	BaseMedMargemAgregado                               // 1 - Margem de valor agregado
-	BaseMedListaNegativa                                // 2 - Lista Negativa
-	BaseMedListaPositiva                                // 3 - Lista Positiva
-	BaseMedListaNeutra                                  // 4 - Lista Neutra
+	BaseMedMargemAgregado                              // 1 - Margem de valor agregado
+	BaseMedListaNegativa                               // 2 - Lista Negativa
+	BaseMedListaPositiva                               // 3 - Lista Positiva
+	BaseMedListaNeutra                                 // 4 - Lista Neutra
 )
 
 // String retorna o valor para o arquivo SPED ("0"..."4").
@@ -604,8 +733,8 @@ type TipoProduto int
 
 const (
 	ProdSimilar  TipoProduto = iota // 0 - Similar
-	ProdGenerico                     // 1 - Generico
-	ProdMarca                        // 2 - De Marca
+	ProdGenerico                    // 1 - Generico
+	ProdMarca                       // 2 - De Marca
 )
 
 // String retorna o valor para o arquivo SPED ("0", "1" ou "2").
@@ -631,7 +760,7 @@ type TipoArmaFogo int
 
 const (
 	ArmaPermitido TipoArmaFogo = iota // 0 - Permitido
-	ArmaRestrito                       // 1 - Restrito
+	ArmaRestrito                      // 1 - Restrito
 )
 
 // String retorna o valor para o arquivo SPED ("0" ou "1").
@@ -712,7 +841,7 @@ type TipoVeiculo int
 
 const (
 	VeicEmbarcacao         TipoVeiculo = iota // 0 - Embarcacao
-	VeicEmpuradorRebocador                     // 1 - Empurrador/Rebocador
+	VeicEmpuradorRebocador                    // 1 - Empurrador/Rebocador
 )
 
 // String retorna o valor para o arquivo SPED ("0" ou "1").
@@ -736,7 +865,7 @@ type TipoNavegacao int
 
 const (
 	NavInterior  TipoNavegacao = iota // 0 - Interior
-	NavCabotagem                       // 1 - Cabotagem
+	NavCabotagem                      // 1 - Cabotagem
 )
 
 // String retorna o valor para o arquivo SPED ("0" ou "1").
@@ -814,7 +943,7 @@ type NaturezaFrete int
 
 const (
 	NatFreteNegociavel    NaturezaFrete = iota // 0 - Negociavel
-	NatFreteNaoNegociavel                       // 1 - Nao Negociavel
+	NatFreteNaoNegociavel                      // 1 - Nao Negociavel
 )
 
 // String retorna o valor para o arquivo SPED ("0" ou "1").
@@ -913,7 +1042,7 @@ type MovimentoST int
 
 const (
 	MovSTSemOperacao MovimentoST = iota // 0 - Sem operacoes com ST
-	MovSTComOperacao                     // 1 - Com operacoes de ST
+	MovSTComOperacao                    // 1 - Com operacoes de ST
 )
 
 // String retorna o valor para o arquivo SPED ("0" ou "1").
@@ -937,7 +1066,7 @@ type TipoAjuste int
 
 const (
 	AjusteDebito  TipoAjuste = iota // 0 - Ajuste a Debito
-	AjusteCredito                    // 1 - Ajuste a Credito
+	AjusteCredito                   // 1 - Ajuste a Credito
 )
 
 // String retorna o valor para o arquivo SPED ("0" ou "1").
@@ -994,8 +1123,8 @@ type IndProp int
 
 const (
 	PropInformante           IndProp = iota // 0 - Item de propriedade do informante e em seu poder
-	PropInformanteNoTerceiro               // 1 - Item de propriedade do informante em poder de terceiros
-	PropTerceiroNoInformante               // 2 - Item de propriedade de terceiros em poder do informante
+	PropInformanteNoTerceiro                // 1 - Item de propriedade do informante em poder de terceiros
+	PropTerceiroNoInformante                // 2 - Item de propriedade de terceiros em poder do informante
 )
 
 // String retorna o valor para o arquivo SPED ("0", "1" ou "2").
@@ -1021,8 +1150,8 @@ type TipoDoctoExport int
 
 const (
 	DocExportDeclaracao        TipoDoctoExport = iota // 0 - Declaracao de Exportacao
-	DocExportDeclaracaoSimples                         // 1 - Declaracao Simplificada de Exportacao
-	DocExportDeclaracaoUnica                           // 2 - Declaracao Unica de Exportacao
+	DocExportDeclaracaoSimples                        // 1 - Declaracao Simplificada de Exportacao
+	DocExportDeclaracaoUnica                          // 2 - Declaracao Unica de Exportacao
 )
 
 // String retorna o valor para o arquivo SPED ("0", "1" ou "2").
@@ -1048,7 +1177,7 @@ type Exportacao int
 
 const (
 	ExportDireta   Exportacao = iota // 0 - Exportacao Direta
-	ExportIndireta                    // 1 - Exportacao Indireta
+	ExportIndireta                   // 1 - Exportacao Indireta
 )
 
 // String retorna o valor para o arquivo SPED ("0" ou "1").
@@ -1072,8 +1201,8 @@ type IndTipoLeiaute int
 
 const (
 	LeiauteSimplificado         IndTipoLeiaute = iota // 0 - Leiaute simplificado
-	LeiauteCompleto                                    // 1 - Leiaute completo
-	LeiauteRestritoSaldoEstoque                        // 2 - Leiaute restrito a saldo de estoque
+	LeiauteCompleto                                   // 1 - Leiaute completo
+	LeiauteRestritoSaldoEstoque                       // 2 - Leiaute restrito a saldo de estoque
 )
 
 // String retorna o valor para o arquivo SPED ("0", "1" ou "2").
@@ -1099,8 +1228,8 @@ type IndEstoque int
 
 const (
 	EstPropInformantePoder     IndEstoque = iota // 0 - Propriedade do informante e em seu poder
-	EstPropInformanteTerceiros                    // 1 - Propriedade do informante e em poder de terceiros
-	EstPropTerceirosInformante                    // 2 - Propriedade de terceiros e em poder do informante
+	EstPropInformanteTerceiros                   // 1 - Propriedade do informante e em poder de terceiros
+	EstPropTerceirosInformante                   // 2 - Propriedade de terceiros e em poder do informante
 )
 
 // String retorna o valor para o arquivo SPED ("0", "1" ou "2").
@@ -1125,12 +1254,12 @@ func (v IndEstoque) String() string {
 type MotInv int
 
 const (
-	MotInvFinalPeriodo       MotInv = iota // 01 - No final no periodo
-	MotInvMudancaTributacao                 // 02 - Na mudanca de forma de tributacao da mercadoria
-	MotInvBaixaCadastral                    // 03 - Na solicitacao da baixa cadastral, paralisacao temporaria e outras situacoes
-	MotInvRegimePagamento                   // 04 - Na alteracao de regime de pagamento condicao de contribuinte
-	MotInvDeterminacaoFiscos                // 05 - Por determinacao dos fiscos
-	MotInvControleMercadoriaST              // 06 - Para controle das mercadorias sujeitas ao regime de substituicao tributaria - Loss/Devolucao
+	MotInvFinalPeriodo         MotInv = iota // 01 - No final no periodo
+	MotInvMudancaTributacao                  // 02 - Na mudanca de forma de tributacao da mercadoria
+	MotInvBaixaCadastral                     // 03 - Na solicitacao da baixa cadastral, paralisacao temporaria e outras situacoes
+	MotInvRegimePagamento                    // 04 - Na alteracao de regime de pagamento condicao de contribuinte
+	MotInvDeterminacaoFiscos                 // 05 - Por determinacao dos fiscos
+	MotInvControleMercadoriaST               // 06 - Para controle das mercadorias sujeitas ao regime de substituicao tributaria - Loss/Devolucao
 )
 
 // String retorna o codigo de 2 digitos ("01", "02", ..., "06").
@@ -1146,21 +1275,21 @@ func (v MotInv) String() string {
 type GrupoTensao int
 
 const (
-	GrupoTensaoNenhum          GrupoTensao = iota // (vazio)
-	GrupoTensaoA1                                   // 01 - A1 - Alta Tensao (230kV ou mais)
-	GrupoTensaoA2                                   // 02 - A2 - Alta Tensao (88 a 138kV)
-	GrupoTensaoA3                                   // 03 - A3 - Alta Tensao (69kV)
-	GrupoTensaoA3a                                  // 04 - A3a - Alta Tensao (30 a 44kV)
-	GrupoTensaoA4                                   // 05 - A4 - Alta Tensao (2,3 a 25kV)
-	GrupoTensaoAS                                   // 06 - AS - Alta Tensao Subterraneo
-	GrupoTensaoB1                                   // 07 - B1 - Residencial
-	GrupoTensaoB1BaixaRenda                         // 08 - B1 - Residencial Baixa Renda
-	GrupoTensaoB2Rural                              // 09 - B2 - Rural
-	GrupoTensaoB2Cooperativa                        // 10 - B2 - Cooperativa de Eletrificacao Rural
-	GrupoTensaoB2ServicoPublico                     // 11 - B2 - Servico Publico de Irrigacao
-	GrupoTensaoB3                                   // 12 - B3 - Demais Classes
-	GrupoTensaoB4a                                  // 13 - B4a - Iluminacao Publica rede de distribuicao
-	GrupoTensaoB4b                                  // 14 - B4b - Iluminacao Publica bulbo da lampada
+	GrupoTensaoNenhum           GrupoTensao = iota // (vazio)
+	GrupoTensaoA1                                  // 01 - A1 - Alta Tensao (230kV ou mais)
+	GrupoTensaoA2                                  // 02 - A2 - Alta Tensao (88 a 138kV)
+	GrupoTensaoA3                                  // 03 - A3 - Alta Tensao (69kV)
+	GrupoTensaoA3a                                 // 04 - A3a - Alta Tensao (30 a 44kV)
+	GrupoTensaoA4                                  // 05 - A4 - Alta Tensao (2,3 a 25kV)
+	GrupoTensaoAS                                  // 06 - AS - Alta Tensao Subterraneo
+	GrupoTensaoB1                                  // 07 - B1 - Residencial
+	GrupoTensaoB1BaixaRenda                        // 08 - B1 - Residencial Baixa Renda
+	GrupoTensaoB2Rural                             // 09 - B2 - Rural
+	GrupoTensaoB2Cooperativa                       // 10 - B2 - Cooperativa de Eletrificacao Rural
+	GrupoTensaoB2ServicoPublico                    // 11 - B2 - Servico Publico de Irrigacao
+	GrupoTensaoB3                                  // 12 - B3 - Demais Classes
+	GrupoTensaoB4a                                 // 13 - B4a - Iluminacao Publica rede de distribuicao
+	GrupoTensaoB4b                                 // 14 - B4b - Iluminacao Publica bulbo da lampada
 )
 
 // String retorna o codigo de 2 digitos ("01"..."14") ou "" para nenhum.
@@ -1308,7 +1437,7 @@ type MovimentoDIFAL int
 
 const (
 	DifalSemOperacao MovimentoDIFAL = iota // 0 - Sem operacoes com DIFAL
-	DifalComOperacao                        // 1 - Com operacoes de DIFAL
+	DifalComOperacao                       // 1 - Com operacoes de DIFAL
 )
 
 // String retorna o valor para o arquivo SPED ("0" ou "1").
@@ -1377,7 +1506,7 @@ type Medicao int
 
 const (
 	MedicaoAnalogico Medicao = iota // 0 - Analogico
-	MedicaoDigital                   // 1 - Digital
+	MedicaoDigital                  // 1 - Digital
 )
 
 // String retorna o valor para o arquivo SPED ("0" ou "1").
@@ -1545,7 +1674,7 @@ type IndFormaPagto int
 
 const (
 	FormaPagtoPrePago IndFormaPagto = iota // 0 - Pre-pago
-	FormaPagtoPosPago                       // 1 - Pos-pago
+	FormaPagtoPosPago                      // 1 - Pos-pago
 )
 
 // String retorna o valor para o arquivo SPED ("0" ou "1").
@@ -1642,7 +1771,7 @@ type IndicadorObrigacao int
 const (
 	ObrigISSProprio          IndicadorObrigacao = iota // 0 - ISS proprio
 	ObrigISSSubstituto                                 // 1 - ISS substituto (devido pelo tomador)
-	ObrigISSUniprofissionais                            // 2 - ISS Uniprofissionais
+	ObrigISSUniprofissionais                           // 2 - ISS Uniprofissionais
 )
 
 // String retorna o valor para o arquivo SPED ("0", "1" ou "2").

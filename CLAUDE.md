@@ -22,9 +22,21 @@ demos/             -- Demos (API REST + Frontend + Docker)
 
 Module: `github.com/openfiscalbr/openfiscalbr`
 
-## Skill Disponivel
+## Skills Disponiveis
+
+Definidas em `.claude/skills/<nome>/SKILL.md`:
 
 - `/convert <ComponentName> <DelphiSourcePath>` -- Converte um componente Delphi para Go
+- `/validar-package [pkg]` -- gofmt, build, vet, testes, header de licenca, module path
+- `/adicionar-registro-sped <registro>` -- Acrescenta um registro ao `packages/sped`
+- `/gerar-demo <pkg>` -- Gera a demo em `demos/<pkg>/`
+- `/sincronizar-meta` -- Atualiza `.openfiscalbr-meta.json` e o status dos packages
+
+Subagente `revisor-go` (`.claude/agents/revisor-go.md`) -- revisa codigo portado quanto a
+fidelidade ao Delphi de origem e as convencoes deste arquivo. So reporta, nao corrige.
+
+> Skills sao carregadas na inicializacao da sessao. Ao criar uma skill nova, ela so fica
+> disponivel a partir da proxima sessao aberta na raiz do projeto.
 
 ## Regras de Mapeamento Delphi -> Go
 
@@ -60,6 +72,57 @@ Module: `github.com/openfiscalbr/openfiscalbr`
 - **Campos fiscais**: manter nomes PT-BR originais (`cUF`, `CNPJ`, `nNF`, `vBC`) pois mapeiam para schemas XML da SEFAZ
 - **Enums**: PascalCase (`TaProducao`, `TaHomologacao`)
 - **Constantes**: PascalCase ou UPPER_SNAKE conforme contexto
+
+## Fidelidade ao Delphi -- o defeito dominante do port
+
+Um port que compila, passa nos testes e gera documento invalido e o caso comum aqui. O que se
+perde nao e a estrutura: e a **condicional em volta dela**. Na auditoria do `packages/sped`,
+100% das divergencias encontradas eram disso, e nenhuma aparecia em build, `vet` ou teste.
+
+Ao portar ou revisar qualquer writer, procure no `.pas` de origem:
+
+- `ifthen` / `IfThen` / `EncodeDate` -- campo que so existe a partir de certa data
+- `COD_VER` / `vlVersaoNNN` -- campo que depende da **versao do leiaute** (dimensao diferente
+  da data; as duas convivem)
+- `if` envolvendo a escrita inteira -- bloco ou registro que nao existe no periodo
+- `case` de enum dentro de `if DT_INI < ...` -- tabela de codigos **remanejada** por epoca
+- `Check(` -- validacao obrigatoria
+- `if Assigned(On...)` -- callback a expor
+
+Regras derivadas disso:
+
+- **Contagem de campos nao e auditoria.** Struct copiado de outro registro tem a quantidade
+  certa e o conteudo errado. Confira nome a nome e confira a hierarquia.
+- **Propague o estado do componente para as partes.** Writer que decide layout por vigencia
+  precisa receber a data; se nao receber, falha em silencio.
+- **Quando o ACBr estiver errado, replique se for deterministico** (com teste e comentario
+  dizendo que e intencional). Nao replique o que depende de ordem de iteracao ou variavel nao
+  inicializada -- documente a divergencia e leve ao usuario.
+- **Separe "tipos declarados" de "tipos exercitados"** ao reportar cobertura. Struct sem writer
+  e preenchido pelo consumidor e nunca aparece na saida.
+
+Ferramenta de apoio: `ferramentas/comparar-campos.py` (veja `ferramentas/README.md` para os
+limites dela).
+
+## Higiene do Repositorio
+
+- Arquivos `.go` sempre em **LF** (ver `.gitattributes`). Fontes Delphi `.pas`/`.dfm` em CRLF.
+- `go build ./... && go vet ./... && go test ./packages/...` verdes antes de qualquer commit.
+- Para conferir formatacao, use `/validar-package` -- `gofmt -l` sozinho da falso positivo em
+  100% dos arquivos quando o checkout esta com `core.autocrlf=true`.
+
+## Convencoes do Package sped
+
+- Structs de registro em `bloco_<x>.go`; writers em `write_bloco_<x>.go` (padrao alvo) ou na
+  secao do bloco em `write_blocos.go`.
+- Writer de registro de dados e **nao exportado** (`writeRegistroC170`); so `X001`, `X990` e
+  `0000` sao exportados.
+- Todo writer carrega doc-comment `// Formato: |REG|CAMPO1|...|` -- e o unico contrato sobre a
+  ordem dos campos, que nada mais valida.
+- Todo writer incrementa `QtdLinX` (alimenta o 9999) **e** `RegistroXXXCount` (alimenta o 9900).
+- A contagem do 9900 usa sempre o contador, nunca `len(slice)` -- `len()` nao alcanca registro
+  neto (o 0175 pertence a cada 0150).
+- Para acrescentar um registro, use `/adicionar-registro-sped`.
 
 ## Ordem de Dependencias (OBRIGATORIA)
 

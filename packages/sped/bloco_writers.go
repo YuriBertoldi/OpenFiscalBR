@@ -162,6 +162,10 @@ type BlocoC struct {
 	RegistroC001 *RegistroC001
 	RegistroC990 *RegistroC990
 
+	// Event callbacks. Sao configuracao do consumidor, nao estado de dados --
+	// por isso nao sao zerados em LimpaRegistros.
+	OnCheckRegistroC100 CheckRegistroFunc
+
 	// Counters for sub-registers
 	RegistroC100Count int
 	RegistroC101Count int

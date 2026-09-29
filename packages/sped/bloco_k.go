@@ -21,7 +21,7 @@ import "time"
 // RegistroK001 - Abertura do Bloco K
 type RegistroK001 struct {
 	OpenBlocos
-	RegistroK010 []*RegistroK010
+	RegistroK010 *RegistroK010
 	RegistroK100 []*RegistroK100
 }
 
@@ -32,7 +32,7 @@ func NewRegistroK001() *RegistroK001 {
 
 // RegistroK010 - Informacao sobre o Tipo de Leiaute (K010)
 type RegistroK010 struct {
-	IndTpLeiaute IndTipoLeiaute
+	IndTipoLeiaute IndTipoLeiaute
 }
 
 // RegistroK100 - Periodo de Apuracao do ICMS/IPI
@@ -66,14 +66,14 @@ type RegistroK210 struct {
 	DtFinOS      time.Time
 	CodDocOS     string
 	CodItemOri   string
-	Qtd          float64
+	QtdOri       float64
 	RegistroK215 []*RegistroK215
 }
 
 // RegistroK215 - Desmontagem de Mercadorias - Item de Destino
 type RegistroK215 struct {
-	CodItemDest string
-	Qtd         float64
+	CodItemDes string
+	QtdDes     float64
 }
 
 // RegistroK220 - Outras Movimentacoes Internas entre Mercadorias
@@ -82,6 +82,7 @@ type RegistroK220 struct {
 	CodItemOri  string
 	CodItemDest string
 	Qtd         float64
+	QtdDest     float64
 }
 
 // RegistroK230 - Itens Produzidos
@@ -90,16 +91,16 @@ type RegistroK230 struct {
 	DtFinOP      time.Time
 	CodDocOP     string
 	CodItem      string
-	Qtd          float64
+	QtdEnc       float64
 	RegistroK235 []*RegistroK235
 }
 
 // RegistroK235 - Insumos Consumidos
 type RegistroK235 struct {
-	DtSaida time.Time
-	CodItem string
-	Qtd     float64
-	CodInsProd string
+	DtSaida     time.Time
+	CodItem     string
+	Qtd         float64
+	CodInsSubst string
 }
 
 // RegistroK250 - Industrializacao Efetuada por Terceiros - Itens Produzidos
@@ -112,18 +113,18 @@ type RegistroK250 struct {
 
 // RegistroK255 - Industrializacao em Terceiros - Insumos Consumidos
 type RegistroK255 struct {
-	DtCons time.Time
-	CodItem string
-	Qtd     float64
-	CodInsProd string
+	DtCons      time.Time
+	CodItem     string
+	Qtd         float64
+	CodInsSubst string
 }
 
 // RegistroK260 - Reprocessamento/Reparo de Produto/Insumo
 type RegistroK260 struct {
-	CodOP        string
+	CodOpOS      string
 	CodItem      string
 	DtSaida      time.Time
-	Qtd          float64
+	QtdSaida     float64
 	DtRet        time.Time
 	QtdRet       float64
 	RegistroK265 []*RegistroK265
@@ -132,7 +133,7 @@ type RegistroK260 struct {
 // RegistroK265 - Reprocessamento/Reparo - Mercadorias Consumidas e/ou Retornadas
 type RegistroK265 struct {
 	CodItem string
-	Qtd     float64
+	QtdCons float64
 	QtdRet  float64
 }
 
@@ -141,29 +142,31 @@ type RegistroK265 struct {
 type RegistroK270 struct {
 	DtIniAP      time.Time
 	DtFinAP      time.Time
-	CodOP        string
+	CodOpOS      string
 	CodItem      string
-	Qtd          float64
-	QtdCorr      float64
+	QtdCorPos    float64
+	QtdCorNeg    float64
+	Origem       string
 	RegistroK275 []*RegistroK275
 }
 
 // RegistroK275 - Correcao de Apontamento e Retorno de Insumos dos Registros
 // K215, K220, K235, K255, K265
 type RegistroK275 struct {
-	CodItem string
-	Qtd     float64
-	QtdCorr float64
+	CodItem     string
+	QtdCorPos   float64
+	QtdCorNeg   float64
+	CodInsSubst string
 }
 
 // RegistroK280 - Correcao de Apontamento - Estoque Escriturado
 type RegistroK280 struct {
-	DtEst   time.Time
-	CodItem string
-	Qtd     float64
-	QtdCorr float64
-	IndEst  IndEstoque
-	CodPart string
+	DtEst     time.Time
+	CodItem   string
+	QtdCorPos float64
+	QtdCorNeg float64
+	IndEst    IndEstoque
+	CodPart   string
 }
 
 // RegistroK290 - Producao Conjunta - Ordem de Producao
@@ -183,9 +186,8 @@ type RegistroK291 struct {
 
 // RegistroK292 - Producao Conjunta - Insumos Consumidos
 type RegistroK292 struct {
-	CodItem    string
-	Qtd        float64
-	CodInsProd string
+	CodItem string
+	Qtd     float64
 }
 
 // RegistroK300 - Producao Conjunta - Industrializacao Efetuada por Terceiros
@@ -205,9 +207,8 @@ type RegistroK301 struct {
 // RegistroK302 - Producao Conjunta - Industrializacao Efetuada por Terceiros -
 // Insumos Consumidos
 type RegistroK302 struct {
-	CodItem    string
-	Qtd        float64
-	CodInsProd string
+	CodItem string
+	Qtd     float64
 }
 
 // RegistroK990 - Encerramento do Bloco K
