@@ -136,7 +136,7 @@ func handleGerar(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Mark block 0 as having data
-	fiscal.Bloco0.Registro0001.IndDad = 0
+	fiscal.Bloco0.Registro0001.IndMov = 0
 
 	// Generate file
 	if err := fiscal.SaveFileTXT(); err != nil {

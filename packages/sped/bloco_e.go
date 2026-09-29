@@ -27,9 +27,9 @@ type RegistroE001 struct {
 	RegistroE500 []*RegistroE500
 }
 
-// NewRegistroE001 cria um novo RegistroE001 com IndDad=1 (sem dados).
+// NewRegistroE001 cria um novo RegistroE001 com IndMov=1 (sem dados).
 func NewRegistroE001() *RegistroE001 {
-	return &RegistroE001{OpenBlocos: OpenBlocos{IndDad: 1}}
+	return &RegistroE001{OpenBlocos: OpenBlocos{IndMov: 1}}
 }
 
 // RegistroE100 - Periodo da Apuracao do ICMS
@@ -41,25 +41,23 @@ type RegistroE100 struct {
 
 // RegistroE110 - Apuracao do ICMS - Operacoes Proprias
 type RegistroE110 struct {
-	VlTotDebitos      float64
-	VlAjDebitos       float64
-	VlTotAjDebitos    float64
-	VlEstornosCred    float64
-	VlTotCreditos     float64
-	VlAjCreditos      float64
-	VlTotAjCreditos   float64
-	VlEstornosDeb     float64
-	VlSldCredorAnt    float64
-	VlSldApurado      float64
-	VlTotDed          float64
-	VlICMSRecolher    float64
-	VlSldCredorTransp float64
-	DebEsp            float64
-	RegistroE111      []*RegistroE111
-	RegistroE112      []*RegistroE112
-	RegistroE113      []*RegistroE113
-	RegistroE115      []*RegistroE115
-	RegistroE116      []*RegistroE116
+	VlTotDebitos           float64
+	VlAjDebitos            float64
+	VlTotAjDebitos         float64
+	VlEstornosCred         float64
+	VlTotCreditos          float64
+	VlAjCreditos           float64
+	VlTotAjCreditos        float64
+	VlEstornosDeb          float64
+	VlSldCredorAnt         float64
+	VlSldApurado           float64
+	VlTotDed               float64
+	VlICMSRecolher         float64
+	VlSldCredorTransportar float64
+	DebEsp                 float64
+	RegistroE111           []*RegistroE111
+	RegistroE115           []*RegistroE115
+	RegistroE116           []*RegistroE116
 }
 
 // RegistroE111 - Ajuste/Beneficio/Incentivo da Apuracao do ICMS
@@ -67,6 +65,8 @@ type RegistroE111 struct {
 	CodAjApur    string
 	DescrComplAj string
 	VlAjApur     float64
+	RegistroE112 []*RegistroE112
+	RegistroE113 []*RegistroE113
 }
 
 // RegistroE112 - Informacoes Adicionais dos Ajustes da Apuracao do ICMS
@@ -89,7 +89,7 @@ type RegistroE113 struct {
 	DtDoc    time.Time
 	CodItem  string
 	VlAjItem float64
-	ChvDOCe  string
+	ChvNFe   string
 }
 
 // RegistroE115 - Informacoes Adicionais da Apuracao do ICMS -
@@ -124,24 +124,22 @@ type RegistroE200 struct {
 
 // RegistroE210 - Apuracao do ICMS - Substituicao Tributaria
 type RegistroE210 struct {
-	IndMovST          MovimentoST
-	VlSldCredAntST    float64
-	VlDevSTAnt        float64
-	VlRessarcSTAnt    float64
-	VlOutCredST       float64
-	VlAjCreditosST    float64
-	VlRetencaoST      float64
-	VlOutDebST        float64
-	VlAjDebitosST     float64
-	VlSldDevAntST     float64
-	VlDeducoesST      float64
-	VlICMSRecST       float64
-	VlSldCredSTTransp float64
-	DebEspST          float64
-	RegistroE220      []*RegistroE220
-	RegistroE230      []*RegistroE230
-	RegistroE240      []*RegistroE240
-	RegistroE250      []*RegistroE250
+	IndMovST               MovimentoST
+	VlSldCredAntST         float64
+	VlDevolST              float64
+	VlRessarcST            float64
+	VlOutCredST            float64
+	VlAjCreditosST         float64
+	VlRetencaoST           float64
+	VlOutDebST             float64
+	VlAjDebitosST          float64
+	VlSldDevAntST          float64
+	VlDeducoesST           float64
+	VlICMSRecolST          float64
+	VlSldCredSTTransportar float64
+	DebEspST               float64
+	RegistroE220           []*RegistroE220
+	RegistroE250           []*RegistroE250
 }
 
 // RegistroE220 - Ajuste/Beneficio/Incentivo da Apuracao do ICMS ST
@@ -149,6 +147,8 @@ type RegistroE220 struct {
 	CodAjApur    string
 	DescrComplAj string
 	VlAjApur     float64
+	RegistroE230 []*RegistroE230
+	RegistroE240 []*RegistroE240
 }
 
 // RegistroE230 - Informacoes Adicionais dos Ajustes da Apuracao do ICMS ST
@@ -171,7 +171,7 @@ type RegistroE240 struct {
 	DtDoc    time.Time
 	CodItem  string
 	VlAjItem float64
-	ChvDOCe  string
+	ChvNFe   string
 }
 
 // RegistroE250 - Obrigacoes do ICMS Recolhido ou a Recolher - ST
@@ -209,6 +209,8 @@ type RegistroE310 struct {
 	VlDeducoesDIFAL      float64
 	VlRecolDIFAL         float64
 	VlSldCredTranspDIFAL float64
+	VlRecol              float64
+	VlSldCredTransportar float64
 	DebEspDIFAL          float64
 	VlSldCredAntFCP      float64
 	VlTotDebFCP          float64
@@ -221,8 +223,6 @@ type RegistroE310 struct {
 	VlSldCredTranspFCP   float64
 	DebEspFCP            float64
 	RegistroE311         []*RegistroE311
-	RegistroE312         []*RegistroE312
-	RegistroE313         []*RegistroE313
 	RegistroE316         []*RegistroE316
 }
 
@@ -232,6 +232,8 @@ type RegistroE311 struct {
 	CodAjApur    string
 	DescrComplAj string
 	VlAjApur     float64
+	RegistroE312 []*RegistroE312
+	RegistroE313 []*RegistroE313
 }
 
 // RegistroE312 - Informacoes Adicionais dos Ajustes da Apuracao do ICMS
@@ -279,13 +281,12 @@ type RegistroE500 struct {
 	DtFin        time.Time
 	RegistroE510 []*RegistroE510
 	RegistroE520 []*RegistroE520
-	RegistroE530 []*RegistroE530
 }
 
 // RegistroE510 - Consolidacao dos Valores do IPI
 type RegistroE510 struct {
 	CFOP      string
-	CstIPI    CstIpi
+	CstIPI    string
 	VlContIPI float64
 	VlBcIPI   float64
 	VlIPI     float64
@@ -293,13 +294,14 @@ type RegistroE510 struct {
 
 // RegistroE520 - Apuracao do IPI
 type RegistroE520 struct {
-	VlSdAnteriorIPI float64
-	VlDebitosIPI    float64
-	VlCreditosIPI   float64
-	VlOdIPI         float64
-	VlOcIPI         float64
-	VlScIPI         float64
-	VlSdIPI         float64
+	VlSdAntIPI   float64
+	VlDebIPI     float64
+	VlCredIPI    float64
+	VlOdIPI      float64
+	VlOcIPI      float64
+	VlScIPI      float64
+	VlSdIPI      float64
+	RegistroE530 []*RegistroE530
 }
 
 // RegistroE530 - Ajustes da Apuracao do IPI

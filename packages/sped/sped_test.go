@@ -14,6 +14,7 @@ package sped
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -385,7 +386,7 @@ func TestSaveFileTXT_MinimalFile(t *testing.T) {
 	r.IndAtiv = AtivOutros
 
 	// Mark block 0 as having data
-	f.Bloco0.Registro0001.IndDad = 0
+	f.Bloco0.Registro0001.IndMov = 0
 
 	err := f.SaveFileTXT()
 	if err != nil {
@@ -518,7 +519,7 @@ func TestSaveFileTXT_WithRegistro0005(t *testing.T) {
 	r.IndPerfil = PerfilB
 	r.IndAtiv = AtivOutros
 
-	f.Bloco0.Registro0001.IndDad = 0
+	f.Bloco0.Registro0001.IndMov = 0
 	f.Bloco0.Registro0001.Registro0005 = &Registro0005{
 		Fantasia: "TESTE FANTASIA",
 		CEP:      "20040020",
@@ -577,7 +578,7 @@ func TestSaveFileTXT_BlockOrder(t *testing.T) {
 	r.IndPerfil = PerfilA
 	r.IndAtiv = AtivOutros
 
-	f.Bloco0.Registro0001.IndDad = 0
+	f.Bloco0.Registro0001.IndMov = 0
 
 	err := f.SaveFileTXT()
 	if err != nil {
@@ -628,7 +629,7 @@ func TestSaveFileTXT_Registro9999_TotalLines(t *testing.T) {
 	r.IndPerfil = PerfilA
 	r.IndAtiv = AtivOutros
 
-	f.Bloco0.Registro0001.IndDad = 0
+	f.Bloco0.Registro0001.IndMov = 0
 
 	err := f.SaveFileTXT()
 	if err != nil {
@@ -694,7 +695,7 @@ func TestSaveFileTXT_AllLinesPipeDelimited(t *testing.T) {
 	r.IndPerfil = PerfilA
 	r.IndAtiv = AtivOutros
 
-	f.Bloco0.Registro0001.IndDad = 0
+	f.Bloco0.Registro0001.IndMov = 0
 
 	err := f.SaveFileTXT()
 	if err != nil {
@@ -746,7 +747,7 @@ func TestSaveFileTXT_CRLFLineEndings(t *testing.T) {
 	r.IndPerfil = PerfilA
 	r.IndAtiv = AtivOutros
 
-	f.Bloco0.Registro0001.IndDad = 0
+	f.Bloco0.Registro0001.IndMov = 0
 
 	_ = f.SaveFileTXT()
 
@@ -777,13 +778,13 @@ func TestCancelaGeracao_ResetsInitialized(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// OpenBlocos — IndDad semantics
+// OpenBlocos — IndMov semantics
 // ---------------------------------------------------------------------------
 
 func TestOpenBlocos_IndDadDefaults(t *testing.T) {
 	reg := NewRegistro0001()
-	if reg.IndDad != 1 {
-		t.Errorf("IndDad should default to 1 (sem dados), got %d", reg.IndDad)
+	if reg.IndMov != 1 {
+		t.Errorf("IndMov should default to 1 (sem dados), got %d", reg.IndMov)
 	}
 }
 
@@ -889,7 +890,7 @@ func newSPEDFiscalParaPeriodo(t *testing.T, ano int, mes time.Month, ultimoDia i
 	r.IndPerfil = PerfilA
 	r.IndAtiv = AtivOutros
 
-	f.Bloco0.Registro0001.IndDad = 0
+	f.Bloco0.Registro0001.IndMov = 0
 	return f
 }
 
@@ -1078,7 +1079,7 @@ func blocoCParaTeste(t *testing.T, dtIni time.Time, regs ...*RegistroC100) *Bloc
 	f := NewSPEDFiscal()
 	b := f.BlocoC
 	b.DtIni = dtIni
-	b.RegistroC001.IndDad = 0
+	b.RegistroC001.IndMov = 0
 	b.RegistroC001.RegistroC100 = regs
 	return b
 }
@@ -1298,7 +1299,7 @@ func bloco0ParaTeste(t *testing.T, dtIni time.Time, ver VersaoLeiauteFiscal) *Bl
 	b := f.Bloco0
 	b.DtIni = dtIni
 	b.Registro0000.CodVer = ver
-	b.Registro0001.IndDad = 0
+	b.Registro0001.IndMov = 0
 	return b
 }
 
@@ -1398,7 +1399,7 @@ func TestWriteRegistroD100_MunicipiosApenas2018(t *testing.T) {
 		f := NewSPEDFiscal()
 		b := f.BlocoD
 		b.DtIni = time.Date(ano, 3, 1, 0, 0, 0, 0, time.UTC)
-		b.RegistroD001.IndDad = 0
+		b.RegistroD001.IndMov = 0
 		b.RegistroD001.RegistroD100 = []*RegistroD100{
 			{CodMod: "57", NumDoc: "1", CodMunOrig: "3550308", CodMunDest: "3304557"},
 		}
@@ -1443,7 +1444,7 @@ func blocoBParaTeste(t *testing.T) *BlocoB {
 	f := NewSPEDFiscal()
 	b := f.BlocoB
 	b.DtIni = time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)
-	b.RegistroB001.IndDad = 0
+	b.RegistroB001.IndMov = 0
 	return b
 }
 
@@ -1627,7 +1628,7 @@ func TestWriteRegistro1010_PorVersaoDeLeiaute(t *testing.T) {
 		f := NewSPEDFiscal()
 		f.Bloco0.Registro0000.CodVer = ver
 		b := f.Bloco1
-		b.Registro1001.IndDad = 0
+		b.Registro1001.IndMov = 0
 		b.Registro1001.Registro1010 = []*Registro1010{{
 			IndExp: "N", IndCCRF: "N", IndComb: "N", IndUsina: "N", IndVA: "N",
 			IndEE: "N", IndCart: "N", IndForm: "N", IndAer: "N",
@@ -1654,25 +1655,34 @@ func TestWriteRegistro1010_PorVersaoDeLeiaute(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestWriteRegistroG110_PorVersaoDeLeiaute(t *testing.T) {
-	monta := func(ver VersaoLeiauteFiscal) string {
+	monta := func(ver VersaoLeiauteFiscal) (linhas []string, qtd int) {
 		f := NewSPEDFiscal()
 		f.Bloco0.Registro0000.CodVer = ver
 		b := f.BlocoG
-		b.RegistroG001.IndDad = 0
+		b.RegistroG001.IndMov = 0
 		b.RegistroG001.RegistroG110 = []*RegistroG110{{
 			ModoCiap: "A", SaldoInICMS: 100, SaldoFnICMS: 50, SomParc: 10,
 			VlTribExp: 1, VlTotal: 200, IndPerSai: 0.5, ICMSAprop: 5, SomICMSOC: 2,
 		}}
 		b.writeRegistroG110()
-		return b.Conteudo[0]
+		return b.Conteudo, b.RegistroG990.QtdLinG
+	}
+	primeira := func(ver VersaoLeiauteFiscal) string {
+		l, _ := monta(ver)
+		return l[0]
 	}
 
+	// Nas versoes 100/101 o ACBr nao cobre nenhum dos dois ramos: a linha nao
+	// sai, mas o contador do G990 incrementa assim mesmo.
+	if l, qtd := monta(VlVersao101); len(l) != 0 || qtd != 1 {
+		t.Errorf("versao 101 deveria contar sem emitir linha: linhas=%v qtd=%d", l, qtd)
+	}
 	// Ate a 102 o registro tem MODO_CIAP e SALDO_FN_ICMS.
-	if l := monta(VlVersao102); !strings.Contains(l, "|A|100,00|50,00|") {
+	if l := primeira(VlVersao102); !strings.Contains(l, "|A|100,00|50,00|") {
 		t.Errorf("versao 102: %q", l)
 	}
 	// Da 103 em diante os dois campos somem.
-	l := monta(VlVersao103)
+	l := primeira(VlVersao103)
 	if strings.Contains(l, "|A|") {
 		t.Errorf("MODO_CIAP nao deveria sair da versao 103 em diante: %q", l)
 	}
@@ -1752,7 +1762,7 @@ func blocoKParaTeste(t *testing.T, ver VersaoLeiauteFiscal, ano int) (*BlocoK, *
 	b := f.BlocoK
 	b.DtIni = time.Date(ano, 9, 1, 0, 0, 0, 0, time.UTC)
 	b.DtFin = time.Date(ano, 9, 30, 0, 0, 0, 0, time.UTC)
-	b.RegistroK001.IndDad = 0
+	b.RegistroK001.IndMov = 0
 	k100 := &RegistroK100{DtIni: b.DtIni, DtFin: b.DtFin}
 	b.RegistroK001.RegistroK100 = []*RegistroK100{k100}
 	return b, k100
@@ -1846,6 +1856,43 @@ func TestWriteRegistroK291_RejeitaQuantidadeNaoPositiva(t *testing.T) {
 	}
 }
 
+// O 9990 declara a quantidade de linhas do Bloco 9, o que inclui a propria
+// linha do 9990 e a do 9999. O port contava as duas a menos -- defeito que a
+// auditoria campo a campo nao pega, porque e valor calculado e nao layout.
+func TestSaveFileTXT_ContagensDoBloco9(t *testing.T) {
+	f := newSPEDFiscalParaPeriodo(t, 2026, time.September, 30)
+	f.Bloco0.Registro0001.Registro0190 = []*Registro0190{{Unid: "UN", Descr: "UNIDADE"}}
+
+	if err := f.SaveFileTXT(); err != nil {
+		t.Fatalf("SaveFileTXT error: %v", err)
+	}
+	data, err := os.ReadFile(filepath.Join(f.Path, f.Arquivo))
+	if err != nil {
+		t.Fatalf("ReadFile error: %v", err)
+	}
+	linhas := strings.Split(strings.TrimRight(string(data), "\r\n"), "\r\n")
+
+	// 9999 = total de linhas do arquivo
+	if got, want := linhas[len(linhas)-1], "|9999|"+strconv.Itoa(len(linhas))+"|"; got != want {
+		t.Errorf("9999 = %q, want %q", got, want)
+	}
+
+	// 9990 = total de linhas do Bloco 9 (9001 + 9900s + 9990 + 9999)
+	doBloco9, declarado := 0, ""
+	for _, l := range linhas {
+		reg := strings.Split(l, "|")[1]
+		if strings.HasPrefix(reg, "9") {
+			doBloco9++
+		}
+		if reg == "9990" {
+			declarado = strings.Split(l, "|")[2]
+		}
+	}
+	if declarado != strconv.Itoa(doBloco9) {
+		t.Errorf("9990 declara %s, mas o Bloco 9 tem %d linhas", declarado, doBloco9)
+	}
+}
+
 func TestWriteRegistro0500_ValidaNaturezaEIndicador(t *testing.T) {
 	monta := func(codNat, indCta string) (panicou bool) {
 		defer func() { panicou = recover() != nil }()
@@ -1865,5 +1912,111 @@ func TestWriteRegistro0500_ValidaNaturezaEIndicador(t *testing.T) {
 	}
 	if !monta("01", "X") {
 		t.Error("IND_CTA invalido deveria entrar em panico")
+	}
+}
+
+// Os tres registros abaixo tinham writer pronto e ninguem os chamava: o
+// consumidor preenchia e a linha nunca saia no arquivo. O ACBr chama E112 e
+// E113 de dentro do laco do E111, e o E115 a partir do E110.
+func TestBlocoE_E112_E113_E115_SaemNoArquivo(t *testing.T) {
+	f := NewSPEDFiscal()
+	f.Bloco0.Registro0000.CodVer = VlVersao103
+	b := f.BlocoE
+
+	e111 := &RegistroE111{CodAjApur: "SP000001", VlAjApur: 10}
+	e111.RegistroE112 = []*RegistroE112{{NumDA: "DA1", NumProc: "P1"}}
+	e111.RegistroE113 = []*RegistroE113{{CodPart: "PART1", CodItem: "IT1", VlAjItem: 3}}
+
+	pai := &RegistroE110{}
+	pai.RegistroE111 = []*RegistroE111{e111}
+	pai.RegistroE115 = []*RegistroE115{{CodInfAdic: "SP90", VlInfAdic: 7}}
+
+	b.writeRegistroE111(pai)
+	b.writeRegistroE115(pai)
+
+	achou := func(reg string) bool {
+		for _, l := range b.Conteudo {
+			if strings.HasPrefix(l, "|"+reg+"|") {
+				return true
+			}
+		}
+		return false
+	}
+	for _, reg := range []string{"E111", "E112", "E113", "E115"} {
+		if !achou(reg) {
+			t.Errorf("%s nao saiu no arquivo: %v", reg, b.Conteudo)
+		}
+	}
+	// O E112/E113 saem logo apos a linha do E111 a que pertencem.
+	if b.Conteudo[0][:6] != "|E111|" || b.Conteudo[1][:6] != "|E112|" {
+		t.Errorf("ordem errada: %v", b.Conteudo)
+	}
+}
+
+// No D100 o ACBr zera a chave do CT-e so quando o documento e inutilizado (05),
+// e zera os valores em 02/03/04/05.
+func TestWriteRegistroD100_InutilizadoZeraChaveECancelaValores(t *testing.T) {
+	const chave = "35260112345678901234550010000000011000000017"
+	// O parametro nulo do LFill/DFill so embranquece valor ZERO -- nunca
+	// sobrescreve valor preenchido. Por isso o teste usa zeros: e a unica
+	// situacao em que o efeito de booConsiderarComoValorNulo e observavel.
+	monta := func(sit CodSit) string {
+		f := NewSPEDFiscal()
+		f.DtIni = time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+		b := f.BlocoD
+		b.DtIni = f.DtIni
+		b.RegistroD001.RegistroD100 = []*RegistroD100{{
+			CodPart: "P1", CodMod: "57", CodSit: sit, NumDoc: "1", ChvCTe: chave,
+		}}
+		b.writeRegistroD100()
+		return b.Conteudo[0]
+	}
+
+	regular := monta(SitRegular)
+	if !strings.Contains(regular, chave) {
+		t.Errorf("documento regular deveria manter a chave: %q", regular)
+	}
+	if !strings.Contains(regular, "|0,00|") {
+		t.Errorf("documento regular deveria emitir 0,00 nos valores zerados: %q", regular)
+	}
+
+	// Cancelado: valores zerados saem vazios; a chave continua.
+	canc := monta(SitCancelado)
+	if strings.Contains(canc, "|0,00|") {
+		t.Errorf("cancelado deveria embranquecer os valores zerados: %q", canc)
+	}
+	if !strings.Contains(canc, chave) {
+		t.Errorf("cancelado nao zera a chave, so o inutilizado: %q", canc)
+	}
+
+	// Inutilizado: alem dos valores, a chave tambem sai vazia.
+	inut := monta(SitNumInutilizada)
+	if strings.Contains(inut, chave) {
+		t.Errorf("inutilizado deveria zerar a chave: %q", inut)
+	}
+	if strings.Contains(inut, "|0,00|") {
+		t.Errorf("inutilizado deveria embranquecer os valores zerados: %q", inut)
+	}
+}
+
+// O D100 remapeia IND_FRT com corte em 01/07/2012, diferente do C100
+// (01/01/2012 e 01/01/2018). Replicado como esta no ACBr.
+func TestIndFrt_StringEmD100_DifereDoC100(t *testing.T) {
+	maio2012 := time.Date(2012, 5, 1, 0, 0, 0, 0, time.UTC)
+	// Em maio/2012 o C100 ja usa a tabela nova e o D100 ainda usa a antiga.
+	if got := FrtContaEmitente.StringEm(maio2012); got != "0" {
+		t.Errorf("C100 em 05/2012: esperado 0, veio %q", got)
+	}
+	if got := FrtContaEmitente.StringEmD100(maio2012); got != "1" {
+		t.Errorf("D100 em 05/2012: esperado 1, veio %q", got)
+	}
+
+	// De 2018 em diante o C100 passa a emitir 3 e 4; o D100 nunca emite.
+	jan2018 := time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC)
+	if got := FrtProprioPorContaRemetente.StringEm(jan2018); got != "3" {
+		t.Errorf("C100 em 2018: esperado 3, veio %q", got)
+	}
+	if got := FrtProprioPorContaRemetente.StringEmD100(jan2018); got != "0" {
+		t.Errorf("D100 em 2018: esperado 0, veio %q", got)
 	}
 }

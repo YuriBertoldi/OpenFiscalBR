@@ -31,9 +31,9 @@ type RegistroB001 struct {
 	RegistroB500 []*RegistroB500
 }
 
-// NewRegistroB001 cria um novo RegistroB001 com IndDad=1 (sem dados).
+// NewRegistroB001 cria um novo RegistroB001 com IndMov=1 (sem dados).
 func NewRegistroB001() *RegistroB001 {
-	return &RegistroB001{OpenBlocos: OpenBlocos{IndDad: 1}}
+	return &RegistroB001{OpenBlocos: OpenBlocos{IndMov: 1}}
 }
 
 // RegistroB020 - Nota Fiscal (codigo 01), NF-e (codigo 55),

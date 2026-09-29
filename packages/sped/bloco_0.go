@@ -58,11 +58,11 @@ type Registro0001 struct {
 	Registro0600 []*Registro0600 // Centro de custos
 }
 
-// NewRegistro0001 cria um novo Registro0001 com IndDad=1 (sem dados),
+// NewRegistro0001 cria um novo Registro0001 com IndMov=1 (sem dados),
 // indicando que o bloco inicialmente nao possui movimentacao.
 func NewRegistro0001() *Registro0001 {
 	return &Registro0001{
-		OpenBlocos: OpenBlocos{IndDad: 1},
+		OpenBlocos: OpenBlocos{IndMov: 1},
 	}
 }
 

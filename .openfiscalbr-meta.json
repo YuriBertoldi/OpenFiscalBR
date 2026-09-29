@@ -1,6 +1,176 @@
 {
-  "projectName": "OpenFiscalBR",
-  "license": "LGPL-2.1-or-later",
+  "components": {
+    "ACBrComum": {
+      "delphiFileHashes": {
+        "ACBrTXTClass.pas": "sha256:c44043fc5dd14bf504c1485badda7180d1ae1787b88fd0dcc40432d1189c42eb"
+      },
+      "delphiSourcePath": "C:\\Sistemas\\Componentes\\DelphiXE3\\ACBR\\Fontes\\ACBrTXT",
+      "goFiles": [
+        "base.go",
+        "doc.go",
+        "errors.go",
+        "txt_class.go",
+        "txt_class_test.go",
+        "util.go"
+      ],
+      "goPackage": "comum",
+      "lastConvertedAt": "2026-09-29T13:42:59-03:00"
+    },
+    "ACBrDFe.RTC": {
+      "delphiFileHashes": {
+        "ACBrDFe.RTC.Classes.pas": "sha256:795ccedd6d66266d61210d29060c9e86801c1263f9a405982638520df0fc9c59",
+        "ACBrDFe.RTC.IniReader.pas": "sha256:61f8065299c4c6a459d772404fc41ae5099c5e3301b6dc5944fc3cbeff3de0ed",
+        "ACBrDFe.RTC.IniWriter.pas": "sha256:73fb56bf1802a9ef6dc3c2e8f85dae3bd025072c654a6fe610d74b908e674621",
+        "ACBrDFe.RTC.XmlReader.pas": "sha256:37b566b9aae918552a56b48a5b61c6e4e2a266dd2125bf3e5ba1cdd6feaf9ce0"
+      },
+      "delphiSourcePath": "C:\\Sistemas\\Componentes\\DelphiXE3\\ACBR\\Fontes\\ACBrDFe",
+      "escopo": "classes + leitor XML completos; ini apenas os grupos usados pela NFGas (sem gIBSCBSMono/IS)",
+      "goFiles": [
+        "classes.go",
+        "conversao.go",
+        "doc.go",
+        "ini.go",
+        "rtc_test.go",
+        "xml_reader.go"
+      ],
+      "goPackage": "rtc",
+      "lastConvertedAt": "2026-09-29T13:44:31-03:00"
+    },
+    "ACBrNFGas": {
+      "delphiFileHashes": {
+        "ACBrNFGas.Classes.pas": "sha256:435ce892a8a55bbcd193c1e2978e16e2a01e8919e2612546b22db1d5ba35d694",
+        "ACBrNFGas.ConsSit.pas": "sha256:d5b123b49c676231166e2e9bacb08a50c12239144508796b601d3dc1aa673cd5",
+        "ACBrNFGas.Consts.pas": "sha256:53ed6ab70a6dfc1bac20ce0c9dc0ec4df7d721b1511933d7a2fda22155d8531c",
+        "ACBrNFGas.Conversao.pas": "sha256:cd7fc2b4aa04bb8ed179c2c576472acb207f9015ab8f51adae95d0a7def8a08b",
+        "ACBrNFGas.EnvEvento.pas": "sha256:b93a83b4ee936e0649838ffbb2bce4f57cf2827b60c38f55b399ced7e35aef2a",
+        "ACBrNFGas.EventoClass.pas": "sha256:536736e2b95ccdf3b13ad65bcef22ef23b7217011aef2dad997e4aca4345b382",
+        "ACBrNFGas.IniReader.pas": "sha256:4c2ca8bdd619a435bdd083a3f3b7645696843262234a0b97199408c6ea7645f4",
+        "ACBrNFGas.IniWriter.pas": "sha256:ffd8346d0e93137134076781f4ff4a620a51c0c9b319054a3f0de8d162f8e5ca",
+        "ACBrNFGas.RetConsSit.pas": "sha256:362b190aa19bd02f1820b80e1eaf9ac44260633061465cfe5733d3090efda846",
+        "ACBrNFGas.RetEnvEvento.pas": "sha256:593a56edb1e8c6014ac6940534d34b321f68a74bb337683eaf78e96bc8d40552",
+        "ACBrNFGas.ValidarRegrasdeNegocio.pas": "sha256:506ba2003d2942c77bc0a7ab14b29cbb3a40b471b24dbc21bf527d71c95cc027",
+        "ACBrNFGas.XmlReader.pas": "sha256:b6873d10379a08d541c9b594f2fc1afe5898aa3448a325dfcec36bade9194271",
+        "ACBrNFGas.XmlWriter.pas": "sha256:a7f13d009794642624a88533b223e2c52bff4b2e207d0e40abc86bf8f4378443",
+        "ACBrNFGas.pas": "sha256:7bc316fd55698691635e25ca7f115405d68e840b3ef28992653db15acd07defa",
+        "ACBrNFGasConfiguracoes.pas": "sha256:b0f937a0da9548852374c12a2a99fa8bdb337a26e436028dfb322f255fe547da",
+        "ACBrNFGasNotasFiscais.pas": "sha256:dc5350630f96a3377379a0ef788082c4b1ce484b3d13b41862425d28f1a9be5e",
+        "ACBrNFGasWebServices.pas": "sha256:35f29dd1f20d475541c788a302c747a367a4b743a6b0f3443bbd95dd1894dbb7"
+      },
+      "delphiSourcePath": "C:\\Sistemas\\Componentes\\DelphiXE3\\ACBR\\Fontes\\ACBrDFe\\ACBrNFGas",
+      "escopo": "leitura (XML, lote, eventos, consulta, ini); emissao em stubs",
+      "goFiles": [
+        "classes.go",
+        "configuracoes.go",
+        "consts.go",
+        "conversao.go",
+        "doc.go",
+        "errors.go",
+        "evento.go",
+        "evento_reader.go",
+        "ini_reader.go",
+        "ini_writer.go",
+        "nfgas.go",
+        "nfgas_test.go",
+        "notas_fiscais.go",
+        "regras_negocio.go",
+        "ret_cons_sit.go",
+        "types.go",
+        "web_services.go",
+        "xml_reader.go",
+        "xml_writer.go"
+      ],
+      "goPackage": "nfgas",
+      "lastConvertedAt": "2026-09-29T13:44:31-03:00"
+    },
+    "ACBrSPEDFiscal": {
+      "delphiFileHashes": {
+        "ACBrEFDBloco_0.pas": "sha256:292505291635c37c23b26698db2367722951603c09e1e8480b8f031c297e2f11",
+        "ACBrEFDBloco_0_Class.pas": "sha256:809bdcf7f5094ede3b4a42f02fe5cb18136d11002855e8c8bff1e7e76f0e2be3",
+        "ACBrEFDBloco_0_Events.pas": "sha256:5089755fb7fd384308df9bf554634da9167250cf1c025de680ce487c792251f0",
+        "ACBrEFDBloco_1.pas": "sha256:148473e8555fd0ff1e057968c817a2e38e307d41119f4233c63468e203030178",
+        "ACBrEFDBloco_1_Class.pas": "sha256:6f3ea603e63792c64ec79db0577296ca171c49f91a2d47fa3048ccf7b7e20020",
+        "ACBrEFDBloco_9.pas": "sha256:664c85f99fb2b769551145b395e2027610d7ddca78001f20ac34ba7cad2fbbcf",
+        "ACBrEFDBloco_9_Class.pas": "sha256:3cf0fe5f939974c39da2faf6564cec5319469e868c5bdd830116a99185d3fd83",
+        "ACBrEFDBloco_B.pas": "sha256:a2e6b0abaa991bde38759d959d058b9affd124b43ed7835070bbe09208600265",
+        "ACBrEFDBloco_B_Class.pas": "sha256:23bd4e81e5e75713f0d86ebe1fbef1a541d8d7179784c59e6459c4a7b8f60c92",
+        "ACBrEFDBloco_B_Events.pas": "sha256:0cd452fd5202134c02d895d3c14d871f660aab0f39d67b122eb7df6837db7ad8",
+        "ACBrEFDBloco_C.pas": "sha256:7db1650366deb13ed131f2b28b207fe8ad4ac0e30caa2e15aa1e195ecc157156",
+        "ACBrEFDBloco_C_Class.pas": "sha256:b1db0f1e662005f6d9e639a1b32e8545ec11aac396f1c8db5dbc02623c6503f1",
+        "ACBrEFDBloco_C_Events.pas": "sha256:cb0d339ba9e66d5e3aed15abddb4b544e0b6e1d053e0421b76da44ef3aa575c3",
+        "ACBrEFDBloco_D.pas": "sha256:a15d1d85910f80e258fc1e0194cddd5e4ba2aaf01b10f73e0a85cb0c340c902c",
+        "ACBrEFDBloco_D_Class.pas": "sha256:b5b439e6ce8762410ddbb7d245cf6242b317d871952034dc052c2fbdc941bd5c",
+        "ACBrEFDBloco_D_Events.pas": "sha256:8ab1b755f982f0b126e5d31db81980804275049aa9461ded3c267f53a36e63ec",
+        "ACBrEFDBloco_E.pas": "sha256:1f5dfef8200d1922fb4681b8fd1d25f3560b7f3ff6a4e98a764f3825bed31a48",
+        "ACBrEFDBloco_E_Class.pas": "sha256:9f4d25e5a363aa35508bef4b065a3c0fa5da3f96f5b3db4d1b21f78524e7e4fc",
+        "ACBrEFDBloco_E_Events.pas": "sha256:889aa6124b68ef64a83a37fab11edea39a2a8a2994677b1e67b95bb5b912f606",
+        "ACBrEFDBloco_G.pas": "sha256:5fa835e3d93d4c8c820df4aa126f97ef09a523ee1957129f017c72af605ed1d8",
+        "ACBrEFDBloco_G_Class.pas": "sha256:2e3d48663cd3c60f3d4881492c4ff8ec61bdaa748dcd3708dd7e82027608cfc8",
+        "ACBrEFDBloco_H.pas": "sha256:20929dc7bc828685a3a265c99f4524b34c30e4174a6042d7b70e7310fb0efc8f",
+        "ACBrEFDBloco_H_Class.pas": "sha256:509c1a39678710f74fdca851504c6ac71624099f722f447bc285b7b4c842af2c",
+        "ACBrEFDBloco_K.pas": "sha256:1378d4dacbb749e47b646f284079fbce2079e9192692078be31c6899c1f425ba",
+        "ACBrEFDBloco_K_Class.pas": "sha256:66f7352cc09d6fab3980935b939b358bd17d92253b4af84dd46286f461848ae0",
+        "ACBrEFDBlocos.pas": "sha256:fa33f00859829af08d82ae3b749f04bb2423f530a18d050ba7b446fb91810b70",
+        "ACBrSpedFiscal.pas": "sha256:6d2e8d57fe2cc61812dbec03216c529a3cce6fe08722a3c6f2791d684504eeaa"
+      },
+      "delphiSourcePath": "C:\\Sistemas\\Componentes\\DelphiXE3\\ACBR\\Fontes\\ACBrTXT\\ACBrSPED\\ACBrSPEDFiscal",
+      "goFiles": [
+        "bloco_0.go",
+        "bloco_1.go",
+        "bloco_9.go",
+        "bloco_b.go",
+        "bloco_c.go",
+        "bloco_d.go",
+        "bloco_e.go",
+        "bloco_g.go",
+        "bloco_h.go",
+        "bloco_k.go",
+        "bloco_writers.go",
+        "cst_types.go",
+        "doc.go",
+        "errors.go",
+        "event_types.go",
+        "fiscal.go",
+        "fiscal_types.go",
+        "open_blocos.go",
+        "sped.go",
+        "sped_test.go",
+        "write_bloco_0.go",
+        "write_blocos.go"
+      ],
+      "goPackage": "sped",
+      "lastConvertedAt": "2026-09-29T13:42:59-03:00"
+    },
+    "ACBrXmlBase": {
+      "delphiFileHashes": {
+        "ACBrDFe.Conversao.pas": "sha256:521a38d6aad2a5f7535c359874851db2cfd7067b23785e781a3101483ecbd429",
+        "ACBrDFeComum.Proc.pas": "sha256:c8f12647abd868195f65a38fc1f3fb677ed07df53cb7b892bb3e7f4b298943c7",
+        "ACBrDFeUtil.pas": "sha256:8dfd8e87c4422345a4e3e748df733e86ca9500cb4d437668ee0e2e90cf1f406f",
+        "ACBrValidador.pas": "sha256:8ab9b8e84e4a263baa00473631e0820edc262ae1af6df598b198930cfc913493",
+        "ACBrXmlBase.pas": "sha256:39ea35f8a3d28e6ab812272edda52d8865a70588aff660ed70b5c425c9ab21b4",
+        "ACBrXmlDocument.pas": "sha256:a519735234f1af9ae0cd7c6517b56218055f01220aee93a0bc87471c353b081b",
+        "ACBrXmlReader.pas": "sha256:d03b8cc4248b896651605a012e9c8a2d0e835df39eb7e8d669c7bd7db8c70ac9"
+      },
+      "delphiSourcePath": "C:\\Sistemas\\Componentes\\DelphiXE3\\ACBR\\Fontes",
+      "escopo": "base de LEITURA de DFe: mini-DOM, tipos de campo, enums DFe, validador CNPJ/CPF, chave de acesso, ini; geracao de XML fica para a fase de emissao",
+      "goFiles": [
+        "chave_acesso.go",
+        "conversao.go",
+        "conversao_dfe.go",
+        "doc.go",
+        "errors.go",
+        "ini.go",
+        "pcn_test.go",
+        "proc_dfe.go",
+        "signature.go",
+        "tipos_campo.go",
+        "validador.go",
+        "xml_node.go"
+      ],
+      "goPackage": "pcn",
+      "lastConvertedAt": "2026-09-29T13:44:31-03:00"
+    }
+  },
   "derivedFrom": "Projeto ACBr (http://projetoacbr.com.br)",
-  "components": {}
+  "license": "LGPL-2.1-or-later",
+  "projectName": "OpenFiscalBR"
 }

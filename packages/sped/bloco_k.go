@@ -25,9 +25,9 @@ type RegistroK001 struct {
 	RegistroK100 []*RegistroK100
 }
 
-// NewRegistroK001 cria um novo RegistroK001 com IndDad=1 (sem dados).
+// NewRegistroK001 cria um novo RegistroK001 com IndMov=1 (sem dados).
 func NewRegistroK001() *RegistroK001 {
-	return &RegistroK001{OpenBlocos: OpenBlocos{IndDad: 1}}
+	return &RegistroK001{OpenBlocos: OpenBlocos{IndMov: 1}}
 }
 
 // RegistroK010 - Informacao sobre o Tipo de Leiaute (K010)

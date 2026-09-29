@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenFiscalBR — Demo NFGas (leitura e importação em lote)</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>OpenFiscalBR — NFGas</h1>
+    <p>Nota Fiscal de Fornecimento de Gás Canalizado · modelo 76 · leiaute 1.00</p>
+    <p class="aviso">Esta demo cobre a <strong>leitura</strong> (XML, lote, evento, consulta, .ini).
+      A emissão será adicionada em fase futura.</p>
+  </header>
+
+  <main>
+    <section class="entrada">
+      <h2>Entrada</h2>
+      <div class="abas" role="tablist">
+        <button class="aba ativa" data-acao="ler">Ler XML</button>
+        <button class="aba" data-acao="ler-lote">Importar lote</button>
+        <button class="aba" data-acao="validar">Validar</button>
+        <button class="aba" data-acao="ler-evento">Evento</button>
+        <button class="aba" data-acao="ler-consulta">Consulta</button>
+        <button class="aba" data-acao="ler-ini">Ler .ini</button>
+      </div>
+
+      <textarea id="conteudo" spellcheck="false"
+        placeholder="Cole aqui o XML da NFGas, o lote de XMLs concatenados, o XML de evento/consulta ou o .ini"></textarea>
+
+      <div class="acoes">
+        <label class="botao secundario">
+          Abrir arquivo…
+          <input type="file" id="arquivo" accept=".xml,.ini,.txt" hidden>
+        </label>
+        <button id="processar" class="botao">Processar</button>
+      </div>
+      <p id="erro" class="erro" hidden></p>
+    </section>
+
+    <section class="saida">
+      <h2>Resultado</h2>
+      <div id="resumo" class="resumo" hidden></div>
+      <pre id="resultado">Nenhum documento processado ainda.</pre>
+    </section>
+  </main>
+
+  <footer>
+    <p>OpenFiscalBR — derivado do <a href="http://projetoacbr.com.br">Projeto ACBr</a> · LGPL v2.1+</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

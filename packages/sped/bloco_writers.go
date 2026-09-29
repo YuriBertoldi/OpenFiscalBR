@@ -168,6 +168,61 @@ type BlocoC struct {
 
 	// Counters for sub-registers
 	RegistroC100Count int
+	RegistroC115Count int
+	RegistroC116Count int
+	RegistroC130Count int
+	RegistroC140Count int
+	RegistroC141Count int
+	RegistroC160Count int
+	RegistroC165Count int
+	RegistroC171Count int
+	RegistroC172Count int
+	RegistroC173Count int
+	RegistroC174Count int
+	RegistroC175Count int
+	RegistroC176Count int
+	RegistroC177Count int
+	RegistroC178Count int
+	RegistroC179Count int
+	RegistroC180Count int
+	RegistroC181Count int
+	RegistroC191Count int
+	RegistroC310Count int
+	RegistroC320Count int
+	RegistroC321Count int
+	RegistroC330Count int
+	RegistroC370Count int
+	RegistroC380Count int
+	RegistroC390Count int
+	RegistroC410Count int
+	RegistroC420Count int
+	RegistroC425Count int
+	RegistroC430Count int
+	RegistroC460Count int
+	RegistroC465Count int
+	RegistroC470Count int
+	RegistroC480Count int
+	RegistroC490Count int
+	RegistroC510Count int
+	RegistroC590Count int
+	RegistroC591Count int
+	RegistroC595Count int
+	RegistroC597Count int
+	RegistroC601Count int
+	RegistroC610Count int
+	RegistroC690Count int
+	RegistroC790Count int
+	RegistroC791Count int
+	RegistroC810Count int
+	RegistroC815Count int
+	RegistroC850Count int
+	RegistroC855Count int
+	RegistroC857Count int
+	RegistroC870Count int
+	RegistroC880Count int
+	RegistroC890Count int
+	RegistroC895Count int
+	RegistroC897Count int
 	RegistroC101Count int
 	RegistroC105Count int
 	RegistroC110Count int
@@ -211,6 +266,61 @@ func (b *BlocoC) LimpaRegistros() {
 	b.RegistroC001 = NewRegistroC001()
 	b.RegistroC990 = &RegistroC990{}
 	b.RegistroC100Count = 0
+	b.RegistroC115Count = 0
+	b.RegistroC116Count = 0
+	b.RegistroC130Count = 0
+	b.RegistroC140Count = 0
+	b.RegistroC141Count = 0
+	b.RegistroC160Count = 0
+	b.RegistroC165Count = 0
+	b.RegistroC171Count = 0
+	b.RegistroC172Count = 0
+	b.RegistroC173Count = 0
+	b.RegistroC174Count = 0
+	b.RegistroC175Count = 0
+	b.RegistroC176Count = 0
+	b.RegistroC177Count = 0
+	b.RegistroC178Count = 0
+	b.RegistroC179Count = 0
+	b.RegistroC180Count = 0
+	b.RegistroC181Count = 0
+	b.RegistroC191Count = 0
+	b.RegistroC310Count = 0
+	b.RegistroC320Count = 0
+	b.RegistroC321Count = 0
+	b.RegistroC330Count = 0
+	b.RegistroC370Count = 0
+	b.RegistroC380Count = 0
+	b.RegistroC390Count = 0
+	b.RegistroC410Count = 0
+	b.RegistroC420Count = 0
+	b.RegistroC425Count = 0
+	b.RegistroC430Count = 0
+	b.RegistroC460Count = 0
+	b.RegistroC465Count = 0
+	b.RegistroC470Count = 0
+	b.RegistroC480Count = 0
+	b.RegistroC490Count = 0
+	b.RegistroC510Count = 0
+	b.RegistroC590Count = 0
+	b.RegistroC591Count = 0
+	b.RegistroC595Count = 0
+	b.RegistroC597Count = 0
+	b.RegistroC601Count = 0
+	b.RegistroC610Count = 0
+	b.RegistroC690Count = 0
+	b.RegistroC790Count = 0
+	b.RegistroC791Count = 0
+	b.RegistroC810Count = 0
+	b.RegistroC815Count = 0
+	b.RegistroC850Count = 0
+	b.RegistroC855Count = 0
+	b.RegistroC857Count = 0
+	b.RegistroC870Count = 0
+	b.RegistroC880Count = 0
+	b.RegistroC890Count = 0
+	b.RegistroC895Count = 0
+	b.RegistroC897Count = 0
 	b.RegistroC101Count = 0
 	b.RegistroC105Count = 0
 	b.RegistroC110Count = 0
@@ -265,6 +375,21 @@ type BlocoD struct {
 	RegistroD195Count int
 	RegistroD197Count int
 	RegistroD300Count int
+	RegistroD301Count int
+	RegistroD310Count int
+	RegistroD355Count int
+	RegistroD360Count int
+	RegistroD365Count int
+	RegistroD370Count int
+	RegistroD390Count int
+	RegistroD410Count int
+	RegistroD411Count int
+	RegistroD420Count int
+	RegistroD510Count int
+	RegistroD530Count int
+	RegistroD590Count int
+	RegistroD610Count int
+	RegistroD690Count int
 	RegistroD350Count int
 	RegistroD400Count int
 	RegistroD500Count int
@@ -314,6 +439,21 @@ func (b *BlocoD) LimpaRegistros() {
 	b.RegistroD195Count = 0
 	b.RegistroD197Count = 0
 	b.RegistroD300Count = 0
+	b.RegistroD301Count = 0
+	b.RegistroD310Count = 0
+	b.RegistroD355Count = 0
+	b.RegistroD360Count = 0
+	b.RegistroD365Count = 0
+	b.RegistroD370Count = 0
+	b.RegistroD390Count = 0
+	b.RegistroD410Count = 0
+	b.RegistroD411Count = 0
+	b.RegistroD420Count = 0
+	b.RegistroD510Count = 0
+	b.RegistroD530Count = 0
+	b.RegistroD590Count = 0
+	b.RegistroD610Count = 0
+	b.RegistroD690Count = 0
 	b.RegistroD350Count = 0
 	b.RegistroD400Count = 0
 	b.RegistroD500Count = 0
@@ -599,6 +739,7 @@ type Bloco1 struct {
 	Registro1391Count int
 	Registro1400Count int
 	Registro1500Count int
+	Registro1510Count int
 	Registro1600Count int
 	Registro1601Count int
 	Registro1700Count int
@@ -608,6 +749,8 @@ type Bloco1 struct {
 	Registro1910Count int
 	Registro1920Count int
 	Registro1921Count int
+	Registro1922Count int
+	Registro1923Count int
 	Registro1925Count int
 	Registro1926Count int
 	Registro1960Count int
@@ -650,6 +793,7 @@ func (b *Bloco1) LimpaRegistros() {
 	b.Registro1391Count = 0
 	b.Registro1400Count = 0
 	b.Registro1500Count = 0
+	b.Registro1510Count = 0
 	b.Registro1600Count = 0
 	b.Registro1601Count = 0
 	b.Registro1700Count = 0
@@ -659,6 +803,8 @@ func (b *Bloco1) LimpaRegistros() {
 	b.Registro1910Count = 0
 	b.Registro1920Count = 0
 	b.Registro1921Count = 0
+	b.Registro1922Count = 0
+	b.Registro1923Count = 0
 	b.Registro1925Count = 0
 	b.Registro1926Count = 0
 	b.Registro1960Count = 0

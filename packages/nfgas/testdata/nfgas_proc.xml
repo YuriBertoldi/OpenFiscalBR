@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nfgasProc versao="1.00" xmlns="http://www.portalfiscal.inf.br/nfgas">
+  <NFGas>
+    <infNFGas versao="1.00" Id="NFGas35260311222333000181760010000000011000000018">
+      <ide>
+        <cUF>35</cUF>
+        <tpAmb>1</tpAmb>
+        <mod>76</mod>
+        <serie>1</serie>
+        <nNF>1</nNF>
+        <cNF>0000001</cNF>
+        <cDV>8</cDV>
+        <dhEmi>2026-03-15T10:30:00-03:00</dhEmi>
+        <tpEmis>1</tpEmis>
+        <nSiteAutoriz>0</nSiteAutoriz>
+        <cMunFG>3550308</cMunFG>
+        <finNFGas>0</finNFGas>
+        <tpFat>1</tpFat>
+        <verProc>OpenFiscalBR 1.0</verProc>
+      </ide>
+      <emit>
+        <CNPJ>11222333000181</CNPJ>
+        <IE>111222333444</IE>
+        <xNome>Distribuidora de Gas Teste LTDA</xNome>
+        <enderEmit>
+          <xLgr>Rua das Tubulacoes</xLgr>
+          <nro>1000</nro>
+          <xBairro>Industrial</xBairro>
+          <cMun>3550308</cMun>
+          <xMun>Sao Paulo</xMun>
+          <CEP>01310100</CEP>
+          <UF>SP</UF>
+        </enderEmit>
+      </emit>
+      <dest>
+        <xNome>Consumidor Teste</xNome>
+        <CPF>52998224725</CPF>
+        <enderDest>
+          <xLgr>Avenida Central</xLgr>
+          <nro>200</nro>
+          <xBairro>Centro</xBairro>
+          <cMun>3550308</cMun>
+          <xMun>Sao Paulo</xMun>
+          <CEP>01001000</CEP>
+          <UF>SP</UF>
+        </enderDest>
+      </dest>
+      <det nItem="1">
+        <gNormal>
+          <prod>
+            <indOrigemQtd>2</indOrigemQtd>
+            <cProd>GAS001</cProd>
+            <xProd>Gas Natural Canalizado</xProd>
+            <cClass>0100101</cClass>
+            <CFOP>5253</CFOP>
+            <uMed>1</uMed>
+            <qFaturada>100.0000</qFaturada>
+            <vItem>3.0000000000</vItem>
+            <vProd>300.0000000000</vProd>
+          </prod>
+          <imposto>
+            <orig>0</orig>
+            <ICMS00>
+              <CST>00</CST><modBC>3</modBC><vBC>300.00</vBC>
+              <pICMS>18.00</pICMS><vICMS>54.00</vICMS>
+            </ICMS00>
+            <PIS><CST>01</CST><vBC>300.00</vBC><pPIS>1.6500</pPIS><vPIS>4.95</vPIS></PIS>
+            <COFINS><CST>01</CST><vBC>300.00</vBC><pCOFINS>7.6000</pCOFINS><vCOFINS>22.80</vCOFINS></COFINS>
+          </imposto>
+        </gNormal>
+      </det>
+      <total>
+        <vProd>300.00</vProd>
+        <ICMSTot><vBC>300.00</vBC><vICMS>54.00</vICMS></ICMSTot>
+        <vCOFINS>22.80</vCOFINS>
+        <vPIS>4.95</vPIS>
+        <vNF>300.00</vNF>
+        <vTotDFe>300.00</vTotDFe>
+      </total>
+      <gFat>
+        <CompetFat>202603</CompetFat>
+        <dVencFat>2026-04-10</dVencFat>
+      </gFat>
+      <gAgencia>
+        <nomeAgenciaAtend>Agencia Central</nomeAgenciaAtend>
+      </gAgencia>
+    </infNFGas>
+    <infNFGasSupl>
+      <qrCodNFGas>https://www.nfgas.fazenda.sp.gov.br/consulta?chNFGas=35260311222333000181760010000000011000000018</qrCodNFGas>
+    </infNFGasSupl>
+  </NFGas>
+  <protNFGas versao="1.00">
+    <infProt Id="ID135260000000001">
+      <tpAmb>1</tpAmb>
+      <verAplic>SP_NFGAS_1.0.0</verAplic>
+      <chNFGas>35260311222333000181760010000000011000000018</chNFGas>
+      <dhRecbto>2026-03-15T11:00:00-03:00</dhRecbto>
+      <nProt>135260000000001</nProt>
+      <digVal>RGlnZXN0VmFsdWVUZXN0ZQ==</digVal>
+      <cStat>100</cStat>
+      <xMotivo>Autorizado o uso da NFGas</xMotivo>
+      <cMsg>1</cMsg>
+      <xMsg>Observacao do fisco</xMsg>
+    </infProt>
+  </protNFGas>
+</nfgasProc>

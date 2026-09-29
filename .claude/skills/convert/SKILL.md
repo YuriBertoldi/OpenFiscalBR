@@ -1,6 +1,6 @@
 ---
 name: convert
-description: "Converte um componente ACBr Delphi para package Go nativo do OpenFiscalBR. Escaneia os fontes .pas, resolve a ordem de dependencias entre layers, gera o package em packages/<pkg>/ com testes e README, gera a demo em demos/<pkg>/ e registra os hashes no .openfiscalbr-meta.json. Quando o package ja existe, entra em modo atualizacao e reporta as diferencas antes de aplicar. Use quando o usuario pedir para converter, portar ou migrar um componente ACBr (ACBrNFe, ACBrBoleto, ACBrPIXCD, PCNComum, ACBrDFe, ACBrSAT...) de Delphi para Go."
+description: "Converte um componente ACBr Delphi para package Go nativo do OpenFiscalBR, e atualiza um package ja existente quando o ACBr publica versao nova. Escaneia os fontes .pas, resolve a ordem de dependencias entre layers, gera o package em packages/<pkg>/ com testes e README, gera a demo em demos/<pkg>/ e registra os hashes no .openfiscalbr-meta.json. No modo atualizacao compara os hashes gravados, procura campo novo sob condicional de versao ou data, tabela de codigos remanejada, registro novo ou revogado e validacao nova, e reporta antes de aplicar. Use quando o usuario pedir para converter, portar ou migrar um componente ACBr (ACBrNFe, ACBrBoleto, ACBrPIXCD, PCNComum, ACBrDFe, ACBrSAT...) de Delphi para Go, ou para trazer para o Go uma atualizacao do ACBr."
 argument-hint: "<ComponentName> <DelphiSourcePath>"
 ---
 
@@ -100,39 +100,92 @@ como molde de referência — é a demo existente e já segue o padrão.
 Ou invoque `/gerar-demo <pkg>`, que faz exatamente este passo de forma isolada e tem os
 conjuntos de rotas por tipo de componente (DFe, Boleto, PIXCD, SAT).
 
-## PASSO 7 — Modo atualização
+## PASSO 7 — Modo atualização (o ACBr mudou)
 
-1. Leia os hashes anteriores do componente em `.openfiscalbr-meta.json`.
-2. Calcule o SHA256 atual de cada `.pas` do componente.
-3. Todos iguais → informe "Nenhuma alteração detectada nos fontes Delphi." e encerre.
-4. Para cada `.pas` alterado, compare com o `.go` correspondente e identifique: tipos novos ou
-   removidos, campos/properties novos ou removidos, valores novos em enums, métodos novos ou
-   removidos, mudanças de assinatura.
-5. Reporte antes de aplicar:
+O ACBr é atualizado a cada nova versão de leiaute. Este passo traz essas mudanças para um
+package **que já existe**, sem reconverter do zero e sem perder o que já foi corrigido à mão.
 
-   ```
-   ## Alterações detectadas em ACBrNFe
+### 7.1 — Ter uma linha de base
 
-   ### Arquivos Delphi modificados
-   - ACBrNFe.Classes.pas
-   - ACBrNFe.Conversao.pas
+```bash
+py ferramentas/comparar-campos.py <bloco> <registro>   # so funciona com fontes acessiveis
+```
 
-   ### Tipos novos
-   - TNewType em ACBrNFe.Classes.pas
+O modo de atualização depende de `.openfiscalbr-meta.json` ter os hashes da conversão
+anterior. **Se `components` estiver vazio para o componente, não há base de comparação** e
+qualquer resposta de "nenhuma alteração" é falsa. Nesse caso, rode `/sincronizar-meta` contra
+a cópia antiga dos fontes antes de mais nada, ou trate como auditoria completa (7.4).
 
-   ### Campos novos
-   - TCampo.NovoField: String em ACBrNFe.Classes.pas
+### 7.2 — O que mudou nos fontes
 
-   ### Valores novos em enum
-   - TipoEmissao: teNovoTipo em ACBrNFe.Conversao.pas
-   ```
+1. Calcule o SHA256 de cada `.pas` do componente e compare com `delphiFileHashes`.
+2. Todos iguais → "Nenhuma alteração detectada nos fontes Delphi." e encerre.
+3. Para cada `.pas` alterado, faça o diff contra a versão anterior se ela existir. Sem ela,
+   compare o `.pas` atual com o `.go` correspondente.
 
-6. Pergunte se deve aplicar. Ao aplicar:
-   - **preserve** todo bloco marcado com `// CUSTOM:` — é código escrito à mão que não tem
-     origem no Delphi e seria perdido
-   - acrescente os tipos, campos e valores de enum novos
-   - marque os removidos com `// DEPRECATED: removido do Delphi em <data>` em vez de apagar,
-     para não quebrar quem já importa o símbolo
+### 7.3 — O que procurar, em ordem de risco
+
+Atualização de ACBr quase nunca é "campo novo no fim". Procure, nesta ordem:
+
+| Mudança | Como aparece no diff | Risco se passar |
+|---|---|---|
+| **Campo novo sob condicional de versão** | `if COD_VER >= vlVersaoNNN` novo, ou constante de versão nova no enum | linha curta no período novo |
+| **Campo novo sob condicional de data** | `ifthen(DT_INI >= EncodeDate(...))` novo | idem |
+| **Tabela de códigos remanejada** | `case` novo dentro de `if DT_INI < ...` | código válido com significado errado |
+| **Registro novo** | `procedure WriteRegistroXxx` nova + classe nova | registro simplesmente ausente |
+| **Registro que deixou de existir** | `Exit` novo no topo, ou guarda de versão | registro emitido fora de vigência |
+| **Mudança de ordem** | posição de um `LFill` trocada | arquivo rejeitado, e nada acusa |
+| **Validação nova** | `Check(` novo | documento inválido gerado em silêncio |
+| **Tamanho/decimais alterados** | 2º e 3º argumentos do `LFill` | campo fora de layout |
+
+A constante de versão nova é o gatilho mais confiável: quando o ACBr ganha `vlVersaoNNN`,
+**todo `if COD_VER` do componente merece releitura**, não só os que apareceram no diff.
+
+### 7.4 — Aplicar
+
+Reporte antes de mexer:
+
+```
+## Alteracoes detectadas em ACBrNFe (v1.2.3 -> v1.3.0)
+
+### Fontes alterados
+- ACBrNFe.Classes.pas, ACBrNFe.Conversao.pas
+
+### Registros afetados
+- C170: campo VL_XXX novo a partir da versao 120
+- C500: tabela de IND_YYY remanejada para DT_INI >= 2027-01-01
+- C999: registro novo (sem equivalente em Go)
+
+### Regras de vigencia novas
+- 3 ocorrencias de COD_VER >= vlVersao120
+```
+
+Ao aplicar:
+
+- **Preserve todo bloco `// CUSTOM:`** — é código sem origem no Delphi e seria perdido.
+- **Preserve as divergências deliberadas já documentadas.** O package registra, no README,
+  comportamentos do ACBr reproduzidos de propósito e defeitos que decidimos não replicar.
+  Uma atualização não pode desfazê-los por acidente: releia essa seção antes de aplicar.
+- Campo novo sob condicional → helper próprio devolvendo `""` fora da vigência, ou `linha +=`
+  dentro de `if`, conforme o padrão já usado no package.
+- Removido do Delphi → `// DEPRECATED: removido do Delphi em <data>`, não apague; quem
+  importa o símbolo continua compilando.
+- Constante de versão nova → acrescente ao enum `VersaoLeiauteFiscal` **na ordem**, já que a
+  comparação é por `iota`.
+
+### 7.5 — Fechar a atualização
+
+Nesta ordem, sem pular:
+
+1. `py ferramentas/comparar-campos.py <bloco> <registros afetados>` — confira que a contagem
+   voltou a bater. Leia `ferramentas/README.md`: `OK` não prova correção, e a ferramenta não
+   compara nomes.
+2. **Teste por faixa** para cada vigência nova — um caso antes do corte e um depois. Sem isso
+   a regra nova não está coberta e some na próxima refatoração.
+3. `/validar-package <pkg>` — inclui a verificação de integridade das contagens do arquivo.
+4. Subagente `revisor-go` sobre os arquivos tocados.
+5. `/sincronizar-meta` para gravar os hashes novos. **Sem este passo a próxima atualização
+   fica cega**, porque volta a não ter linha de base.
 
 ## PASSO 7b — Auditoria de fidelidade
 
@@ -167,9 +220,27 @@ por build, `vet` ou teste; todas exigiram comparação com o `.pas`.
    Cada ocorrência é uma regra que precisa existir no Go.
 3. Confira também **hierarquia** (quem é filho de quem) e **nomes de campo** — não só a
    quantidade. Um struct copiado de outro registro tem a contagem certa e o conteúdo errado.
-4. Para o `sped`, use `ferramentas/comparar-campos.py` como primeira passada; leia o
+4. Confira a **cadeia de chamadas**: todo writer convertido é chamado por alguém, e pelo mesmo
+   pai que o chama no `.pas`. Writer órfão não quebra build nem teste — a linha simplesmente
+   não sai. No `sped` isso escondeu três registros (`E112`, `E113`, `E115`), e o que os revelou
+   foi o `unusedfunc` do `go vet`/diagnósticos, não a auditoria de campos.
+5. Para o `sped`, use `ferramentas/comparar-campos.py` como primeira passada; leia o
    `ferramentas/README.md` para os limites dela antes de confiar no `OK`.
-5. Chame o subagente `revisor-go` sobre o package.
+6. Chame o subagente `revisor-go` sobre o package.
+
+### Nomeie os campos como o Delphi nomeia
+
+A auditoria automática de nomes só funciona se o lado Go não abreviar. Duas regras práticas,
+ambas aprendidas corrigindo falso positivo:
+
+- **Campo de struct** repete o nome do layout (`VL_SLD_CREDOR_TRANSPORTAR` → `VlSldCredorTransportar`,
+  não `VlSldCredorTransp`). Abreviação economiza dez caracteres e custa uma auditoria.
+- **Parâmetro de helper compartilhado** repete o nome do campo que recebe. Um helper com
+  parâmetros abreviados cega a auditoria em todos os registros que o usam de uma vez.
+
+Quando o Delphi batiza uma variável local com nome próprio (`ChaveEletronicaCTe` no `D100`),
+registre o par em `ALIAS_GO`, no topo do comparador — não renomeie o campo Go para o nome da
+variável.
 
 ### Quando o Delphi de origem estiver errado
 
@@ -238,3 +309,9 @@ Formato da entrada no meta:
 - **Contador declarado precisa ser lido em algum lugar.** Se você gerar um campo de contagem,
   ligue-o ao consumidor na mesma conversão. No `sped` havia 130 contadores incrementados que
   nada lia, enquanto a contagem real usava outro mecanismo, incompleto.
+- **O package não expõe URL.** Nada de `net/http`, `encoding/json` ou template em
+  `packages/`; todo transporte vai para `demos/<pkg>`. O consumidor da biblioteca precisa
+  gerar o documento sem subir servidor.
+- **Confira as contagens gerando um arquivo de verdade.** Registro de totalização é valor
+  calculado, e nenhuma conferência de layout o alcança. O `9990` do `sped` declarava uma
+  linha a menos e passou por toda a auditoria campo a campo.

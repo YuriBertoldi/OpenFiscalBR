@@ -14,10 +14,10 @@ package sped
 // OpenBlocos is the base struct for all SPED blocks.
 // IND_DAD indicates if the block has data (0) or not (1).
 type OpenBlocos struct {
-	IndDad int // 0=com dados, 1=sem dados (default 1)
+	IndMov int // 0=com dados, 1=sem dados (default 1)
 }
 
-// NewOpenBlocos creates a new OpenBlocos with IndDad defaulting to 1 (sem dados).
+// NewOpenBlocos creates a new OpenBlocos with IndMov defaulting to 1 (sem dados).
 func NewOpenBlocos() *OpenBlocos {
-	return &OpenBlocos{IndDad: 1}
+	return &OpenBlocos{IndMov: 1}
 }

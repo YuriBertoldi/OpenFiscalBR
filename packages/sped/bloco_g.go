@@ -24,9 +24,9 @@ type RegistroG001 struct {
 	RegistroG110 []*RegistroG110
 }
 
-// NewRegistroG001 cria um novo RegistroG001 com IndDad=1 (sem dados).
+// NewRegistroG001 cria um novo RegistroG001 com IndMov=1 (sem dados).
 func NewRegistroG001() *RegistroG001 {
-	return &RegistroG001{OpenBlocos: OpenBlocos{IndDad: 1}}
+	return &RegistroG001{OpenBlocos: OpenBlocos{IndMov: 1}}
 }
 
 // RegistroG110 - ICMS - Ativo Permanente - CIAP
@@ -56,21 +56,21 @@ type RegistroG125 struct {
 	VlImobICMSDif float64
 	NumParc       string
 	VlParcPass    float64
-	VlParcApr     float64
+	VlParcAprop   float64
 	RegistroG126  []*RegistroG126
 	RegistroG130  []*RegistroG130
 }
 
 // RegistroG126 - Outros Creditos CIAP
 type RegistroG126 struct {
-	DtIni      time.Time
-	DtFin      time.Time
-	NumParc    string
-	VlParcPass float64
-	VlTribOC   float64
-	VlTotal    float64
-	IndPerSai  float64
-	VlParcApr  float64
+	DtIni       time.Time
+	DtFin       time.Time
+	NumParc     string
+	VlParcPass  float64
+	VlTribOC    float64
+	VlTotal     float64
+	IndPerSai   float64
+	VlParcAprop float64
 }
 
 // RegistroG130 - Identificacao do Documento Fiscal

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<retConsSitNFGas versao="1.00" xmlns="http://www.portalfiscal.inf.br/nfgas">
+  <tpAmb>1</tpAmb>
+  <verAplic>SP_NFGAS_1.0.0</verAplic>
+  <cStat>101</cStat>
+  <xMotivo>Cancelamento de NFGas homologado</xMotivo>
+  <cUF>35</cUF>
+  <nRec>351260000000123</nRec>
+  <dhRecbto>2026-03-16T09:10:00-03:00</dhRecbto>
+  <chNFGas>35260311222333000181760010000000011000000018</chNFGas>
+  <protNFGas versao="1.00">
+    <infProt Id="ID135260000000001">
+      <tpAmb>1</tpAmb>
+      <verAplic>SP_NFGAS_1.0.0</verAplic>
+      <chNFGas>35260311222333000181760010000000011000000018</chNFGas>
+      <dhRecbto>2026-03-15T11:00:00-03:00</dhRecbto>
+      <nProt>135260000000001</nProt>
+      <digVal>RGlnZXN0VmFsdWVUZXN0ZQ==</digVal>
+      <cStat>100</cStat>
+      <xMotivo>Autorizado o uso da NFGas</xMotivo>
+    </infProt>
+  </protNFGas>
+  <procEventoNFGas versao="1.00">
+    <retEventoNFGas versao="1.00">
+      <infEvento Id="ID110111352603112223330001817600100000000110000000181">
+        <tpAmb>1</tpAmb>
+        <verAplic>SP_NFGAS_1.0.0</verAplic>
+        <cOrgao>35</cOrgao>
+        <cStat>135</cStat>
+        <xMotivo>Evento registrado e vinculado a NFGas</xMotivo>
+        <chNFGas>35260311222333000181760010000000011000000018</chNFGas>
+        <tpEvento>110111</tpEvento>
+        <xEvento>Cancelamento</xEvento>
+        <nSeqEvento>1</nSeqEvento>
+        <dhRegEvento>2026-03-16T09:05:00-03:00</dhRegEvento>
+        <nProt>135260000000099</nProt>
+      </infEvento>
+    </retEventoNFGas>
+  </procEventoNFGas>
+</retConsSitNFGas>

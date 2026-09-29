@@ -282,6 +282,36 @@ func (t *TXTClass) Check(condition bool, msg string) {
 	}
 }
 
+// VDFill formata um valor opcional com o numero de casas decimais informado.
+// Equivale ao VDFill do ACBr, que recebe um Variant: quando o valor nao foi
+// informado (nil), o campo sai vazio -- diferente de zero, que sai "0,00".
+//
+// O parametro nulo dos demais helpers nao cobre esse caso: la zero e vazio sao
+// indistinguiveis. Registros como C181, C185, C330 e C815 dependem dessa
+// distincao.
+func (t *TXTClass) VDFill(value *float64, decimal int) string {
+	if value == nil {
+		return t.Delimitador
+	}
+	return t.Delimitador + formatDecimal(*value, decimal)
+}
+
+// VLFill formata um valor opcional com tamanho fixo e casas decimais.
+// Equivale ao VLFill do ACBr: valor nao informado (nil) sai vazio.
+//
+// Atencao ao ACBr: em VLFill o primeiro parametro extra e o TAMANHO, enquanto
+// em VDFill e o numero de DECIMAIS. A diferenca e facil de trocar ao portar.
+func (t *TXTClass) VLFill(value *float64, size, decimal int) string {
+	if value == nil {
+		return t.Delimitador
+	}
+	s := formatDecimal(*value, decimal)
+	for len(s) < size {
+		s = "0" + s
+	}
+	return t.Delimitador + s
+}
+
 // Checkf valida uma condicao com mensagem formatada. Equivale a sobrecarga
 // Delphi Check(Condicao, Msg, Fmt: array of const) de ACBrTXTClass.pas, usada
 // por praticamente toda validacao de registro do ACBr.

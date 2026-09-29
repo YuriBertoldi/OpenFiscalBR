@@ -15,10 +15,18 @@ Põe `.openfiscalbr-meta.json` e os READMEs de acordo com o que existe de fato n
 
 Sem argumentos — sempre varre o projeto inteiro.
 
-**Estado inicial conhecido:** `.openfiscalbr-meta.json` tem `"components": {}`. Nem `comum`
-nem `sped` foram registrados, embora ambos existam. Enquanto isso não for corrigido, o modo de
-atualização da `/convert` (PASSO 7) não tem hash de referência para comparar e sempre trata
-tudo como conversão nova.
+**Por que isso importa mais do que parece.** O `.openfiscalbr-meta.json` é a **linha de base
+do ciclo de atualização**: quando o ACBr publica uma versão nova, é comparando os hashes
+gravados aqui que a `/convert` (PASSO 7) descobre quais `.pas` mudaram.
+
+Sem os hashes, o modo de atualização fica cego de um jeito perigoso — não falha, apenas trata
+tudo como conversão nova, ou responde "nenhuma alteração" sem ter com o que comparar. Rodar
+esta skill **ao fim de toda conversão e de toda atualização** é o que mantém o ciclo
+funcionando.
+
+**Linha de base ja estabelecida** para `ACBrComum` (1 fonte) e `ACBrSPEDFiscal` (27 fontes).
+A proxima atualizacao do ACBr para esses dois ja tem com o que comparar. Componentes novos
+precisam ser registrados aqui ao fim da conversao.
 
 ---
 
@@ -69,16 +77,19 @@ writers implementados:
 
 ```bash
 grep -c "^type Registro.* struct" packages/sped/bloco_*.go | awk -F: '{s+=$2} END {print "structs:", s}'
-grep -ch "riteRegistro.*(" packages/sped/write_*.go | awk '{s+=$1} END {print "writers:", s}'
+# a assinatura completa e obrigatoria: "riteRegistro.*(" sozinho conta tambem as
+# chamadas e devolve 617 onde existem 270 writers
+grep -ho "func (b \*Bloco[0-9A-Za-z]*) [wW]riteRegistro[0-9A-Z]*(" packages/sped/write_*.go \
+  | sort -u | wc -l
 ```
 
 Um struct sem writer é um registro que o consumidor consegue preencher e que **nunca aparece
 no arquivo gerado** — silenciosamente. Por isso a divergência importa mais do que uma
 imprecisão de documentação.
 
-Estado conhecido na última verificação: `packages/sped` está marcado "Completo" no README da
-raiz, mas tem cerca de 198 structs de registro para cerca de 59 writers. O status honesto é
-**Parcial**, com a proporção explicitada.
+Estado na última verificação: `packages/sped` tem **271 structs para 270 writers** — o único
+sem writer é o `Registro0002`, que o ACBr escreve inline dentro do `0001`. Status "Completo"
+confere.
 
 Reporte a divergência e proponha a correção antes de editar — o usuário pode preferir
 completar o código a rebaixar o status.

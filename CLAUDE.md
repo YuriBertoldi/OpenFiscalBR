@@ -104,6 +104,46 @@ Regras derivadas disso:
 Ferramenta de apoio: `ferramentas/comparar-campos.py` (veja `ferramentas/README.md` para os
 limites dela).
 
+## Fronteira entre package e demo
+
+`packages/<pkg>` e **biblioteca**: gera o documento fiscal e devolve dado. Nao expoe URL,
+nao serve HTTP, nao fala JSON. Todo transporte vive em `demos/<pkg>`.
+
+Na pratica isso significa que **nenhum arquivo em `packages/` importa `net/http`,
+`encoding/json`, `net` ou `html/template`**. A dependencia e numa direcao so: o demo importa
+o package, nunca o contrario.
+
+Por que a regra existe:
+
+- Quem consome a biblioteca (um ERP, um job, um CLI) nao quer subir servidor para gerar um
+  arquivo. O exemplo do `README.md` da raiz roda sem HTTP nenhum.
+- Formato de transporte muda por consumidor (REST, gRPC, fila, CLI); leiaute fiscal nao.
+  Misturar os dois faria a mudanca de um arrastar o outro.
+- O demo e descartavel e serve para demonstrar; o package e o produto.
+
+`/validar-package` verifica isso automaticamente.
+
+## Convencao de erros (OFICIAL)
+
+O padrao de erro do projeto e o **idiomatico do Go**, estabelecido nos packages `pcn`, `rtc` e
+`nfgas`:
+
+- **Sentinelas** com `errors.New`, prefixadas pelo package (`nfgas: XML da NFGas nao
+  carregado`), testaveis com `errors.Is`.
+- **Tipos com contexto** implementando `Unwrap()` (e `Unwrap() []error` em agregadores como
+  `nfgas.ErrosLote`), para `errors.Is`/`errors.As` alcancarem a causa. O contexto carrega o que
+  torna o erro acionavel: caminho da tag (`infNFGas/ide/dhEmi`), indice no lote, arquivo, chave
+  de acesso.
+- **Wrapping** com `fmt.Errorf("...: %w", err)`.
+- **`raise EACBrException` do Delphi vira `error`**, nunca panic. Biblioteca nao entra em
+  panico com entrada torta; numa importacao em lote, um documento invalido vira entrada de erro
+  e os demais seguem.
+- Fase futura declarada e nao implementada devolve o sentinela `ErrNaoImplementado` do package.
+
+O `comum.ACBrError` e o `Check`/panic do `TXTClass` sao **legado do `sped`** (herdados do
+TACBrTXTClass): permanecem la por compatibilidade, mas NAO devem ser adotados em package novo.
+Exemplo de referencia: `packages/nfgas/errors.go`.
+
 ## Higiene do Repositorio
 
 - Arquivos `.go` sempre em **LF** (ver `.gitattributes`). Fontes Delphi `.pas`/`.dfm` em CRLF.

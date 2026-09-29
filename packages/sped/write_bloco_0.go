@@ -118,7 +118,7 @@ func (b *Bloco0) WriteRegistro0000() {
 // ---------------------------------------------------------------------------
 
 // WriteRegistro0001 gera a linha do registro 0001 e dispara a escrita de
-// todos os sub-registros do Bloco 0 quando IndDad == 0 (com dados).
+// todos os sub-registros do Bloco 0 quando IndMov == 0 (com dados).
 // Formato: |0001|IND_MOV|
 func (b *Bloco0) WriteRegistro0001() {
 	if b.Registro0001 == nil {
@@ -126,7 +126,7 @@ func (b *Bloco0) WriteRegistro0001() {
 	}
 
 	linha := b.LFillStr("0001", 0, false, '0') +
-		b.LFillInt(int64(b.Registro0001.IndDad), 0, false, '0')
+		b.LFillInt(int64(b.Registro0001.IndMov), 0, false, '0')
 	b.Add(linha, true)
 
 	// Registro0002 se industrial e periodo >= 2020
@@ -138,7 +138,7 @@ func (b *Bloco0) WriteRegistro0001() {
 		b.Registro0990.QtdLin0++
 	}
 
-	if b.Registro0001.IndDad == 0 { // com dados
+	if b.Registro0001.IndMov == 0 { // com dados
 		b.writeRegistro0005()
 		b.writeRegistro0015()
 		b.writeRegistro0100()

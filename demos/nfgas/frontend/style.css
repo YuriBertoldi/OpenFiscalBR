@@ -1,0 +1,158 @@
+/* OpenFiscalBR - Demo NFGas - LGPL v2.1+ */
+
+:root {
+  --fundo: #10151c;
+  --painel: #1a222d;
+  --borda: #2b3a4d;
+  --texto: #dbe6f2;
+  --texto-suave: #8ba0b8;
+  --acento: #3fa8ff;
+  --ok: #43c98b;
+  --erro: #ff6b6b;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: var(--fundo);
+  color: var(--texto);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  padding: 1.5rem 2rem 1rem;
+  border-bottom: 1px solid var(--borda);
+}
+
+header h1 { margin: 0 0 .25rem; font-size: 1.5rem; }
+header p { margin: .15rem 0; color: var(--texto-suave); }
+header .aviso { font-size: .85rem; }
+
+main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  padding: 1.5rem 2rem;
+}
+
+@media (max-width: 900px) {
+  main { grid-template-columns: 1fr; }
+}
+
+section h2 { margin: 0 0 .75rem; font-size: 1.1rem; }
+
+.abas { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .75rem; }
+
+.aba {
+  background: var(--painel);
+  color: var(--texto-suave);
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  padding: .4rem .8rem;
+  cursor: pointer;
+  font: inherit;
+  font-size: .85rem;
+}
+
+.aba.ativa {
+  color: var(--texto);
+  border-color: var(--acento);
+  background: #21344a;
+}
+
+textarea {
+  width: 100%;
+  min-height: 320px;
+  background: var(--painel);
+  color: var(--texto);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  padding: .75rem;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: .8rem;
+  resize: vertical;
+}
+
+.acoes {
+  display: flex;
+  gap: .6rem;
+  margin-top: .75rem;
+  align-items: center;
+}
+
+.botao {
+  background: var(--acento);
+  color: #06121f;
+  border: none;
+  border-radius: 6px;
+  padding: .55rem 1.2rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.botao:disabled { opacity: .5; cursor: wait; }
+
+.botao.secundario {
+  background: var(--painel);
+  color: var(--texto);
+  border: 1px solid var(--borda);
+  display: inline-block;
+}
+
+.erro {
+  color: var(--erro);
+  background: rgba(255, 107, 107, .1);
+  border: 1px solid rgba(255, 107, 107, .4);
+  border-radius: 6px;
+  padding: .5rem .75rem;
+  margin-top: .75rem;
+  font-size: .85rem;
+}
+
+.resumo { margin-bottom: .75rem; }
+
+.cartao {
+  background: var(--painel);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  padding: .6rem .9rem;
+  margin-bottom: .5rem;
+}
+
+.cartao p { margin: .2rem 0; font-size: .85rem; }
+.cartao .chave { font-family: Consolas, monospace; color: var(--texto-suave); font-size: .78rem; }
+
+.situacao { padding: .1rem .5rem; border-radius: 10px; font-size: .75rem; }
+.situacao.confirmada { background: rgba(67, 201, 139, .15); color: var(--ok); }
+.situacao.cancelada { background: rgba(255, 107, 107, .15); color: var(--erro); }
+.situacao.neutra { background: rgba(139, 160, 184, .15); color: var(--texto-suave); }
+
+.destaque { color: var(--ok); font-size: .9rem; }
+.falha { color: var(--erro); font-size: .85rem; }
+
+pre#resultado {
+  background: var(--painel);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  padding: .75rem;
+  font-size: .75rem;
+  overflow: auto;
+  max-height: 60vh;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+footer {
+  padding: 1rem 2rem;
+  border-top: 1px solid var(--borda);
+  color: var(--texto-suave);
+  font-size: .8rem;
+}
+
+footer a { color: var(--acento); }

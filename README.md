@@ -9,8 +9,9 @@ Licenciado sob **LGPL 2.1+** (obra derivada do Projeto ACBr).
 | Package | Descricao | Status |
 |---------|-----------|--------|
 | `packages/comum` | Base: TXTClass, utils, erros, FormatFloatBR | Completo |
-| `packages/sped` | SPED Fiscal (EFD-ICMS/IPI): tipos, registros, blocos, geracao TXT | Parcial (100 registros com writer, de 198 structs declarados) |
-| `packages/pcn` | Gerador/Leitor XML (PCNComum) | Pendente |
+| `packages/sped` | SPED Fiscal (EFD-ICMS/IPI): tipos, registros, blocos, geracao TXT | Completo (270 registros com writer) |
+| `packages/pcn` | Base de XML de DFe: mini-DOM, tipos de campo, enums DFe, validador CNPJ/CPF, chave de acesso, ini | Leitura completa (geracao de XML pendente) |
+| `packages/rtc` | Reforma Tributaria (IBS/CBS/IS) compartilhada pelos DFe | Classes + leitor XML completos; ini parcial (sem monofasia) |
 | `packages/dfe` | DFe base, SSL, config | Pendente |
 | `packages/nfe` | NFe (Nota Fiscal Eletronica) | Pendente |
 | `packages/cte` | CTe (Conhecimento de Transporte Eletronico) | Pendente |
@@ -19,12 +20,14 @@ Licenciado sob **LGPL 2.1+** (obra derivada do Projeto ACBr).
 | `packages/pixcd` | PIX (pagamentos instantaneos) | Pendente |
 | `packages/sat` | SAT Fiscal (CF-e) | Pendente |
 | `packages/nfsex` | NFSe (Nota Fiscal de Servicos Eletronica) | Pendente |
+| `packages/nfgas` | NFGas (NF de Gas Canalizado, modelo 76) | Leitura completa (XML, lote, eventos, consulta, ini); emissao em stubs |
 
 ## Status das Demos
 
 | Demo | Descricao | Status |
 |------|-----------|--------|
 | `demos/sped` | API REST + Frontend para geracao de arquivo SPED Fiscal | Completo |
+| `demos/nfgas` | API REST + Frontend para leitura/importacao em lote de NFGas | Completo (somente leitura, como o package) |
 
 ## Inicio Rapido
 
@@ -75,6 +78,28 @@ func main() {
 }
 ```
 
+### Lendo NFGas em lote programaticamente
+
+```go
+package main
+
+import (
+    "fmt"
+
+    "github.com/openfiscalbr/openfiscalbr/packages/nfgas"
+)
+
+func main() {
+    notas, err := nfgas.LerLoteDiretorio(`C:\xmls\nfgas`)
+    if err != nil {
+        fmt.Println("Documentos com problema:", err) // as notas legiveis vem mesmo assim
+    }
+    for _, n := range notas {
+        fmt.Println(n.ChaveAcesso(), n.Situacao(), n.NFGas.Total.VNF)
+    }
+}
+```
+
 ### Rodando a demo SPED
 
 ```bash
@@ -99,14 +124,17 @@ go test ./packages/... -v
 
 ```
 packages/
-  comum/         Layer 0: base, TXTClass, validadores, utils
+  comum/         Layer 0: base, TXTClass, utils
   sped/          Layer 0: SPED Fiscal (EFD-ICMS/IPI)
-  pcn/           Layer 1: gerador/leitor XML (PCNComum)
+  pcn/           Layer 1: base de XML de DFe (mini-DOM, tipos de campo, validador, chave, ini)
+  rtc/           Layer 1: Reforma Tributaria (IBS/CBS) compartilhada pelos DFe
   dfe/           Layer 2: DFe base, SSL, config
   nfe/           Layer 3: NFe
+  nfgas/         Layer 3: NFGas (leitura)
   ...
 demos/
   sped/          Demo SPED Fiscal (API REST + Frontend + Docker)
+  nfgas/         Demo NFGas: leitura e importacao em lote (API REST + Frontend + Docker)
 ferramentas/     Scripts de apoio ao port (nao fazem parte do modulo Go)
 ```
 
@@ -122,6 +150,7 @@ abrir uma sessao na raiz do projeto:
 | `/adicionar-registro-sped <registro>` | Acrescenta um registro ao `packages/sped` |
 | `/gerar-demo <pkg>` | Gera a demo em `demos/<pkg>/` |
 | `/sincronizar-meta` | Atualiza `.openfiscalbr-meta.json` e o status dos packages |
+| `/portar-leitor-dfe <Componente>` | Porta o leitor de XML de um DFe com fidelidade auditavel |
 
 Ha tambem o subagente `revisor-go` (`.claude/agents/revisor-go.md`), que revisa codigo portado
 quanto a fidelidade ao Delphi de origem e as convencoes do projeto.
@@ -139,9 +168,10 @@ Veja `.claude/skills/convert/SKILL.md` para detalhes do workflow.
 A conversao deve respeitar esta ordem — nunca converter um componente sem que suas dependencias existam:
 
 1. **Layer 0**: `comum` (sem dependencias) e `sped` (depende de `comum`)
-2. **Layer 1**: `pcn` (depende de `comum`)
+2. **Layer 1**: `pcn` (depende de `comum`) e `rtc` (depende de `pcn`)
 3. **Layer 2**: `dfe` (depende de `comum`, `pcn`)
-4. **Layer 3**: componentes finais (`nfe`, `cte`, `mdfe`, `boleto`, `pixcd`, `sat`, `nfsex`)
+4. **Layer 3**: componentes finais (`nfe`, `cte`, `mdfe`, `boleto`, `pixcd`, `sat`, `nfsex`,
+   `nfgas` — este, na fase de leitura, depende de `comum`, `pcn` e `rtc`)
 
 ## Licenca
 

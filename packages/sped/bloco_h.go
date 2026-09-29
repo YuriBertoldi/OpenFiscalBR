@@ -24,9 +24,9 @@ type RegistroH001 struct {
 	RegistroH005 []*RegistroH005
 }
 
-// NewRegistroH001 cria um novo RegistroH001 com IndDad=1 (sem dados).
+// NewRegistroH001 cria um novo RegistroH001 com IndMov=1 (sem dados).
 func NewRegistroH001() *RegistroH001 {
-	return &RegistroH001{OpenBlocos: OpenBlocos{IndDad: 1}}
+	return &RegistroH001{OpenBlocos: OpenBlocos{IndMov: 1}}
 }
 
 // RegistroH005 - Totais do Inventario

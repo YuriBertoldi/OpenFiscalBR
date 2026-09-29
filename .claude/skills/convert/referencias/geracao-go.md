@@ -159,9 +159,12 @@ var (
 )
 ```
 
-Para erro que carrega contexto, seguir o padrão já existente em `packages/comum/errors.go`
-(`ACBrError`) e `packages/sped/errors.go` (`SPEDFiscalError`) em vez de criar um terceiro
-formato.
+Para erro que carrega contexto, seguir a **convenção oficial** do `CLAUDE.md` (seção
+"Convencao de erros"): tipo com campos de contexto + `Unwrap()`, sentinelas testáveis com
+`errors.Is`, wrapping com `%w` e nada de panic em biblioteca. Exemplos de referência:
+`packages/nfgas/errors.go` (`ErroNFGas`, `ErrosLote`) e `packages/pcn/errors.go`
+(`ErroLeitura`). O `ACBrError` de `comum` e o `SPEDFiscalError` de `sped` são legado — não
+adotar em package novo.
 
 ## Dockerfile da demo
 

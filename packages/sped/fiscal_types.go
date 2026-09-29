@@ -390,6 +390,49 @@ func (v IndFrt) StringEm(dtIni time.Time) string {
 	return ""
 }
 
+// StringEmD100 retorna o codigo de IND_FRT vigente no periodo de dtIni segundo
+// o writer do D100 -- que nao e o mesmo do C100.
+//
+// O ACBr usa criterios diferentes nos dois blocos e a diferenca nao parece
+// intencional, mas replicamos como esta:
+//
+//   - o corte e 01/07/2012, nao 01/01/2012 como no C100. No primeiro semestre
+//     de 2012 o mesmo IND_FRT sai com codigo diferente em C100 e D100;
+//   - nao existe a faixa de 2018 em diante, entao o D100 nunca emite os
+//     codigos "3" e "4" -- de 07/2012 em diante sempre 0/1/2/9.
+//
+// Ref.: ACBrEFDBloco_D_Class.pas, WriteRegistroD100.
+func (v IndFrt) StringEmD100(dtIni time.Time) string {
+	if v == FrtNenhum {
+		return ""
+	}
+	if v == FrtSemCobranca {
+		return "9"
+	}
+
+	if dtIni.Before(time.Date(2012, 7, 1, 0, 0, 0, 0, time.UTC)) {
+		switch v {
+		case FrtContaTerceiros:
+			return "0"
+		case FrtContaEmitente, FrtProprioPorContaRemetente:
+			return "1"
+		case FrtContaDestinatario, FrtProprioContaDestinatario:
+			return "2"
+		}
+		return ""
+	}
+
+	switch v {
+	case FrtContaEmitente, FrtProprioPorContaRemetente:
+		return "0"
+	case FrtContaDestinatario, FrtProprioContaDestinatario:
+		return "1"
+	case FrtContaTerceiros:
+		return "2"
+	}
+	return ""
+}
+
 // ===========================================================================
 // Frete Redespacho (TACBrTipoFreteRedespacho)
 // ===========================================================================
@@ -623,6 +666,52 @@ func (v IndMovFisica) String() string {
 // ===========================================================================
 // Apuracao IPI (TACBrApuracaoIPI)
 // ===========================================================================
+
+// ConhecEmbarque indica o tipo de conhecimento de embarque no registro 1100.
+// Os codigos nao sao sequenciais: o layout pula "05" e "15".
+type ConhecEmbarque int
+
+const (
+	CeAWB ConhecEmbarque = iota
+	CeMAWB
+	CeHAWB
+	CeCOMAT
+	CeRExpressas
+	CeEtiqRExpressas
+	CeHrExpressas
+	CeAV7
+	CeBL
+	CeMBL
+	CeHBL
+	CeCTR
+	CeDSIC
+	CeComatBL
+	CeRWB
+	CeHRWB
+	CeTifDta
+	CeCP2
+	CeNaoIATA
+	CeMNaoIATA
+	CeHNaoIATA
+	CeOutros
+)
+
+var conhecEmbarqueCodigos = map[ConhecEmbarque]string{
+	CeAWB: "01", CeMAWB: "02", CeHAWB: "03", CeCOMAT: "04",
+	CeRExpressas: "06", CeEtiqRExpressas: "07", CeHrExpressas: "08",
+	CeAV7: "09", CeBL: "10", CeMBL: "11", CeHBL: "12", CeCTR: "13",
+	CeDSIC: "14", CeComatBL: "16", CeRWB: "17", CeHRWB: "18",
+	CeTifDta: "19", CeCP2: "20", CeNaoIATA: "91", CeMNaoIATA: "92",
+	CeHNaoIATA: "93", CeOutros: "99",
+}
+
+// String retorna o codigo de dois digitos do tipo de conhecimento de embarque.
+func (v ConhecEmbarque) String() string {
+	if c, ok := conhecEmbarqueCodigos[v]; ok {
+		return c
+	}
+	return ""
+}
 
 // MovimentoBens indica o tipo de movimentacao do bem ou componente do ativo
 // imobilizado, no registro G125 (CIAP).

@@ -514,6 +514,37 @@ func TestCheck_PanicsOnFalse(t *testing.T) {
 	txt.Check(false, "validation failed")
 }
 
+// VDFill e VLFill distinguem "nao informado" de zero, o que o parametro nulo
+// dos demais helpers nao faz.
+func TestVDFill_DistingueNaoInformadoDeZero(t *testing.T) {
+	txt := NewTXTClass()
+	zero := 0.0
+	valor := 12.5
+
+	if got := txt.VDFill(nil, 6); got != "|" {
+		t.Errorf("nao informado: got %q, want %q", got, "|")
+	}
+	if got := txt.VDFill(&zero, 6); got != "|0,000000" {
+		t.Errorf("zero: got %q, want %q", got, "|0,000000")
+	}
+	if got := txt.VDFill(&valor, 6); got != "|12,500000" {
+		t.Errorf("valor: got %q, want %q", got, "|12,500000")
+	}
+}
+
+func TestVLFill_PadEDistingueNaoInformado(t *testing.T) {
+	txt := NewTXTClass()
+	valor := 1.5
+
+	if got := txt.VLFill(nil, 6, 2); got != "|" {
+		t.Errorf("nao informado: got %q, want %q", got, "|")
+	}
+	// "1,50" tem 4 caracteres; com tamanho 6 recebe dois zeros a esquerda.
+	if got := txt.VLFill(&valor, 6, 2); got != "|001,50" {
+		t.Errorf("com pad: got %q, want %q", got, "|001,50")
+	}
+}
+
 func TestCheckf_DoesNotPanicOnTrue(t *testing.T) {
 	txt := NewTXTClass()
 	txt.Checkf(true, "nao deveria entrar em panico: %s", "arg")

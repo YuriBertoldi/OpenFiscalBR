@@ -22,9 +22,9 @@ type Registro9001 struct {
 	Registro9900 []*Registro9900
 }
 
-// NewRegistro9001 cria um novo Registro9001 com IndDad=1 (sem dados).
+// NewRegistro9001 cria um novo Registro9001 com IndMov=1 (sem dados).
 func NewRegistro9001() *Registro9001 {
-	return &Registro9001{OpenBlocos: OpenBlocos{IndDad: 1}}
+	return &Registro9001{OpenBlocos: OpenBlocos{IndMov: 1}}
 }
 
 // Registro9900 - Registros do Arquivo

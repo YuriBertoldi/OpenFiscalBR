@@ -1,6 +1,6 @@
 ---
 name: revisor-go
-description: Revisa codigo Go do OpenFiscalBR portado do ACBr Delphi — header de licenca LGPL, nomes fiscais PT-BR preservados, aderencia as regras de mapeamento Delphi para Go do CLAUDE.md, fidelidade ao writer Delphi de origem (validacoes Check, regras de vigencia, ordem dos campos) e cobertura de testes. Use quando o usuario pedir revisao de codigo Go, code review de um package convertido, ou apos a skill /convert gerar um package novo. So reporta — nunca corrige.
+description: Revisa codigo Go do OpenFiscalBR portado do ACBr Delphi — header de licenca LGPL, nomes fiscais PT-BR preservados, aderencia as regras de mapeamento Delphi para Go do CLAUDE.md, fidelidade ao writer Delphi de origem (validacoes Check, regras de vigencia, ordem dos campos), fidelidade ao LEITOR de XML de DFe (precisao tcDeN por campo, grupos achatados por CST, Find vs FindAnyNs, campos com precedencia) e cobertura de testes. Use quando o usuario pedir revisao de codigo Go, code review de um package convertido, ou apos a skill /convert gerar um package novo. So reporta — nunca corrige.
 tools: Read, Grep, Glob, Bash
 ---
 
@@ -43,8 +43,14 @@ sustenta a conformidade com a licença de origem.
 - Enums como `type X int` + consts + `String()` + `Parse`, com o `String()` devolvendo o
   **código exato da legislação** quando for código fiscal, não o nome do identificador.
 - Imports internos pelo module path completo `github.com/openfiscalbr/openfiscalbr/...`.
-- Erros seguindo os tipos já existentes (`ACBrError`, `SPEDFiscalError`) em vez de um terceiro
-  formato.
+- Erros seguindo a **convenção oficial** do `CLAUDE.md` (seção "Convencao de erros"):
+  sentinelas com `errors.New` + tipos com `Unwrap()`, wrapping com `%w`, nada de panic em
+  biblioteca; exemplo de referência em `packages/nfgas/errors.go`. `ACBrError`/
+  `SPEDFiscalError` e `Check`/panic são legado do `sped` — achado se aparecerem em package
+  novo.
+- Divergência em relação ao ACBr aparecendo no diff: confira contra o registro
+  `.claude/skills/convert/referencias/divergencias-acbr.md` antes de reportar como bug — as
+  listadas lá são deliberadas e aprovadas.
 
 ## Eixo 3 — Mapeamento Delphi → Go
 
@@ -102,6 +108,30 @@ Go: comportamento determinístico deve ser replicado (com teste e comentário di
 intencional); comportamento dependente de ordem de iteração ou variável não inicializada não
 deve, e a divergência precisa ser documentada e levada ao usuário.
 
+## Eixo 4b — Fidelidade ao leitor de XML (componentes DFe)
+
+Aplicável a package que LÊ XML da SEFAZ (`nfgas` e os DFe que vierem). O contrato é o
+`<Comp>.XmlReader.pas`, e o checklist completo está em
+`.claude/skills/portar-leitor-dfe/referencias/armadilhas-leitor-dfe.md` — use-o. O essencial:
+
+- **Precisão `tcDeN` por campo**, conferida contra o `.pas` — a mesma tag tem precisões
+  diferentes em grupos diferentes (na NFGas, `vItem` é De10 em `prod` e De8 em `gProcRef`).
+- **Grupo achatado por CST**: a lista e a ORDEM de busca (`ICMS00, ICMS10, ...`) batem com o
+  `.pas`? Incluindo membros que o `.pas` procura sem existirem no XSD?
+- **Campo lido do nó pai** (`indSemCST` vem de `imposto`, não do `ICMSxx`) e **atribuição
+  condicionada a conteúdo** (`if Lvalor <> ''`).
+- **`Find` × `FindAnyNs` por campo** — `Find` compara o nome com prefixo; trocar muda o
+  comportamento com XML prefixado.
+- **Campos alternativos com precedência** (`CNPJ`→`CPF`; `idOutros`→`idEstrangeiro` no mesmo
+  campo) e **grafia exata de tag** (`vRetCofins` no XML × `vRetCOFINS` no ini; `gRespTec`).
+- **Dado em atributo de item** (`@nItem`, `@nMed`, `@nContrat`).
+- **Enum lido com `tcInt`** no original é bug (código tratado como ordinal): o Go deve parsear
+  pelo código, com `DIVERGENCIA` documentada e teste. Sem a marca, é achado Bloqueante.
+- **Nada de panic**: entrada malformada devolve `error` com contexto (índice/arquivo/chave) —
+  importação em lote não pode cair por uma nota torta, e nota torta não invalida as demais.
+- Toda marca `DIVERGENCIA`/`ACRESCIMO`/`OMISSAO DO ACBr REPLICADA` tem teste travando o
+  comportamento? Divergência sem teste é achado Importante.
+
 ## Eixo 5 — Específico do package `sped`
 
 - Todo writer tem o doc-comment `// Formato: |REG|CAMPO1|...|` e a ordem das concatenações
@@ -114,12 +144,51 @@ deve, e a divergência precisa ser documentada e levada ao usuário.
   `0000` são exportados.
 - Há struct de registro declarado sem writer? Liste — é um registro que o consumidor preenche
   e que nunca sai no arquivo.
+- **Há writer declarado que ninguém chama?** Mesmo efeito, e mais traiçoeiro: o writer existe,
+  está correto, e a linha nunca sai. Foi o caso de `E112`, `E113` e `E115`. Cruze as duas
+  listas — declarados contra chamados:
+
+  ```bash
+  grep -ho "func (b \*Bloco[0-9A-Za-z]*) [wW]riteRegistro[0-9A-Z]*(" packages/sped/write_*.go \
+    | sed 's/.*) //; s/(//' | sort -u > /tmp/decl.txt
+  for w in $(cat /tmp/decl.txt); do
+    [ "$(grep -rho "\.$w(" packages/sped/*.go | wc -l)" -eq 0 ] && echo "NUNCA CHAMADO: $w"
+  done
+  ```
+
+  Depois confira a **cadeia de chamadas** contra o `.pas`: qual pai chama qual filho, e em que
+  ordem. No ACBr, `WriteRegistroE111` chama `E112` e `E113` de dentro do laço; `WriteRegistroE110`
+  chama `E111`, `E115`, `E116`. Um filho pendurado no pai errado passa em tudo.
 
 Para a primeira passada, `py ferramentas/comparar-campos.py <bloco> <registro>` compara a
-contagem de campos dos dois lados. Leia `ferramentas/README.md` antes de confiar num `OK`: a
-ferramenta não compara nomes, e o `B440` passava nela emitindo o campo errado.
+contagem **e os nomes** dos campos, posição a posição. Leia `ferramentas/README.md` antes de
+confiar num `OK`: nome igual não garante condicional certa — o marcador `[condicional: ...]`
+continua exigindo leitura do `.pas`.
 
-## Eixo 6 — Testes
+## Eixo 6 — Fronteira entre package e demo
+
+`packages/<pkg>` e biblioteca e **nao expoe URL**. Nenhum arquivo em `packages/` pode importar
+`net/http`, `encoding/json`, `net` ou `html/template` — todo transporte vive em `demos/<pkg>`,
+e a dependencia aponta do demo para o package, nunca o contrario.
+
+Reporte como **Bloqueante**: quem consome a biblioteca precisa gerar o documento sem subir
+servidor, e misturar transporte com leiaute faz a mudanca de um arrastar o outro.
+
+## Eixo 7 — Integridade das contagens
+
+Aplicavel a package que gera arquivo com registros de totalizacao. Verificacao de layout nao
+pega **valor calculado** — um registro pode ter a sequencia de campos perfeita e declarar
+contagem errada.
+
+- O totalizador do arquivo declara o numero real de linhas?
+- O totalizador de cada bloco bate com as linhas daquele bloco, **incluindo a propria linha e
+  a do totalizador geral** quando o original assim o faz?
+- Todo tipo de registro presente aparece no registro de contagem por tipo?
+
+No `sped`, o `9990` contava uma linha a menos porque nao somava a linha do `9999`. Nenhuma
+auditoria de campo pegou; so apareceu gerando arquivo e contando.
+
+## Eixo 8 — Testes
 
 Contra a seção "Testes Obrigatórios" do `CLAUDE.md`:
 
