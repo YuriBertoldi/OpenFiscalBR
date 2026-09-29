@@ -95,13 +95,20 @@ func AssinarXML(cert *Certificado, xmlStr, infElement string) (string, error) {
 		base64.StdEncoding.EncodeToString(cert.Cert.Raw) +
 		"</X509Certificate></X509Data></KeyInfo></Signature>"
 
-	// insere antes do fechamento do elemento raiz (ultimo filho), que e o
-	// docElement de todos os DFe (NFGas, eventoNFGas...)
-	pos := strings.LastIndex(xmlStr, "</")
+	// insere como ULTIMO FILHO do docElement -- o PAI do elemento
+	// referenciado (NFGas, eventoNFGas...). Trabalhar relativo ao pai, e
+	// nao ao fim do documento, evita que assinar um XML ja envelopado
+	// (nfgasProc) deixe a Signature fora do documento.
+	docElem := inf.Pai()
+	if docElem == nil {
+		docElem = inf
+	}
+	outer := docElem.OuterXML()
+	pos := strings.LastIndex(outer, "</")
 	if pos < 0 {
 		return "", fmt.Errorf("dfe: assinar: XML sem elemento de fechamento")
 	}
-	return xmlStr[:pos] + bloco + xmlStr[pos:], nil
+	return strings.Replace(xmlStr, outer, outer[:pos]+bloco+outer[pos:], 1), nil
 }
 
 // montarSignedInfo monta o SignedInfo. comXmlns=true produz a forma CANONICA
@@ -213,6 +220,21 @@ func VerificarAssinatura(xmlStr string) error {
 func HashCSRT(csrt, chave string) string {
 	h := sha1.Sum([]byte(csrt + chave))
 	return base64.StdEncoding.EncodeToString(h[:])
+}
+
+// AssinarSHA1Base64 assina o SHA-1 de dados com a chave RSA do certificado
+// e devolve em base64 -- o CalcHash(dgstSHA1, outBase64, Assinar=True) do
+// TDFeSSL, usado no parametro sign do QR-Code em emissao offline.
+func (c *Certificado) AssinarSHA1Base64(dados string) (string, error) {
+	if c == nil || c.Chave == nil {
+		return "", ErrCertificadoNaoCarregado
+	}
+	h := sha1.Sum([]byte(dados))
+	sig, err := rsa.SignPKCS1v15(rand.Reader, c.Chave, crypto.SHA1, h[:])
+	if err != nil {
+		return "", fmt.Errorf("dfe: assinar hash: %w", err)
+	}
+	return base64.StdEncoding.EncodeToString(sig), nil
 }
 
 // buscarProfundo procura, em profundidade, o primeiro elemento com o local

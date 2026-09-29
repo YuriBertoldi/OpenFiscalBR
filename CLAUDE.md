@@ -113,6 +113,12 @@ Na pratica isso significa que **nenhum arquivo em `packages/` importa `net/http`
 `encoding/json`, `net` ou `html/template`**. A dependencia e numa direcao so: o demo importa
 o package, nunca o contrario.
 
+Excecao unica: `packages/dfe/soap.go` importa `net/http` como **CLIENTE** SOAP dos web
+services da SEFAZ. Transmitir o documento (recepcao, consulta, evento) e a propria funcao
+fiscal — e o papel do `TDFeWebService` do ACBr — e nao exposicao de transporte. Continua
+proibido em qualquer package, `dfe` incluido: servidor HTTP, handler, `encoding/json` e
+template. Cliente HTTP fora do `dfe` tambem e achado.
+
 Por que a regra existe:
 
 - Quem consome a biblioteca (um ERP, um job, um CLI) nao quer subir servidor para gerar um

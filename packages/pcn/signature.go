@@ -22,6 +22,15 @@ type Signature struct {
 	IDSignatureValue string // preenchido apenas na geracao
 }
 
+// Assinada informa se ha uma assinatura COMPLETA (DigestValue,
+// SignatureValue e X509Certificate presentes) -- a condicao que o
+// taSomenteSeAssinada do ACBr exige para reembutir o bloco Signature na
+// geracao (ACBrNFGas.XmlWriter.pas:268-280). Um struct so com URI, por
+// exemplo, esta "nao vazio" mas nao esta assinado.
+func (s *Signature) Assinada() bool {
+	return s != nil && s.DigestValue != "" && s.SignatureValue != "" && s.X509Certificate != ""
+}
+
 // Vazia informa se nenhum dado de assinatura foi lido.
 func (s *Signature) Vazia() bool {
 	if s == nil {

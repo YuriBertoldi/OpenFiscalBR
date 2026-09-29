@@ -86,3 +86,17 @@ Nada aqui gera XML — a geração entra junto com a emissão.
 ```bash
 go test ./packages/rtc/... -v
 ```
+
+## Geração de XML (`xml_writer.go`)
+
+Porte 1:1 de `TDFeRTCXmlWriter` (`ACBrDFe.RTC.XmlWriter.pas`). O `Writer` carrega **estado**
+entre chamadas, como o original — use um `Writer` novo por documento:
+
+- `GerarGCompraGovReduzido`/`GerarGCompraGov` capturam `pRedutor`/`tpEnteGov` ANTES de decidir
+  se o grupo sai — o estado força `gRed` nos itens e habilita `gTribCompraGov`;
+- `GerarIBSCBS` liga o flag interno que autoriza `GerarIBSCBSTot` no total do documento;
+- o corpo do grupo IBSCBS varia por `ModeloDFe` (na NFGas, só CST 000 gera `gIBSCBS`).
+
+Round-trip writer→reader coberto em `xml_writer_test.go`. Divergência defensiva: os
+`AppendChild` que o Delphi executa sobre `Result=nil` (access violation em potencial) aqui são
+no-ops.

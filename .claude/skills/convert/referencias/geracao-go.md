@@ -171,7 +171,8 @@ adotar em package novo.
 ```dockerfile
 FROM golang:1.22-alpine AS builder
 WORKDIR /app
-COPY go.mod ./
+COPY go.mod go.sum ./
+RUN go mod download
 COPY packages/ packages/
 COPY demos/<pkg>/ cmd/
 RUN CGO_ENABLED=0 go build -o server ./cmd/
@@ -184,9 +185,11 @@ EXPOSE 8080
 CMD ["/server"]
 ```
 
-`COPY go.mod ./` sem `go.sum`: o módulo hoje não tem dependência externa alguma e o arquivo
-`go.sum` não existe — incluí-lo no `COPY` quebra o build. Quando a primeira dependência
-externa entrar, passar a `COPY go.mod go.sum ./` e acrescentar `RUN go mod download`.
+O `go.sum` existe desde que `packages/dfe` trouxe a primeira dependência externa
+(`software.sslmate.com/src/go-pkcs12`, para PFX ICP-Brasil modernos) — por isso o `COPY`
+inclui os dois arquivos e o `go mod download` na camada de cache. Dockerfiles anteriores a
+isso copiavam só o `go.mod`; se algum ainda estiver assim, o build quebra ao resolver o
+import do `dfe`.
 
 ## docker-compose.yml da demo
 

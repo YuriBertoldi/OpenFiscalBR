@@ -174,11 +174,22 @@ func lerEventoEnviado(node *pcn.Node, e *EventoNFGas) {
 	e.InfEvento.NSeqEvento = pcn.ConteudoInt(inf.FindAnyNs("nSeqEvento"))
 
 	if det := inf.FindAnyNs("detEvento"); det != nil {
-		e.InfEvento.DetEvento.Versao = det.Attr("versao")
-		e.InfEvento.DetEvento.DescEvento = pcn.ConteudoStr(det.FindAnyNs("descEvento"))
-		e.InfEvento.DetEvento.NProt = pcn.ConteudoStr(det.FindAnyNs("nProt"))
-		e.InfEvento.DetEvento.XJust = pcn.ConteudoStr(det.FindAnyNs("xJust"))
-		e.InfEvento.DetEvento.IDPedidoCancelado = pcn.ConteudoStr(det.FindAnyNs("idPedidoCancelado"))
+		// o gerador grava o atributo como versaoEvento (Gerar_DetEvento);
+		// "versao" fica como fallback para XML de terceiros
+		e.InfEvento.DetEvento.Versao = det.Attr("versaoEvento")
+		if e.InfEvento.DetEvento.Versao == "" {
+			e.InfEvento.DetEvento.Versao = det.Attr("versao")
+		}
+		// os campos ficam dentro de evCancNFGas; sem ele, le direto do
+		// detEvento (tolerancia a leiaute achatado)
+		alvo := det.FindAnyNs("evCancNFGas")
+		if alvo == nil {
+			alvo = det
+		}
+		e.InfEvento.DetEvento.DescEvento = pcn.ConteudoStr(alvo.FindAnyNs("descEvento"))
+		e.InfEvento.DetEvento.NProt = pcn.ConteudoStr(alvo.FindAnyNs("nProt"))
+		e.InfEvento.DetEvento.XJust = pcn.ConteudoStr(alvo.FindAnyNs("xJust"))
+		e.InfEvento.DetEvento.IDPedidoCancelado = pcn.ConteudoStr(alvo.FindAnyNs("idPedidoCancelado"))
 	}
 
 	pcn.LerSignature(node.FindAnyNs("Signature"), &e.Signature)

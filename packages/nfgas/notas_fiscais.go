@@ -33,6 +33,10 @@ type NotaFiscal struct {
 	NFGas *NFGas
 	// XMLOriginal e o trecho exato do XML de onde a nota foi lida.
 	XMLOriginal string
+	// XMLAssinado e o XML gerado e assinado para transmissao.
+	// Porte de TNotaFiscal.XMLAssinado; preenchido por Componente.Enviar
+	// ou manualmente via GerarXML + Assinar.
+	XMLAssinado string
 	// NomeArq e o arquivo de origem, quando a leitura veio de disco.
 	NomeArq string
 	// Alertas acumula avisos nao fatais da leitura.

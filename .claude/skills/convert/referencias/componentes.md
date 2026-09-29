@@ -90,7 +90,7 @@ dependências ainda não existam em `packages/`.
 | `rtc` | `pcn` |
 | `dfe` | `comum`, `pcn` |
 | `nfe`, `cte`, `mdfe`, `bpe`, `nfsex`, `nfse`, `nf3e`, `nfcom`, `gnre`, `reinf`, `esocial` | `comum`, `pcn`, `dfe` |
-| `nfgas` | `comum`, `pcn`, `rtc` (leitura); a fase de emissão passará a exigir `dfe` |
+| `nfgas` | `comum`, `pcn`, `rtc`, `dfe` (leitura e emissão completas desde 2026-09-29) |
 | `boleto` | `comum` |
 | `pixcd` | `comum` |
 | `sat` | `comum` |

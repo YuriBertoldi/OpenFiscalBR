@@ -26,9 +26,7 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	// API routes -- somente leitura, que e o que o package implementa.
-	// As rotas de emissao (assinar, transmitir, cancelar) NAO existem
-	// porque nao ha metodo por tras delas nesta fase.
+	// Leitura e validacao
 	mux.HandleFunc("POST /api/ler", handleLer)
 	mux.HandleFunc("POST /api/ler-lote", handleLerLote)
 	mux.HandleFunc("POST /api/validar", handleValidar)
@@ -36,6 +34,15 @@ func main() {
 	mux.HandleFunc("POST /api/ler-consulta", handleLerConsulta)
 	mux.HandleFunc("POST /api/ler-ini", handleLerINI)
 	mux.HandleFunc("GET /api/status", handleStatus)
+
+	// Emissao -- geracao, assinatura e transmissao a SEFAZ.
+	// Certificado A1 via CERT_PATH/CERT_PASS; UF e AMBIENTE via env.
+	mux.HandleFunc("POST /api/gerar", handleGerar)
+	mux.HandleFunc("POST /api/assinar", handleAssinar)
+	mux.HandleFunc("POST /api/transmitir", handleTransmitir)
+	mux.HandleFunc("GET /api/status-sefaz", handleStatusSefaz)
+	mux.HandleFunc("POST /api/consultar-sefaz", handleConsultarSefaz)
+	mux.HandleFunc("POST /api/cancelar", handleCancelar)
 
 	// Serve frontend static files
 	staticDir := os.Getenv("STATIC_DIR")

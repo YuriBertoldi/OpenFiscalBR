@@ -106,17 +106,27 @@ grep -rn '"\./\|"\.\./' --include='*.go' . || echo "OK: nenhum import relativo"
 
 ## 7 — Fronteira entre package e demo
 
-`packages/` e biblioteca e **nao expoe URL**: nada de HTTP, JSON ou template. Todo transporte
-vive em `demos/`.
+`packages/` e biblioteca e **nao expoe URL**: nada de servidor HTTP, JSON ou template. Todo
+transporte de EXPOSICAO vive em `demos/`.
+
+Excecao unica: `packages/dfe/soap.go` importa `net/http` como **CLIENTE** dos web services da
+SEFAZ — transmitir o documento e funcao fiscal (o TDFeWebService do ACBr), nao exposicao.
+A regra continua valendo para servidor, handler e JSON, inclusive no `dfe`.
+
+Arquivos `_test.go` tambem ficam fora do check: o `httptest` (que importa `net/http`) e a
+forma correta de testar o cliente SOAP sem rede, e teste nao entra no binario do consumidor.
 
 ```bash
 grep -rn '"net/http"\|"encoding/json"\|"html/template"\|^\s*"net"$' \
-  --include='*.go' packages/ || echo "OK: nenhum transporte em packages/"
+  --include='*.go' --exclude='*_test.go' packages/ | grep -v '^packages/dfe/soap.go:' \
+  || echo "OK: nenhum transporte em packages/"
 ```
 
-Qualquer ocorrencia e um achado: o consumidor da biblioteca (um ERP, um job, um CLI) precisa
-gerar o documento sem subir servidor. Se um handler HTTP foi parar no package, mova-o para
-`demos/<pkg>/handlers.go` -- a dependencia so pode apontar do demo para o package.
+Qualquer outra ocorrencia e um achado: o consumidor da biblioteca (um ERP, um job, um CLI)
+precisa gerar o documento sem subir servidor. Se um handler HTTP foi parar no package, mova-o
+para `demos/<pkg>/handlers.go` -- a dependencia so pode apontar do demo para o package.
+`http.HandleFunc`, `http.ListenAndServe` e `json.Marshal` sao achado em QUALQUER package,
+`dfe` incluido.
 
 ## 8 — Integridade do arquivo gerado
 

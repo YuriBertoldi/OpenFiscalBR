@@ -11,13 +11,16 @@
 
 package nfgas
 
-import "github.com/openfiscalbr/openfiscalbr/packages/pcn"
+import (
+	"time"
 
-// Configuracoes reune o que a leitura e a validacao precisam saber sobre o
-// contexto. Porte do subconjunto de TConfiguracoesNFGas que a leitura usa.
-//
-// As configuracoes de certificado, proxy, caminhos de arquivo e web service
-// ficam para a fase de emissao.
+	"github.com/openfiscalbr/openfiscalbr/packages/dfe"
+	"github.com/openfiscalbr/openfiscalbr/packages/pcn"
+)
+
+// Configuracoes reune o que a leitura, a validacao e a transmissao precisam
+// saber sobre o contexto. Porte do subconjunto de TConfiguracoesNFGas em
+// uso (Geral, WebServices, Certificados e RespTec).
 //
 // O valor zero e utilizavel: VersaoDF vale Ve100 (unica versao publicada),
 // Ambiente vale TaProducao e TpEmis vale TeNormal -- que sao os zeros dos
@@ -43,6 +46,22 @@ type Configuracoes struct {
 	// CodigoUF e o codigo IBGE da UF autorizadora. Usado pela regra 226.
 	// Quando vale 0, e derivado de UF.
 	CodigoUF int
+
+	// Certificado e o certificado A1 usado na assinatura e no TLS mutuo.
+	// Porte de Certificados (TConfiguracoes) via TDFeSSL.
+	Certificado *dfe.Certificado
+	// Timeout das chamadas SOAP. Porte de WebServices.TimeOut; zero usa
+	// dfe.TimeoutPadrao.
+	Timeout time.Duration
+	// IDCSRT e CSRT identificam o Codigo de Seguranca do Responsavel
+	// Tecnico. Porte de RespTec (TConfiguracoes); quando preenchidos, o
+	// hashCSRT do gRespTec e calculado na emissao.
+	IDCSRT int
+	CSRT   string
+
+	// URLs sobrescreve o endereco de um servico -- o equivalente de editar
+	// o ACBrNFGasServicos.ini. Vazio usa a tabela embutida (SVRS).
+	URLs map[Servico]string
 }
 
 // CodigoUFEfetivo devolve o codigo IBGE da UF autorizadora, derivando de UF

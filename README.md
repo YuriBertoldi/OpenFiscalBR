@@ -10,9 +10,9 @@ Licenciado sob **LGPL 2.1+** (obra derivada do Projeto ACBr).
 |---------|-----------|--------|
 | `packages/comum` | Base: TXTClass, utils, erros, FormatFloatBR | Completo |
 | `packages/sped` | SPED Fiscal (EFD-ICMS/IPI): tipos, registros, blocos, geracao TXT | Completo (270 registros com writer) |
-| `packages/pcn` | Base de XML de DFe: mini-DOM, tipos de campo, enums DFe, validador CNPJ/CPF, chave de acesso, ini | Leitura completa (geracao de XML pendente) |
-| `packages/rtc` | Reforma Tributaria (IBS/CBS/IS) compartilhada pelos DFe | Classes + leitor XML completos; ini parcial (sem monofasia) |
-| `packages/dfe` | DFe base, SSL, config | Pendente |
+| `packages/pcn` | Base de XML de DFe: mini-DOM, tipos de campo, enums DFe, validador CNPJ/CPF, chave de acesso, ini, construtor de XML (AddNode) | Completo (leitura e geracao) |
+| `packages/rtc` | Reforma Tributaria (IBS/CBS/IS) compartilhada pelos DFe | Classes + leitor + gerador XML completos; ini parcial (sem monofasia) |
+| `packages/dfe` | DFe base: certificado A1 (PFX/PEM), assinatura XMLDSig (C14N 1.0), cliente SOAP 1.2 com TLS mutuo | Completo |
 | `packages/nfe` | NFe (Nota Fiscal Eletronica) | Pendente |
 | `packages/cte` | CTe (Conhecimento de Transporte Eletronico) | Pendente |
 | `packages/mdfe` | MDFe (Manifesto Eletronico de Documentos Fiscais) | Pendente |
@@ -20,14 +20,14 @@ Licenciado sob **LGPL 2.1+** (obra derivada do Projeto ACBr).
 | `packages/pixcd` | PIX (pagamentos instantaneos) | Pendente |
 | `packages/sat` | SAT Fiscal (CF-e) | Pendente |
 | `packages/nfsex` | NFSe (Nota Fiscal de Servicos Eletronica) | Pendente |
-| `packages/nfgas` | NFGas (NF de Gas Canalizado, modelo 76) | Leitura completa (XML, lote, eventos, consulta, ini); emissao em stubs |
+| `packages/nfgas` | NFGas (NF de Gas Canalizado, modelo 76) | Completo: leitura, geracao, assinatura, transmissao a SEFAZ (recepcao sincrona, consulta, status, cancelamento), QR-Code |
 
 ## Status das Demos
 
 | Demo | Descricao | Status |
 |------|-----------|--------|
 | `demos/sped` | API REST + Frontend para geracao de arquivo SPED Fiscal | Completo |
-| `demos/nfgas` | API REST + Frontend para leitura/importacao em lote de NFGas | Completo (somente leitura, como o package) |
+| `demos/nfgas` | API REST + Frontend para NFGas: leitura, importacao em lote, geracao, assinatura e transmissao (certificado via env) | Completo |
 
 ## Inicio Rapido
 
@@ -128,13 +128,13 @@ packages/
   sped/          Layer 0: SPED Fiscal (EFD-ICMS/IPI)
   pcn/           Layer 1: base de XML de DFe (mini-DOM, tipos de campo, validador, chave, ini)
   rtc/           Layer 1: Reforma Tributaria (IBS/CBS) compartilhada pelos DFe
-  dfe/           Layer 2: DFe base, SSL, config
+  dfe/           Layer 2: certificado A1, assinatura XMLDSig, cliente SOAP SEFAZ
   nfe/           Layer 3: NFe
-  nfgas/         Layer 3: NFGas (leitura)
+  nfgas/         Layer 3: NFGas (leitura e emissao)
   ...
 demos/
   sped/          Demo SPED Fiscal (API REST + Frontend + Docker)
-  nfgas/         Demo NFGas: leitura e importacao em lote (API REST + Frontend + Docker)
+  nfgas/         Demo NFGas: leitura, lote, geracao, assinatura e transmissao (API REST + Frontend + Docker)
 ferramentas/     Scripts de apoio ao port (nao fazem parte do modulo Go)
 ```
 
@@ -171,7 +171,7 @@ A conversao deve respeitar esta ordem — nunca converter um componente sem que 
 2. **Layer 1**: `pcn` (depende de `comum`) e `rtc` (depende de `pcn`)
 3. **Layer 2**: `dfe` (depende de `comum`, `pcn`)
 4. **Layer 3**: componentes finais (`nfe`, `cte`, `mdfe`, `boleto`, `pixcd`, `sat`, `nfsex`,
-   `nfgas` — este, na fase de leitura, depende de `comum`, `pcn` e `rtc`)
+   `nfgas` — depende de `comum`, `pcn`, `rtc` e `dfe`)
 
 ## Licenca
 

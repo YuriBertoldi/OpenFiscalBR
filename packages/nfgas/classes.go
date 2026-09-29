@@ -243,7 +243,7 @@ type Prod struct {
 	FatorP         float64                // fatorP
 	FatorT         float64                // fatorT
 	VProd          float64                // vProd
-	IndDevolucao   pcn.Indicador          // indDevolucao
+	IndDevolucao   pcn.IndicadorEx        // indDevolucao -- IndicadorEx, ver nota do struct
 	GPagAntecipado rtc.GPagAntecipadoProd // gPagAntecipado
 }
 
@@ -268,7 +268,7 @@ type ICMS struct {
 	PRedBC          float64                // pRedBC
 	VICMSDeson      float64                // vICMSDeson
 	CBenef          string                 // cBenef
-	IndSemCST       pcn.Indicador          // indSemCST -- lido do no imposto, nao do ICMSxx
+	IndSemCST       pcn.IndicadorEx        // indSemCST -- lido do no imposto, nao do ICMSxx; IndicadorEx (ver Prod)
 	VBCSTRet        float64                // vBCSTRet
 	PICMSSTRet      float64                // pICMSSTRet
 	VICMSSubstituto float64                // vICMSSubstituto
@@ -327,7 +327,7 @@ type TxReg struct {
 type Imposto struct {
 	Orig      pcn.OrigemMercadoria // orig
 	ICMS      ICMS                 // ICMS00..ICMS90, achatados
-	IndSemCST pcn.Indicador        // indSemCST
+	IndSemCST pcn.IndicadorEx      // indSemCST -- IndicadorEx (ver Prod)
 	PIS       PIS                  // PIS
 	COFINS    COFINS               // COFINS
 	RetTrib   RetTrib              // retTrib
@@ -346,11 +346,11 @@ type GProc struct {
 //
 // QFaturada aqui e Double no proprio ACBr, diferente de Prod.QFaturada.
 type GProcRef struct {
-	VItem        float64       // vItem
-	QFaturada    float64       // qFaturada
-	VProd        float64       // vProd
-	IndDevolucao pcn.Indicador // indDevolucao
-	GProc        []GProc       // gProc (0..N)
+	VItem        float64         // vItem
+	QFaturada    float64         // qFaturada
+	VProd        float64         // vProd
+	IndDevolucao pcn.IndicadorEx // indDevolucao -- IndicadorEx (ver Prod)
+	GProc        []GProc         // gProc (0..N)
 }
 
 // GNormal e o grupo de item normal. Porte de TgNormal.

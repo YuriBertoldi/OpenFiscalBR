@@ -298,3 +298,74 @@ func PadLeftZeros(s string, minimo int) string {
 	}
 	return s
 }
+
+// ---------------------------------------------------------------------------
+// Equivalentes do TACBrXmlWriter.AddNode por tipo de campo
+// ---------------------------------------------------------------------------
+//
+// Semantica portada do AddNode (ACBrXmlWriter.pas):
+//   - obrigatorio (ocorrencias=1) com valor vazio  -> gera a TAG VAZIA;
+//   - opcional (ocorrencias=0) com valor vazio     -> devolve nil (nao gera);
+//   - caso contrario gera a tag com o conteudo formatado.
+// "Vazio" e: string vazia apos Trim (tcStr), zero (tcInt/tcDeN, so quando
+// opcional) e data zero (tcDat).
+//
+// OMISSAO DELIBERADA: a ListaDeAlertas do ACBr (wAlerta de min/max/vazio)
+// nao foi portada -- os alertas do original sao informativos e nao impedem a
+// geracao; a validacao efetiva e a do XSD da SEFAZ e das regras de negocio.
+
+// NodeStr e o AddNode tcStr: Trim + FiltrarTextoXML (acentos, espacos
+// duplicados, quebras de linha).
+func NodeStr(nome, valor string, obrigatorio bool) *Elem {
+	valor = strings.TrimSpace(valor)
+	if valor == "" {
+		if obrigatorio {
+			return NovoElem(nome)
+		}
+		return nil
+	}
+	return NovoElem(nome).Texto(FiltrarTextoXML(valor))
+}
+
+// NodeStrSemFiltro e o AddNode tcStr com ParseTextoXML=False: o conteudo vai
+// como esta (apenas escapado na serializacao). Usado para campos que nao
+// podem sofrer o filtro, como chaves e URLs.
+func NodeStrSemFiltro(nome, valor string, obrigatorio bool) *Elem {
+	valor = strings.TrimSpace(valor)
+	if valor == "" {
+		if obrigatorio {
+			return NovoElem(nome)
+		}
+		return nil
+	}
+	return NovoElem(nome).Texto(valor)
+}
+
+// NodeInt e o AddNode tcInt: zero e vazio quando opcional; PadLeft de zeros
+// ate o tamanho minimo.
+func NodeInt(nome string, valor int, minimo int, obrigatorio bool) *Elem {
+	if valor == 0 && !obrigatorio {
+		return nil
+	}
+	return NovoElem(nome).Texto(PadLeftZeros(strconv.Itoa(valor), minimo))
+}
+
+// NodeDec e o AddNode tcDeN: numero de casas FIXO, ponto decimal; zero e
+// vazio quando opcional, e obrigatorio gera "0.00...".
+func NodeDec(nome string, valor float64, casas int, obrigatorio bool) *Elem {
+	if valor == 0 && !obrigatorio {
+		return nil
+	}
+	return NovoElem(nome).Texto(FormatarDecimalXML(valor, casas))
+}
+
+// NodeDat e o AddNode tcDat: AAAA-MM-DD; tempo zero e vazio.
+func NodeDat(nome string, t time.Time, obrigatorio bool) *Elem {
+	if t.IsZero() {
+		if obrigatorio {
+			return NovoElem(nome)
+		}
+		return nil
+	}
+	return NovoElem(nome).Texto(FormatarDataXML(t))
+}

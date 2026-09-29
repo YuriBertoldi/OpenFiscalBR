@@ -418,7 +418,7 @@ func lerProd(node *pcn.Node, p *Prod) {
 	p.VProd = pcn.ConteudoDe10(node.FindAnyNs("vProd"))
 
 	if v := pcn.ConteudoStr(node.FindAnyNs("indDevolucao")); v != "" {
-		p.IndDevolucao, _ = pcn.ParseIndicador(v)
+		p.IndDevolucao, _ = pcn.ParseIndicadorEx(v)
 	}
 
 	rtc.LerGPagAntecipadoProd(node.FindAnyNs("gPagAntecipado"), &p.GPagAntecipado)
@@ -464,7 +464,13 @@ func lerImposto(node *pcn.Node, i *Imposto) {
 	}
 	i.Orig, _ = pcn.ParseOrigemMercadoria(pcn.ConteudoStr(node.FindAnyNs("orig")))
 
+	// IndSemCST e espelhado de lerICMS, que le a tag no no imposto. O tipo
+	// e IndicadorEx (zero = nao informado): no ACBr o campo e TIndicador,
+	// cujo ordinal ZERO e tiSim -- um imposto lido sem a tag ficava "sem
+	// CST" e o proprio ACBr descartaria o grupo ICMS ao regerar
+	// (DIVERGENCIA DE TIPO, ver classes.go).
 	lerICMS(node, &i.ICMS)
+	i.IndSemCST = i.ICMS.IndSemCST
 	rtc.LerIBSCBS(node.FindAnyNs("IBSCBS"), &i.IBSCBS)
 	lerPIS(node.FindAnyNs("PIS"), &i.PIS)
 	lerCOFINS(node.FindAnyNs("COFINS"), &i.COFINS)
@@ -534,9 +540,10 @@ func lerICMS(node *pcn.Node, icms *ICMS) {
 	icms.PFCP = pcn.ConteudoDe4(icmsNode.FindAnyNs("pFCP")) // De4, nao De2
 	icms.VFCP = pcn.ConteudoDe2(icmsNode.FindAnyNs("vFCP"))
 
-	// indSemCST vem do no imposto, um nivel acima do ICMSxx.
+	// indSemCST vem do no imposto, um nivel acima do ICMSxx, e so e
+	// atribuido quando a tag tem conteudo (ausente = TieNenhum).
 	if v := pcn.ConteudoStr(node.FindAnyNs("indSemCST")); v != "" {
-		icms.IndSemCST, _ = pcn.ParseIndicador(v)
+		icms.IndSemCST, _ = pcn.ParseIndicadorEx(v)
 	}
 }
 
@@ -600,7 +607,7 @@ func lerGProcRef(node *pcn.Node, g *GProcRef) {
 	g.VProd = pcn.ConteudoDe8(node.FindAnyNs("vProd"))
 
 	if v := pcn.ConteudoStr(node.FindAnyNs("indDevolucao")); v != "" {
-		g.IndDevolucao, _ = pcn.ParseIndicador(v)
+		g.IndDevolucao, _ = pcn.ParseIndicadorEx(v)
 	}
 
 	g.GProc = nil

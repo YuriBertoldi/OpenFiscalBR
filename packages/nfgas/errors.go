@@ -53,6 +53,24 @@ var (
 	// ErrNaoImplementado marca a parte de emissao, que sera portada num
 	// segundo momento: geracao de XML, assinatura e web services.
 	ErrNaoImplementado = errors.New("nfgas: nao implementado nesta fase (emissao)")
+
+	// ErrProtocoloAusente indica operacao que exige o protocolo de
+	// autorizacao (nfgasProc) sem ProcNFGas.NProt preenchido.
+	ErrProtocoloAusente = errors.New("nfgas: documento sem protocolo de autorizacao")
+
+	// ErrSemURL indica UF sem web service de NFGas definido -- MA e PA
+	// constam como SVAN no ACBrNFGasServicos.ini, mas o SVAN nao tem URLs
+	// de NFGas publicadas (lacuna herdada do ACBr).
+	ErrSemURL = errors.New("nfgas: a UF nao tem URL de web service NFGas definida")
+
+	// ErrCertificadoObrigatorio indica operacao de transmissao sem
+	// certificado configurado no Componente.
+	ErrCertificadoObrigatorio = errors.New("nfgas: certificado digital nao configurado")
+
+	// ErrDigestDivergente indica protocolo de autorizacao cujo digVal nao
+	// corresponde ao DigestValue do XML transmitido (ValidarDigest do
+	// TratarResposta).
+	ErrDigestDivergente = errors.New("nfgas: digVal do protocolo nao corresponde ao XML transmitido")
 )
 
 // ErroNFGas e o erro de leitura de um documento, com o indice dentro do

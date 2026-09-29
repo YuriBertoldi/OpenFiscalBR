@@ -16,28 +16,54 @@
       "goPackage": "comum",
       "lastConvertedAt": "2026-09-29T13:42:59-03:00"
     },
+    "ACBrDFe": {
+      "delphiFileHashes": {
+        "ACBrDFeSSL.pas": "sha256:a1f85019cd58faa1395873e22a7dbc086c70be7b3193c29577bbfd9425d1d5a5",
+        "ACBrDFeUtil.pas": "sha256:8dfd8e87c4422345a4e3e748df733e86ca9500cb4d437668ee0e2e90cf1f406f",
+        "ACBrDFeWebService.pas": "sha256:71be721aa6827145bef2fa39c5015db017c90545c0e6998a51dc3119c395bbd4"
+      },
+      "delphiSourcePath": "C:\\Sistemas\\Componentes\\DelphiXE3\\ACBR\\Fontes\\ACBrDFe",
+      "escopo": "certificado A1 (PFX/PEM), assinatura XMLDSig com C14N 1.0, cliente SOAP 1.2 TLS mutuo, gzip+base64; sem A3/proxy/validacao de cadeia",
+      "goFiles": [
+        "assinatura.go",
+        "c14n.go",
+        "certificado.go",
+        "compress.go",
+        "dfe_test.go",
+        "doc.go",
+        "errors.go",
+        "soap.go"
+      ],
+      "goPackage": "dfe",
+      "lastConvertedAt": "2026-09-29T16:03:40-03:00"
+    },
     "ACBrDFe.RTC": {
       "delphiFileHashes": {
         "ACBrDFe.RTC.Classes.pas": "sha256:795ccedd6d66266d61210d29060c9e86801c1263f9a405982638520df0fc9c59",
         "ACBrDFe.RTC.IniReader.pas": "sha256:61f8065299c4c6a459d772404fc41ae5099c5e3301b6dc5944fc3cbeff3de0ed",
         "ACBrDFe.RTC.IniWriter.pas": "sha256:73fb56bf1802a9ef6dc3c2e8f85dae3bd025072c654a6fe610d74b908e674621",
-        "ACBrDFe.RTC.XmlReader.pas": "sha256:37b566b9aae918552a56b48a5b61c6e4e2a266dd2125bf3e5ba1cdd6feaf9ce0"
+        "ACBrDFe.RTC.XmlReader.pas": "sha256:37b566b9aae918552a56b48a5b61c6e4e2a266dd2125bf3e5ba1cdd6feaf9ce0",
+        "ACBrDFe.RTC.XmlWriter.pas": "sha256:d90380f2bc20cff9a9771ac90a724fb1c772ad374cb83b66df260b2f9d531589"
       },
       "delphiSourcePath": "C:\\Sistemas\\Componentes\\DelphiXE3\\ACBR\\Fontes\\ACBrDFe",
-      "escopo": "classes + leitor XML completos; ini apenas os grupos usados pela NFGas (sem gIBSCBSMono/IS)",
+      "escopo": "classes + leitor + gerador XML completos; ini apenas os grupos usados pela NFGas (sem gIBSCBSMono/IS)",
       "goFiles": [
         "classes.go",
         "conversao.go",
         "doc.go",
         "ini.go",
         "rtc_test.go",
-        "xml_reader.go"
+        "xml_reader.go",
+        "xml_writer.go",
+        "xml_writer_test.go"
       ],
       "goPackage": "rtc",
-      "lastConvertedAt": "2026-09-29T13:44:31-03:00"
+      "lastConvertedAt": "2026-09-29T16:03:40-03:00"
     },
     "ACBrNFGas": {
       "delphiFileHashes": {
+        "ACBrDFeComum.ConsStatServ.pas": "sha256:a136e108591b41315fe57320cb4532ce85f6bff2d12b7415412a308791a47fdb",
+        "ACBrDFeComum.RetConsStatServ.pas": "sha256:ef57c966f2a5315e7b0a2a0f04ba10c64d9f12dbc7eeeeddd1b16bb6454bcce7",
         "ACBrNFGas.Classes.pas": "sha256:435ce892a8a55bbcd193c1e2978e16e2a01e8919e2612546b22db1d5ba35d694",
         "ACBrNFGas.ConsSit.pas": "sha256:d5b123b49c676231166e2e9bacb08a50c12239144508796b601d3dc1aa673cd5",
         "ACBrNFGas.Consts.pas": "sha256:53ed6ab70a6dfc1bac20ce0c9dc0ec4df7d721b1511933d7a2fda22155d8531c",
@@ -54,10 +80,11 @@
         "ACBrNFGas.pas": "sha256:7bc316fd55698691635e25ca7f115405d68e840b3ef28992653db15acd07defa",
         "ACBrNFGasConfiguracoes.pas": "sha256:b0f937a0da9548852374c12a2a99fa8bdb337a26e436028dfb322f255fe547da",
         "ACBrNFGasNotasFiscais.pas": "sha256:dc5350630f96a3377379a0ef788082c4b1ce484b3d13b41862425d28f1a9be5e",
+        "ACBrNFGasServicos.ini": "sha256:529a52d7dc1fbe35aa4c92a3982dafe4e5feb48b29fcdd93199d6db6a7707830",
         "ACBrNFGasWebServices.pas": "sha256:35f29dd1f20d475541c788a302c747a367a4b743a6b0f3443bbd95dd1894dbb7"
       },
       "delphiSourcePath": "C:\\Sistemas\\Componentes\\DelphiXE3\\ACBR\\Fontes\\ACBrDFe\\ACBrNFGas",
-      "escopo": "leitura (XML, lote, eventos, consulta, ini); emissao em stubs",
+      "escopo": "leitura + geracao + assinatura + web services (recepcao sincrona, consulta, status, evento de cancelamento)",
       "goFiles": [
         "classes.go",
         "configuracoes.go",
@@ -67,6 +94,7 @@
         "errors.go",
         "evento.go",
         "evento_reader.go",
+        "evento_writer.go",
         "ini_reader.go",
         "ini_writer.go",
         "nfgas.go",
@@ -74,13 +102,17 @@
         "notas_fiscais.go",
         "regras_negocio.go",
         "ret_cons_sit.go",
+        "ret_status.go",
         "types.go",
+        "urls.go",
         "web_services.go",
+        "web_services_test.go",
         "xml_reader.go",
-        "xml_writer.go"
+        "xml_writer.go",
+        "xml_writer_test.go"
       ],
       "goPackage": "nfgas",
-      "lastConvertedAt": "2026-09-29T13:44:31-03:00"
+      "lastConvertedAt": "2026-09-29T16:03:40-03:00"
     },
     "ACBrSPEDFiscal": {
       "delphiFileHashes": {
@@ -148,7 +180,8 @@
         "ACBrValidador.pas": "sha256:8ab9b8e84e4a263baa00473631e0820edc262ae1af6df598b198930cfc913493",
         "ACBrXmlBase.pas": "sha256:39ea35f8a3d28e6ab812272edda52d8865a70588aff660ed70b5c425c9ab21b4",
         "ACBrXmlDocument.pas": "sha256:a519735234f1af9ae0cd7c6517b56218055f01220aee93a0bc87471c353b081b",
-        "ACBrXmlReader.pas": "sha256:d03b8cc4248b896651605a012e9c8a2d0e835df39eb7e8d669c7bd7db8c70ac9"
+        "ACBrXmlReader.pas": "sha256:d03b8cc4248b896651605a012e9c8a2d0e835df39eb7e8d669c7bd7db8c70ac9",
+        "ACBrXmlWriter.pas": "sha256:2bf4e77cb02b2a8ba3f0cf3064b8a43f16158b0dfb1ee91f5d890a6808efbc8a"
       },
       "delphiSourcePath": "C:\\Sistemas\\Componentes\\DelphiXE3\\ACBR\\Fontes",
       "escopo": "base de LEITURA de DFe: mini-DOM, tipos de campo, enums DFe, validador CNPJ/CPF, chave de acesso, ini; geracao de XML fica para a fase de emissao",
@@ -164,10 +197,12 @@
         "signature.go",
         "tipos_campo.go",
         "validador.go",
+        "xml_builder.go",
+        "xml_builder_test.go",
         "xml_node.go"
       ],
       "goPackage": "pcn",
-      "lastConvertedAt": "2026-09-29T13:44:31-03:00"
+      "lastConvertedAt": "2026-09-29T16:03:40-03:00"
     }
   },
   "derivedFrom": "Projeto ACBr (http://projetoacbr.com.br)",

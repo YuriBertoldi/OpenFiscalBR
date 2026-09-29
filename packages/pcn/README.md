@@ -103,3 +103,20 @@ go test ./packages/pcn/... -v
 ```
 
 Sem dependência externa e sem arquivo fora de `t.TempDir()`.
+
+## Geração de XML (`xml_builder.go`)
+
+Fase de emissão: o construtor `Elem` (porte da escrita de `TACBrXmlNode`) e os equivalentes do
+`TACBrXmlWriter.AddNode` por tipo de campo:
+
+| Função | Semântica do AddNode |
+|---|---|
+| `NodeStr` / `NodeStrSemFiltro` | `tcStr` com/sem `FiltrarTextoXML` (acentos, espaços, quebras→`;`) |
+| `NodeInt` | `tcInt` — zero é vazio quando opcional; `PadLeft` de zeros até o mínimo |
+| `NodeDec` | `tcDeN` — casas decimais **fixas**, ponto; zero é vazio quando opcional |
+| `NodeDat` | `tcDat` — `AAAA-MM-DD`; tempo zero é vazio |
+| `FormatarDataHoraXML` + `OffsetUF` | `DateTimeTodh` + `GetUTC(UF)` (AC −05; AM/RR/RO/MT/MS −04; resto −03) |
+
+Regra herdada do ACBr: campo **obrigatório** com valor vazio gera a **tag vazia**; opcional com
+valor vazio não gera nada. A `ListaDeAlertas` (wAlerta) não foi portada — omissão deliberada,
+a validação efetiva é o XSD da SEFAZ.

@@ -109,6 +109,8 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 			"POST /api/ler", "POST /api/ler-lote", "POST /api/validar",
 			"POST /api/ler-evento", "POST /api/ler-consulta", "POST /api/ler-ini",
 			"GET /api/status",
+			"POST /api/gerar", "POST /api/assinar", "POST /api/transmitir",
+			"GET /api/status-sefaz", "POST /api/consultar-sefaz", "POST /api/cancelar",
 		},
 	})
 }

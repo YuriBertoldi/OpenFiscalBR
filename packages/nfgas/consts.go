@@ -64,11 +64,14 @@ var gruposICMS = []string{
 }
 
 // cStat que indicam documento confirmado, processado ou cancelado.
-// Porte de TACBrNFGas.CstatConfirmada / CstatProcessado / CstatCancelada.
+// Porte de TACBrNFGas.CstatConfirmada / CstatProcessado / CstatCancelada
+// (ACBrNFGas.pas:230-256). Na NFGas, Confirmada e Processado sao o MESMO
+// conjunto {100, 150} -- diferente do NFe, que acrescenta 110/301/302 -- e
+// Cancelada inclui o 135 (evento registrado e vinculado).
 var (
 	cStatConfirmada = map[int]bool{100: true, 150: true}
-	cStatProcessado = map[int]bool{100: true, 110: true, 150: true, 301: true, 302: true}
-	cStatCancelada  = map[int]bool{101: true, 151: true, 155: true}
+	cStatProcessado = map[int]bool{100: true, 150: true}
+	cStatCancelada  = map[int]bool{101: true, 135: true, 151: true, 155: true}
 )
 
 // cStatComProtocolo lista os cStat em que a consulta de situacao traz o

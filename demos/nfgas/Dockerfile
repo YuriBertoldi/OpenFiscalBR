@@ -3,7 +3,8 @@
 
 FROM golang:1.22-alpine AS build
 WORKDIR /src
-COPY go.mod ./
+COPY go.mod go.sum ./
+RUN go mod download
 COPY packages/ packages/
 COPY demos/nfgas/ demos/nfgas/
 RUN CGO_ENABLED=0 go build -o /bin/nfgas-demo ./demos/nfgas

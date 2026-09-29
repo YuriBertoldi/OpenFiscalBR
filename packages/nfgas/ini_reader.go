@@ -277,7 +277,7 @@ func lerINIDet(ini *pcn.INI, n *NFGas) {
 		d.NItemAnt = ini.LerInteiro(secao, "nItemAnt", 0)
 
 		d.GNormal.Imposto.Orig, _ = pcn.ParseOrigemMercadoria(ini.LerString(secao, "orig", "0"))
-		d.GNormal.Imposto.IndSemCST, _ = pcn.ParseIndicador(ini.LerString(secao, "indSemCST", ""))
+		d.GNormal.Imposto.IndSemCST, _ = pcn.ParseIndicadorEx(ini.LerString(secao, "indSemCST", ""))
 
 		p := &d.GNormal.Prod
 		p.IndOrigemQtd, _ = ParseIndOrigemQtd(ini.LerString(secao, "indOrigemQtd", "1"))
@@ -293,7 +293,7 @@ func lerINIDet(ini *pcn.INI, n *NFGas) {
 		p.FatorP = ini.LerFloat(secao, "fatorP", 0)
 		p.FatorT = ini.LerFloat(secao, "fatorT", 0)
 		p.VProd = ini.LerFloat(secao, "vProd", 0)
-		p.IndDevolucao, _ = pcn.ParseIndicador(ini.LerString(secao, "indDevolucao", ""))
+		p.IndDevolucao, _ = pcn.ParseIndicadorEx(ini.LerString(secao, "indDevolucao", ""))
 		d.GNormal.InfAdProd = ini.LerString(secao, "infAdProd", "")
 
 		lerINIGMedicao(ini, &p.GMedicao, i)
@@ -366,7 +366,7 @@ func lerINIGProcRef(ini *pcn.INI, g *GProcRef, det int) {
 	g.VItem = pcn.StringToFloatDef(v, 0)
 	g.QFaturada = ini.LerFloat(secao, "qFaturada", 0)
 	g.VProd = ini.LerFloat(secao, "vProd", 0)
-	g.IndDevolucao, _ = pcn.ParseIndicador(ini.LerString(secao, "indDevolucao", ""))
+	g.IndDevolucao, _ = pcn.ParseIndicadorEx(ini.LerString(secao, "indDevolucao", ""))
 
 	g.GProc = nil
 	for p := 1; ; p++ {
@@ -386,7 +386,7 @@ func lerINIICMS(ini *pcn.INI, icms *ICMS, det int) {
 	if !ini.SecaoExiste(secao) {
 		return
 	}
-	icms.IndSemCST, _ = pcn.ParseIndicador(ini.LerString(secao, "indSemCST", ""))
+	icms.IndSemCST, _ = pcn.ParseIndicadorEx(ini.LerString(secao, "indSemCST", ""))
 	icms.CST, _ = pcn.ParseCSTIcms(ini.LerString(secao, "CST", ""))
 	icms.ModBC, _ = ParseDeterminacaoBaseIcms(ini.LerString(secao, "modBC", ""))
 	icms.PRedBC = ini.LerFloat(secao, "pRedBC", 0)

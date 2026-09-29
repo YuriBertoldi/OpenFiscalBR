@@ -550,7 +550,7 @@ func TestLerXML_ProdPrecisaoETipos(t *testing.T) {
 	if p.FatorPCS != 1.01 || p.FatorPTZ != 0.99 {
 		t.Errorf("fatores = %v/%v", p.FatorPCS, p.FatorPTZ)
 	}
-	if p.IndDevolucao != pcn.TiNao {
+	if p.IndDevolucao != pcn.TieNao {
 		t.Errorf("indDevolucao = %v", p.IndDevolucao)
 	}
 	if p.GPagAntecipado.NItemPagAnt != 1 || p.GPagAntecipado.ChDFePagAnt == "" {
@@ -651,7 +651,7 @@ func TestLerXML_ICMSAchatado(t *testing.T) {
 		t.Errorf("motDesICMS = %v (%q), esperado MdiOutros", icms.MotDesICMS, icms.MotDesICMS.String())
 	}
 	// indSemCST vem do no imposto, nao do ICMSxx.
-	if icms.IndSemCST != pcn.TiNao {
+	if icms.IndSemCST != pcn.TieNao {
 		t.Errorf("indSemCST = %v", icms.IndSemCST)
 	}
 }
@@ -724,8 +724,8 @@ func TestLerXML_SemGrupoICMSNaoAlteraNada(t *testing.T) {
 	if icms != (ICMS{}) {
 		t.Errorf("sem ICMSxx a struct deveria ficar zerada, veio %+v", icms)
 	}
-	if n.Det[0].GNormal.Imposto.IndSemCST != pcn.TiSim {
-		t.Errorf("indSemCST deveria ser descartado (ficar no zero TiSim), veio %v",
+	if n.Det[0].GNormal.Imposto.IndSemCST != pcn.TieNenhum {
+		t.Errorf("indSemCST deveria ser descartado (TieNenhum), veio %v",
 			n.Det[0].GNormal.Imposto.IndSemCST)
 	}
 
@@ -737,7 +737,7 @@ func TestLerXML_SemGrupoICMSNaoAlteraNada(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if n2.Det[0].GNormal.Imposto.ICMS.IndSemCST != pcn.TiNao {
+	if n2.Det[0].GNormal.Imposto.ICMS.IndSemCST != pcn.TieNao {
 		t.Errorf("com ICMSxx presente, indSemCST deveria ser lido: %v",
 			n2.Det[0].GNormal.Imposto.ICMS.IndSemCST)
 	}
@@ -810,7 +810,7 @@ func TestLerXML_GProcRefPrecisaoDiferenteDeProd(t *testing.T) {
 	if g.QFaturada != 10.5 {
 		t.Errorf("gProcRef/qFaturada = %v", g.QFaturada)
 	}
-	if g.IndDevolucao != pcn.TiSim {
+	if g.IndDevolucao != pcn.TieSim {
 		t.Errorf("indDevolucao = %v", g.IndDevolucao)
 	}
 	if len(g.GProc) != 2 {
@@ -1043,17 +1043,22 @@ func TestLerXML_NFGasProcComProtocolo(t *testing.T) {
 }
 
 func TestCStat_Classificacao(t *testing.T) {
+	// Tabela de TACBrNFGas.CstatConfirmada/Processado/Cancelada
+	// (ACBrNFGas.pas:230-256): Confirmada == Processado == {100,150};
+	// Cancelada inclui o 135. Os codigos 110/301/302 sao do NFe e NAO
+	// existem na tabela da NFGas.
 	casos := []struct {
 		cStat                             int
 		confirmada, processada, cancelada bool
 	}{
 		{100, true, true, false},
 		{150, true, true, false},
-		{110, false, true, false},
+		{110, false, false, false},
 		{101, false, false, true},
+		{135, false, false, true},
 		{151, false, false, true},
 		{155, false, false, true},
-		{301, false, true, false},
+		{301, false, false, false},
 		{999, false, false, false},
 	}
 	for _, c := range casos {
@@ -2052,46 +2057,32 @@ func TestIdentificarSchema(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// Emissao -- declarada, nao implementada
+// Emissao -- contratos sem rede (a bateria completa esta em
+// xml_writer_test.go e web_services_test.go)
 // ---------------------------------------------------------------------------
 
-func TestEmissao_DevolveNaoImplementado(t *testing.T) {
-	n := lerCompleta(t)
+func TestEmissao_ContratosSemRede(t *testing.T) {
 	c := NovoComponente()
 	ctx := testContext()
 
-	if _, err := GerarXML(n); !errors.Is(err, ErrNaoImplementado) {
-		t.Errorf("GerarXML = %v", err)
+	// transmissao sem certificado configurado falha cedo, sem rede
+	if _, err := c.Consultar(ctx, chaveTeste); !errors.Is(err, ErrCertificadoObrigatorio) {
+		t.Errorf("Consultar sem certificado = %v", err)
 	}
-	if _, err := GerarXMLProc(n); !errors.Is(err, ErrNaoImplementado) {
-		t.Errorf("GerarXMLProc = %v", err)
+	if _, err := c.StatusServico(ctx); !errors.Is(err, ErrCertificadoObrigatorio) {
+		t.Errorf("StatusServico sem certificado = %v", err)
 	}
-	if _, err := GerarXMLEvento(&EventoNFGas{}); !errors.Is(err, ErrNaoImplementado) {
-		t.Errorf("GerarXMLEvento = %v", err)
+	if _, err := c.Cancelamento(ctx, chaveTeste, "191000000000001", "justificativa de teste"); !errors.Is(err, ErrCertificadoObrigatorio) {
+		t.Errorf("Cancelamento sem certificado = %v", err)
 	}
-	if _, err := Assinar(n, ""); !errors.Is(err, ErrNaoImplementado) {
-		t.Errorf("Assinar = %v", err)
+
+	// URL publica de consulta nao depende de certificado
+	if url, err := c.URLConsultaNFGas(35); err != nil || url == "" {
+		t.Errorf("URLConsultaNFGas(35) = %q, %v", url, err)
 	}
-	if _, err := GerarQRCode(n, Configuracoes{}); !errors.Is(err, ErrNaoImplementado) {
-		t.Errorf("GerarQRCode = %v", err)
-	}
-	if err := c.Enviar(ctx, "1", nil); !errors.Is(err, ErrNaoImplementado) {
-		t.Errorf("Enviar = %v", err)
-	}
-	if _, err := c.Consultar(ctx, chaveTeste); !errors.Is(err, ErrNaoImplementado) {
-		t.Errorf("Consultar = %v", err)
-	}
-	if err := c.StatusServico(ctx); !errors.Is(err, ErrNaoImplementado) {
-		t.Errorf("StatusServico = %v", err)
-	}
-	if _, err := c.Cancelamento(ctx, chaveTeste, "1", "just"); !errors.Is(err, ErrNaoImplementado) {
-		t.Errorf("Cancelamento = %v", err)
-	}
-	if _, err := c.EnviarEvento(ctx, &EventoNFGas{}); !errors.Is(err, ErrNaoImplementado) {
-		t.Errorf("EnviarEvento = %v", err)
-	}
-	if _, err := c.URLConsultaNFGas(35); !errors.Is(err, ErrNaoImplementado) {
-		t.Errorf("URLConsultaNFGas = %v", err)
+	// MA e PA apontam para o SVAN, sem URL publicada (lacuna do ACBr)
+	if _, err := c.URLConsultaNFGas(21); !errors.Is(err, ErrSemURL) {
+		t.Errorf("URLConsultaNFGas(MA) deveria dar ErrSemURL, veio %v", err)
 	}
 }
 

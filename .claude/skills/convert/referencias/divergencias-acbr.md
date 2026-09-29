@@ -56,3 +56,43 @@ Determinístico e sem perda de dado — mudar isso quebra a compatibilidade com 
 - `enderCorresp` não lê `cPais`/`xPais`; `gpBioDiferenca` não é lido nos grupos ad valorem da
   monofasia; `pDevTrib` não é lido em `gIBSMun`/`gCBS` no `.ini`.
 - Protocolo da consulta só é lido com `cStat` em `{100, 101, 104, 150, 151, 155}`.
+
+## Divergências da GERAÇÃO/EMISSÃO da NFGas (aprovadas em 2026-09-29)
+
+Bugs determinísticos do `ACBrNFGas.XmlWriter.pas` corrigidos no porte — todos com teste em
+`packages/nfgas/xml_writer_test.go` citando a divergência:
+
+| # | Onde | O ACBr faz | O porte faz | Fonte |
+|---|---|---|---|---|
+| 1 | raiz do documento processado | gera `NFGasProc` | gera `nfgasProc`, como o XSD (`nfgasProc_v1.00.xsd`) e o próprio LEITOR do ACBr esperam | `GerarXml`, linha 248 |
+| 2 | `finNFGas`, `indOrigemQtd`, `tpMotNaoLeitura`, `tpProc`, `modBCST`, `motDesICMS` | passa o enum cru ao `AddNode` → grava o **ordinal** | grava o código do leiaute (`String()`) | `Gerar_Ide` etc. |
+| 3 | ICMS70 | gera o bloco `vICMSDeson` **duas vezes** (a 2ª com `cBenef`) | só o primeiro bloco (`vICMSDeson`+`motDesICMS`+`indDeduzDeson`); `cBenef` não sai no ICMS70 | `ICMS70`, linhas 917–930 |
+| 4 | CST de ICMS fora do leiaute | `Result := nil` + `AppendChild` em seguida → **access violation** | o grupo `imposto` sai nil (item sem imposto), sem pânico | `Gerar_det_imposto`, linha 976 |
+| 5 | competência/dhCont com data zero | `FormatDateTime` da data zero → `189912` (em `Gerar_gFat` e `Gerar_gCons`) e `1899-12-30T...` (em `dhCont` quando só `xJust` veio preenchido) | tag vazia | `Gerar_gFat`:1194, `Gerar_gCons`:1337, `Gerar_Ide`:393. Obs.: no `Gerar_gNF` o **próprio ACBr** já guarda a data zero (`if CompetEmis > 0`, :531-542) — ali não há divergência |
+| 6 | `cNF` aleatório | `GerarCodigoDFe` sorteia com 8 dígitos — a posição 36 da chave da NFGas é o `nSiteAutoriz`, então código de 8 dígitos corrompe a chave | sorteio com 7 dígitos, mesma lista de códigos proibidos | `ACBrDFeUtil.pas` |
+
+### Divergência de TIPO: `TIndicador` tem `tiSim` como ordinal ZERO
+
+`TIndicador = (tiSim, tiNao)` (`ACBrDFe.Conversao.pas:199`). Um `TImposto`/`TProd` recém-criado
+no Delphi tem `indSemCST`/`indDevolucao` = `tiSim` — regerar uma nota lida de XML sem essas tags
+faria o ACBr **descartar o grupo ICMS inteiro** e marcar devolução em todo item. No porte, os
+campos `Imposto.IndSemCST`, `ICMS.IndSemCST`, `Prod.IndDevolucao` e `GProcRef.IndDevolucao` são
+`pcn.IndicadorEx` (zero = `TieNenhum` = não informado). Round-trip ler→gerar coberto por
+`TestGerarXML_RoundTripEstavel`.
+
+### Replicado mesmo parecendo errado (geração)
+
+- `gMedicao/nContrat` sai SEMPRE (`FormatFloat('00')` antes do `AddNode` opcional → `"00"`
+  nunca é vazio).
+- `pgto/@nPag` e `pgto/@idTransacao` saem sempre, mesmo vazios (`SetAttribute` incondicional).
+- `infAdic` é gerado mesmo sem conteúdo.
+- `Det` com `gNormal` E `gAgregadora` preenchidos: só `gAgregadora` sai (`Gerar_det`).
+- `gProcRef/qFaturada` inteira sai como `tcInt` (sem casas); fracionada como `tcDe4`.
+- URLs: MA e PA apontam para seções `NFGas_SVAN_*` que **não existem** no
+  `ACBrNFGasServicos.ini` → `ErrSemURL` (lacuna herdada, documentada).
+
+### Omissões deliberadas (geração)
+
+- `ListaDeAlertas`/`wAlerta` não portada — validação efetiva é o XSD da SEFAZ +
+  `regras_negocio.go`.
+- `NormatizarMunicipios` (lookup em arquivo de municípios) não portada.
