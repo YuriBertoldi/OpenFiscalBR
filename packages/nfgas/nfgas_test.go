@@ -1302,6 +1302,20 @@ func TestLerXML_ValorInvalidoNaoAborta(t *testing.T) {
 // Eventos
 // ---------------------------------------------------------------------------
 
+func TestRetInfEventoRegistrado(t *testing.T) {
+	// conjunto de aceite do ACBrNFGasWebServices.pas:1571: [135, 136, 155]
+	for _, cStat := range []int{135, 136, 155} {
+		if !(&RetInfEvento{CStat: cStat}).Registrado() {
+			t.Errorf("cStat %d deveria ser evento registrado", cStat)
+		}
+	}
+	for _, cStat := range []int{0, 100, 128, 573} {
+		if (&RetInfEvento{CStat: cStat}).Registrado() {
+			t.Errorf("cStat %d nao deveria ser evento registrado", cStat)
+		}
+	}
+}
+
 func TestLerEvento_ProcEventoCancelamento(t *testing.T) {
 	ev, err := LerEventoBytes(carregarFixture(t, "proc_evento_cancelamento.xml"))
 	if err != nil {

@@ -96,3 +96,32 @@ campos `Imposto.IndSemCST`, `ICMS.IndSemCST`, `Prod.IndDevolucao` e `GProcRef.In
 - `ListaDeAlertas`/`wAlerta` não portada — validação efetiva é o XSD da SEFAZ +
   `regras_negocio.go`.
 - `NormatizarMunicipios` (lookup em arquivo de municípios) não portada.
+
+## Divergências do ACBrNFAg (aprovadas em 2026-09-30)
+
+O `packages/nfag` (água, modelo 75) herda a política do NFGas. Específicas dele, todas com
+teste em `packages/nfag/`:
+
+| # | Onde | O ACBr faz | O porte faz | Fonte |
+|---|---|---|---|---|
+| 1 | raiz do proc na geração | `NFAgProc` (gera E lê) | gera `nfagProc` (XSD `procNFAg_v1.00.xsd`); o leitor aceita `NFAgProc`, `nfagProc` e `procNFAg` | `GerarXml`:271 / `LerXml`:145 |
+| 2 | `retTrib` do item | grava **`vRetCOFINS`** | grava `vRetCofins` | XSD `nfagTiposBasico_v1.00.xsd:925` e o próprio leitor (`Ler_RetTrib`:536) usam a grafia minúscula — o valor gravado pelo ACBr se perde na releitura. Flagrado pelo teste de round-trip byte a byte |
+| 3 | `Ler_Dest` | **sem guard** `if not Assigned` → AV com `<dest>` ausente | leitura tolerante | `XmlReader.pas:307` |
+| 4 | `Ler_gMed` @nMed | `StrToInt` sem Def → exceção com atributo ausente | vale 0 | `XmlReader.pas:369` |
+| 5 | `.ini`, `gPagAntecipadoNNN` do item | writer grava com índice **0-based** (`IniWriter.pas:346`) e o reader lê **1-based** (`IniReader.pas:357`) — o round-trip do ACBr perde o grupo | writer usa o mesmo 1-based do reader | flagrado por teste de round-trip; perde dado, então corrigido (não replicado) |
+
+### Bugs determinísticos REPLICADOS (não "corrigir")
+
+- **INI, versão**: gravada em `[infNFAg]` (`IniWriter.pas:154`), lida de `[infNFGas]`
+  (`IniReader.pas:144`, copy-paste da NFGas) — o round-trip do ACBr perde a versão.
+- **INI, TFU**: `Gerar_TFU` grava na seção `'TFS'+NNN` (`IniWriter.pas:498`); o reader lê de
+  `[TFUNNN]` — TFU gravado nunca é relido.
+- `tpFat` não é lido do XML (`Ler_Ide` não tem a tag); `vBCIRRF` é gerado e nunca lido.
+- Assimetrias de precisão writer×reader do próprio ACBr (replicadas): prod
+  `vItem`/`vProd` leitura tcDe10 × geração tcDe2; `pPIS`/`pCOFINS` leitura De4 × geração
+  De2; `medMensal`/`consumo` leitura De4 × geração De2; gProcRef `vItem`/`vProd` leitura
+  De8 × geração De2.
+- `DescricaoTipoEvento` = "CANCELAMENTO DE NF3-e" (typo, só descritivo);
+  `IdentificaSchema` procura `<infNFGas` (typo inofensivo, default já é schNFAg).
+- Recepção síncrona: sucesso exige **cStat do retorno = 104** (não 100 como na NFGas) —
+  não é bug, é o contrato do `TNFAgRecepcao.TratarResposta`, replicado e testado.

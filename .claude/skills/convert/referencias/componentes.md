@@ -21,6 +21,7 @@ Caminhos relativos ao `DelphiSourcePath` informado (a pasta `Fontes` do ACBr).
 | `ACBrNF3e` | `<path>/ACBrDFe/ACBrNF3e/` |
 | `ACBrNFCom` | `<path>/ACBrDFe/ACBrNFCom/` |
 | `ACBrNFGas` | `<path>/ACBrDFe/ACBrNFGas/` |
+| `ACBrNFAg` | `<path>/ACBrDFe/ACBrNFAg/` |
 | `ACBrGNRE` | `<path>/ACBrDFe/ACBrGNRE/` |
 | `ACBrReinf` | `<path>/ACBrDFe/ACBrReinf/` |
 | `ACBreSocial` | `<path>/ACBrDFe/ACBreSocial/` |
@@ -56,6 +57,7 @@ encontrar, **perguntar o caminho exato ao usuário** — nunca chutar o diretór
 | `ACBrNF3e` | `nf3e` | `packages/nf3e/` |
 | `ACBrNFCom` | `nfcom` | `packages/nfcom/` |
 | `ACBrNFGas` | `nfgas` | `packages/nfgas/` |
+| `ACBrNFAg` | `nfag` | `packages/nfag/` |
 | `ACBrBoleto` | `boleto` | `packages/boleto/` |
 | `ACBrPIXCD` | `pixcd` | `packages/pixcd/` |
 | `ACBrSAT` | `sat` | `packages/sat/` |
@@ -91,6 +93,7 @@ dependências ainda não existam em `packages/`.
 | `dfe` | `comum`, `pcn` |
 | `nfe`, `cte`, `mdfe`, `bpe`, `nfsex`, `nfse`, `nf3e`, `nfcom`, `gnre`, `reinf`, `esocial` | `comum`, `pcn`, `dfe` |
 | `nfgas` | `comum`, `pcn`, `rtc`, `dfe` (leitura e emissão completas desde 2026-09-29) |
+| `nfag` | `comum`, `pcn`, `rtc`, `dfe` (leitura e emissão completas desde 2026-09-30; modelo de dados próprio da água, não é rename do nfgas) |
 | `boleto` | `comum` |
 | `pixcd` | `comum` |
 | `sat` | `comum` |

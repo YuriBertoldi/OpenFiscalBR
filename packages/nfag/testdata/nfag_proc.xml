@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NFAgProc versao="1.00" xmlns="http://www.portalfiscal.inf.br/nfag">
+  <NFAg>
+    <infNFAg Id="NFAG35260311222333000181750010000000021100000099" versao="1.00">
+      <ide>
+        <cUF>35</cUF>
+        <tpAmb>2</tpAmb>
+        <mod>75</mod>
+        <serie>1</serie>
+        <nNF>2</nNF>
+        <cNF>0000009</cNF>
+        <cDV>9</cDV>
+        <dhEmi>2026-03-16T09:00:00-03:00</dhEmi>
+        <tpEmis>1</tpEmis>
+        <nSiteAutoriz>1</nSiteAutoriz>
+        <cMunFG>3550308</cMunFG>
+        <finNFAg>0</finNFAg>
+        <tpFat>1</tpFat>
+        <verProc>OpenFiscalBR 1.0</verProc>
+      </ide>
+      <emit>
+        <CNPJ>11222333000181</CNPJ>
+        <IE>111222333444</IE>
+        <xNome>Saneamento Teste LTDA</xNome>
+        <enderEmit>
+          <xLgr>Rua das Adutoras</xLgr>
+          <nro>1000</nro>
+          <xBairro>Industrial</xBairro>
+          <cMun>3550308</cMun>
+          <xMun>Sao Paulo</xMun>
+          <CEP>01310100</CEP>
+          <UF>SP</UF>
+        </enderEmit>
+      </emit>
+      <dest>
+        <xNome>Consumidor Proc</xNome>
+        <idOutros>MATRICULA-778899</idOutros>
+        <enderDest>
+          <xLgr>Rua B</xLgr>
+          <nro>2</nro>
+          <xBairro>Centro</xBairro>
+          <cMun>3550308</cMun>
+          <xMun>Sao Paulo</xMun>
+          <CEP>01001000</CEP>
+          <UF>SP</UF>
+        </enderDest>
+      </dest>
+      <ligacao>
+        <idLigacao>LIG-000456</idLigacao>
+        <tpLigacao>1</tpLigacao>
+        <latGPS>-23.550520</latGPS>
+        <longGPS>-46.633308</longGPS>
+      </ligacao>
+      <det nItem="1">
+        <prod>
+          <indOrigemQtd>1</indOrigemQtd>
+          <cProd>AGUA001</cProd>
+          <xProd>Fornecimento de agua</xProd>
+          <cClass>0100101</cClass>
+          <tpCategoria>06</tpCategoria>
+          <uMed>1</uMed>
+          <qFaturada>10.0000</qFaturada>
+          <vItem>5.0000000000</vItem>
+          <vProd>50.0000000000</vProd>
+        </prod>
+        <imposto/>
+      </det>
+      <total>
+        <vProd>50.00</vProd>
+        <vRetTribTot>
+          <vRetPIS>0.00</vRetPIS>
+          <vRetCofins>0.00</vRetCofins>
+          <vRetCSLL>0.00</vRetCSLL>
+          <vIRRF>0.00</vIRRF>
+        </vRetTribTot>
+        <vCOFINS>0.00</vCOFINS>
+        <vPIS>0.00</vPIS>
+        <vTFS>0.00</vTFS>
+        <vTFU>0.00</vTFU>
+        <vNF>50.00</vNF>
+      </total>
+      <gFat>
+        <CompetFat>202603</CompetFat>
+        <dVencFat>2026-04-10</dVencFat>
+        <dProxLeitura>2026-04-16</dProxLeitura>
+        <codBarras>846700000000502000011222333000181000000000002</codBarras>
+        <codBanco>001</codBanco>
+        <codAgencia>1234</codAgencia>
+      </gFat>
+      <gAgencia>
+        <nAgenciaAtend>AG-CENTRO-01</nAgenciaAtend>
+        <enderAgenciaAtend>Praca da Matriz, 10</enderAgenciaAtend>
+      </gAgencia>
+    </infNFAg>
+  </NFAg>
+  <protNFAg versao="1.00">
+    <infProt>
+      <tpAmb>2</tpAmb>
+      <verAplic>SVRS1.0</verAplic>
+      <chNFAg>35260311222333000181750010000000021100000099</chNFAg>
+      <dhRecbto>2026-03-16T09:01:00-03:00</dhRecbto>
+      <nProt>335260000000101</nProt>
+      <digVal>abc123=</digVal>
+      <cStat>100</cStat>
+      <xMotivo>Autorizado o uso da NFAg</xMotivo>
+    </infProt>
+  </protNFAg>
+</NFAgProc>

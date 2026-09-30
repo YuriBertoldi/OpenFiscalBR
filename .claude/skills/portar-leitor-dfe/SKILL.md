@@ -24,6 +24,10 @@ arquivo correspondente lá.
 
 ## PASSO 1 — Mapear as units de leitura do componente
 
+> Componente irmão de um já portado (NFGas ↔ NFAg ↔ NF3e ↔ NFCom)? Comece pelo diff
+> estruturado dos `.pas` (`diff --strip-trailing-cr -w -i`) — a técnica está no PASSO 1 da
+> `/portar-emissor-dfe`. O delta é o trabalho; o modelo de dados se valida struct a struct.
+
 Em `<Fontes>/ACBrDFe/<Componente>/`:
 
 | Unit | O que é | Vai para |

@@ -31,6 +31,14 @@ TratarResposta), `Base/Servicos/<Comp>.EnvEvento.pas` (gerador de evento), `<Com
 (URLs por UF), `<Comp>.pas` (GetURLQRCode/GetURLConsulta). Anote de cada `Gerar_*`: ordem dos
 campos, tipo `tcDeN` POR CAMPO, ocorrência 0/1, e a CONDICIONAL em volta de cada bloco.
 
+**Se existe um IRMÃO da mesma família já portado** (NFGas ↔ NFAg ↔ NF3e ↔ NFCom — utilities
+com a mesma arquitetura de fontes), comece pelo diff estruturado unit a unit:
+`diff --strip-trailing-cr -w -i irmao.pas novo.pas` (os `.pas` são CRLF; sem `--strip-trailing-cr`
+o diff acusa 100% das linhas). O delta é o trabalho real; `urls.go`/`web_services.go`/
+`notas_fiscais.go` saem por cópia+ajuste. MAS o modelo de dados é próprio de cada documento
+(o det da NFAg é achatado, o imposto não tem ICMS...) — `classes.go` e os writers/readers se
+validam struct a struct contra o `.pas` novo, nunca por rename do irmão.
+
 ## PASSO 2 — Bugs do ACBr que se repetem em TODO writer (conferir um a um)
 
 1. **Enum cru no AddNode → grava o ORDINAL.** Todo campo onde o `.pas` passa o enum sem
@@ -69,7 +77,30 @@ campos, tipo `tcDeN` POR CAMPO, ocorrência 0/1, e a CONDICIONAL em volta de cad
 - Recepção pode ser síncrona (NFGas/NF3e/NFCom: 1 documento, `GzipBase64`, limite 1 MB,
   resposta `ret<Comp>` renomeada para o leitor de consulta) ou por lote/recibo (NFe) — copie o
   fluxo do `.pas`, não o de outro componente.
+- **Conjuntos de cStat são POR COMPONENTE — copie do `TratarResposta` do `.pas`, nunca do
+  irmão.** Sucesso da recepção síncrona: NFAg exige cStat do RETORNO = 104; NFGas usa 100.
+  Evento registrado: `[135, 136, 155]` (o 155 — cancelamento fora de prazo — some fácil).
+  Confirmada/Processada/Cancelada idem.
 - Config de teste: `Configuracoes.URLs map[Servico]string` para apontar ao `httptest`.
+
+## PASSO 4b — IniWriter (onde a revisão do NFAg achou TODOS os defeitos)
+
+O `Gerar_*` do `IniWriter.pas` tem as mesmas armadilhas de condicional do XmlWriter, e o
+build/vet não pega nenhuma:
+
+1. **Guard (`Exit`) de cada seção, literal**: `Gerar_gMedicao` só pula com
+   `(nMed <= 0) AND (vMed = 0)`; `Gerar_Ligacao` pula com `idLigacao` vazio. Simplificar o
+   guard descarta grupo em silêncio.
+2. **`DateTimeToIni` = `DateTimeToStr` — data E HORA.** Gravar só a data zera a hora de
+   `dhEmi`/`dhCont` no round-trip (formato fixo `AAAA-MM-DDTHH:MM:SS`, não o do locale).
+3. **Base do índice writer × reader pode divergir no próprio ACBr** (`gPagAntecipado`:
+   writer 0-based, reader 1-based — o round-trip do ACBr perde o grupo). Perde dado →
+   corrigir para a base do reader + registrar em `divergencias-acbr.md`.
+4. **`raise` de validação no `GravarIni`** (`ValidarChave` → "Chave Inválida") vira `error`.
+   Atenção: o IniReader NÃO lê o `ID` — teste de round-trip a partir de `.ini` precisa montar
+   o ID antes de regravar.
+5. Bugs determinísticos de seção trocada se REPLICAM (versão em `[infNFAg]` lida de
+   `[infNFGas]`; TFU gravado em `[TFSNNN]`) — com teste citando o `.pas`.
 
 ## PASSO 5 — Testes que provam a geração
 
@@ -80,7 +111,9 @@ campos, tipo `tcDeN` POR CAMPO, ocorrência 0/1, e a CONDICIONAL em volta de cad
    teste).
 3. SOAP contra `httptest`: envelope, namespace do DadosMsg, gzip+base64 decodificado e
    assinatura do XML transmitido verificada.
-4. Um teste por divergência aprovada, citando o `.pas`.
+4. **Round-trip do INI** (gravar→ler→comparar): pega guard simplificado, hora perdida e
+   índice de seção divergente — foi o que faltou no NFAg e a revisão cobrou.
+5. Um teste por divergência aprovada, citando o `.pas`.
 
 ## PASSO 6 — Fechar
 

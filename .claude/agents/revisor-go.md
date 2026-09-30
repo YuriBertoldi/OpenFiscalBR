@@ -132,6 +132,26 @@ Aplicável a package que LÊ XML da SEFAZ (`nfgas` e os DFe que vierem). O contr
 - Toda marca `DIVERGENCIA`/`ACRESCIMO`/`OMISSAO DO ACBr REPLICADA` tem teste travando o
   comportamento? Divergência sem teste é achado Importante.
 
+## Eixo 4c — IniWriter/IniReader e helpers de cStat (componentes DFe)
+
+Na revisão do `nfag`, TODOS os achados médios estavam aqui — o XML estava perfeito. Confira
+no `<Comp>.IniWriter.pas`:
+
+- **O guard (`Exit`) de cada `Gerar_*` foi portado literal?** Ex.: `Gerar_gMedicao` só pula
+  com `(nMed <= 0) AND (vMed = 0)`; `Gerar_Ligacao` pula com `idLigacao` vazio. Guard
+  simplificado (`== 0` no lugar do `AND`) descarta grupo em silêncio.
+- **`DateTimeToIni` = `DateTimeToStr` (data E HORA)** — porte que grava só a data perde a
+  hora de `dhEmi`/`dhCont` no round-trip.
+- **Base do índice de seção: writer × reader do próprio ACBr podem divergir**
+  (`gPagAntecipado`: writer 0-based, reader 1-based). Perde dado → o Go corrige para a base
+  do reader, MAS precisa de `DIVERGENCIA` registrada + teste; correção silenciosa é achado.
+- **`raise` de validação no `GravarIni`** (`ValidarChave`) virou `error`?
+- **Round-trip do INI (gravar→ler→comparar) existe como teste?** É o único que pega os três
+  primeiros itens.
+- **Conjuntos de cStat dos helpers batem com o `WebServices.pas` DO componente?** Evento
+  registrado é `[135, 136, 155]` (o 155 some fácil); sucesso da recepção síncrona varia por
+  componente (NFAg = 104 no retorno; NFGas = 100). Conjunto copiado do irmão é achado.
+
 ## Eixo 5 — Específico do package `sped`
 
 - Todo writer tem o doc-comment `// Formato: |REG|CAMPO1|...|` e a ordem das concatenações

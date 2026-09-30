@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<retConsSitNFAg versao="1.00" xmlns="http://www.portalfiscal.inf.br/nfag">
+  <tpAmb>2</tpAmb>
+  <verAplic>SVRS1.0</verAplic>
+  <cStat>100</cStat>
+  <xMotivo>Autorizado o uso da NFAg</xMotivo>
+  <cUF>35</cUF>
+  <dhRecbto>2026-03-18T08:00:00-03:00</dhRecbto>
+  <chNFAg>35260311222333000181750010000000021100000099</chNFAg>
+  <protNFAg versao="1.00">
+    <infProt>
+      <tpAmb>2</tpAmb>
+      <verAplic>SVRS1.0</verAplic>
+      <chNFAg>35260311222333000181750010000000021100000099</chNFAg>
+      <dhRecbto>2026-03-16T09:01:00-03:00</dhRecbto>
+      <nProt>335260000000101</nProt>
+      <digVal>abc123=</digVal>
+      <cStat>100</cStat>
+      <xMotivo>Autorizado o uso da NFAg</xMotivo>
+    </infProt>
+  </protNFAg>
+</retConsSitNFAg>

@@ -1,0 +1,74 @@
+// OpenFiscalBR - Automacao Fiscal Brasileira em Go
+// Derivado do Projeto ACBr (http://projetoacbr.com.br)
+// Copyright (c) 2004-2026 Projeto ACBr - Daniel Simoes de Almeida
+//
+// Este arquivo e parte do OpenFiscalBR, derivado do Projeto ACBr.
+// Portado de Delphi para Go em 2026-09-29.
+//
+// Esta biblioteca e software livre; voce pode redistribui-la sob os
+// termos da Licenca Publica Geral Menor GNU (LGPL v2.1+).
+// Veja LICENSE.TXT para detalhes.
+
+package nfag
+
+import (
+	"time"
+
+	"github.com/openfiscalbr/openfiscalbr/packages/dfe"
+	"github.com/openfiscalbr/openfiscalbr/packages/pcn"
+)
+
+// Configuracoes reune o que a leitura, a validacao e a transmissao precisam
+// saber sobre o contexto. Porte do subconjunto de TConfiguracoesNFAg em
+// uso (Geral, WebServices, Certificados e RespTec).
+//
+// O valor zero e utilizavel: VersaoDF vale Ve100 (unica versao publicada),
+// Ambiente vale TaProducao e TpEmis vale TeNormal -- que sao os zeros dos
+// enums. Atencao: o default do componente DELPHI para Ambiente e
+// taHomologacao (ACBrDFeConfiguracoes.pas); NovoComponente aplica esse
+// default para manter a paridade.
+type Configuracoes struct {
+	// VersaoDF e a versao do leiaute. Porte de Geral.VersaoDF.
+	VersaoDF VersaoNFAg
+	// VersaoQRCode e a versao do QR-Code. Porte de Geral.VersaoQRCode.
+	VersaoQRCode VersaoQrCode
+	// Ambiente e o ambiente esperado. Porte de WebServices.Ambiente.
+	// Usado pela regra de negocio 252 e como default de tpAmb no .ini.
+	Ambiente pcn.TipoAmbiente
+	// TpEmis e a forma de emissao configurada no componente. Porte de
+	// Geral.FormaEmissao; usada como default de tpEmis na leitura do .ini
+	// -- sem ela, uma instalacao em contingencia leria o .ini como emissao
+	// normal.
+	TpEmis pcn.TipoEmissao
+	// UF e a sigla da UF autorizadora. Porte de WebServices.UF.
+	// Usada pela regra de negocio 247.
+	UF string
+	// CodigoUF e o codigo IBGE da UF autorizadora. Usado pela regra 226.
+	// Quando vale 0, e derivado de UF.
+	CodigoUF int
+
+	// Certificado e o certificado A1 usado na assinatura e no TLS mutuo.
+	// Porte de Certificados (TConfiguracoes) via TDFeSSL.
+	Certificado *dfe.Certificado
+	// Timeout das chamadas SOAP. Porte de WebServices.TimeOut; zero usa
+	// dfe.TimeoutPadrao.
+	Timeout time.Duration
+	// IDCSRT e CSRT identificam o Codigo de Seguranca do Responsavel
+	// Tecnico. Porte de RespTec (TConfiguracoes); quando preenchidos, o
+	// hashCSRT do gRespTec e calculado na emissao.
+	IDCSRT int
+	CSRT   string
+
+	// URLs sobrescreve o endereco de um servico -- o equivalente de editar
+	// o ACBrNFAgServicos.ini. Vazio usa a tabela embutida (SVRS).
+	URLs map[Servico]string
+}
+
+// CodigoUFEfetivo devolve o codigo IBGE da UF autorizadora, derivando de UF
+// quando CodigoUF nao foi informado.
+func (c Configuracoes) CodigoUFEfetivo() int {
+	if c.CodigoUF != 0 {
+		return c.CodigoUF
+	}
+	return pcn.CodigoUF(c.UF)
+}

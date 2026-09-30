@@ -21,6 +21,7 @@ Licenciado sob **LGPL 2.1+** (obra derivada do Projeto ACBr).
 | `packages/sat` | SAT Fiscal (CF-e) | Pendente |
 | `packages/nfsex` | NFSe (Nota Fiscal de Servicos Eletronica) | Pendente |
 | `packages/nfgas` | NFGas (NF de Gas Canalizado, modelo 76) | Completo: leitura, geracao, assinatura, transmissao a SEFAZ (recepcao sincrona, consulta, status, cancelamento), QR-Code |
+| `packages/nfag` | NFAg (NF de Agua Canalizada, modelo 75) | Completo: leitura, geracao, assinatura, transmissao a SEFAZ, QR-Code |
 
 ## Status das Demos
 
@@ -28,6 +29,7 @@ Licenciado sob **LGPL 2.1+** (obra derivada do Projeto ACBr).
 |------|-----------|--------|
 | `demos/sped` | API REST + Frontend para geracao de arquivo SPED Fiscal | Completo |
 | `demos/nfgas` | API REST + Frontend para NFGas: leitura, importacao em lote, geracao, assinatura e transmissao (certificado via env) | Completo |
+| `demos/nfag` | API REST + Frontend para NFAg: mesmas rotas da demo NFGas | Completo |
 
 ## Inicio Rapido
 
@@ -131,6 +133,7 @@ packages/
   dfe/           Layer 2: certificado A1, assinatura XMLDSig, cliente SOAP SEFAZ
   nfe/           Layer 3: NFe
   nfgas/         Layer 3: NFGas (leitura e emissao)
+  nfag/          Layer 3: NFAg (leitura e emissao)
   ...
 demos/
   sped/          Demo SPED Fiscal (API REST + Frontend + Docker)

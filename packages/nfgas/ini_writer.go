@@ -72,6 +72,11 @@ func MontarINI(n *NFGas) (*pcn.INI, error) {
 	if n == nil {
 		return nil, ErrXMLVazio
 	}
+	// Como o original (GravarIni, IniWriter.pas:146-147), recusa nota com
+	// chave invalida -- o raise "Chave Invalida" vira erro.
+	if err := pcn.ValidarChaveAcesso(n.InfNFGas.ID); err != nil {
+		return nil, fmt.Errorf("nfgas: NFGas inconsistente para gerar INI: %w", err)
+	}
 	ini := pcn.NovoINI()
 
 	ini.GravarFloat("infNFGas", "versao", n.InfNFGas.Versao, 2)
