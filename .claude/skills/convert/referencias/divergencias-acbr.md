@@ -88,6 +88,12 @@ campos `Imposto.IndSemCST`, `ICMS.IndSemCST`, `Prod.IndDevolucao` e `GProcRef.In
 - `infAdic` é gerado mesmo sem conteúdo.
 - `Det` com `gNormal` E `gAgregadora` preenchidos: só `gAgregadora` sai (`Gerar_det`).
 - `gProcRef/qFaturada` inteira sai como `tcInt` (sem casas); fracionada como `tcDe4`.
+- **`tpMotNaoLeitura`/`xMotNaoLeitura` são RAMO MORTO na NFGas.** `Gerar_det_prod` só chama
+  `Gerar_det_prod_gMedicao` quando `nMed > 0` **e** `gMedida.vMed > 0`
+  (`ACBrNFGas.XmlWriter.pas:687`), mas dentro dele essas duas tags só saem no ramo
+  `vMed = 0` (`:720-728`). Nenhum XML gerado pelo ACBr pode contê-las, e o porte replica a
+  guarda (`packages/nfgas/xml_writer.go:377`, marcado `OMISSAO DO ACBr REPLICADA`). A **NFAg
+  não tem o defeito**: lá a guarda exige apenas `nMed > 0`, e o ramo é alcançável.
 - URLs: MA e PA apontam para seções `NFGas_SVAN_*` que **não existem** no
   `ACBrNFGasServicos.ini` → `ErrSemURL` (lacuna herdada, documentada).
 
@@ -96,6 +102,16 @@ campos `Imposto.IndSemCST`, `ICMS.IndSemCST`, `Prod.IndDevolucao` e `GProcRef.In
 - `ListaDeAlertas`/`wAlerta` não portada — validação efetiva é o XSD da SEFAZ +
   `regras_negocio.go`.
 - `NormatizarMunicipios` (lookup em arquivo de municípios) não portada.
+
+### Acréscimos ao porte (existem no Go, não existem no ACBr)
+
+Valem para `nfgas` e `nfag`, com teste em cada package:
+
+| Acréscimo | Por quê |
+|---|---|
+| Leitura do **evento enviado** dentro de `procEvento*` (`RetEvento*.Evento`/`TemEvento`) | é a única fonte do `xJust`; o `TRetEvento*` do ACBr só lê a parte de retorno, e sem isso uma importação de cancelamentos não tem a justificativa |
+| Leitura de `CNPJDest`, `emailDest` e `cOrgaoAutor` do retorno | declarados em `TRetInfEvento` e nunca lidos pelo ACBr; são dados do documento |
+| **`GerarXMLProcEvento`** (`evento_writer.go`) | o `TRetEvento*` do ACBr só tem leitura — não há como produzir o envelope `procEvento*` que o contribuinte arquiva. Simétrico ao `GerarXMLProc` do documento; recusa com `ErrEventoAusente` quando falta a parte enviada, e herda do evento enviado os campos que o retorno não trouxer (senão `tpEvento` sairia como `-99999`, o `String()` do zero value) |
 
 ## Divergências do ACBrNFAg (aprovadas em 2026-09-30)
 

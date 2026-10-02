@@ -65,6 +65,79 @@ section h2 { margin: 0 0 .75rem; font-size: 1.1rem; }
   background: #21344a;
 }
 
+/* .botao.secundario usa display:inline-block, que venceria o display:none
+   que o navegador aplica ao atributo hidden. */
+[hidden] { display: none !important; }
+
+.exemplos {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-bottom: .5rem;
+}
+
+.exemplos label { font-size: .85rem; color: var(--texto-suave); }
+
+.exemplos select {
+  flex: 1;
+  min-width: 16rem;
+  background: var(--painel);
+  color: var(--texto);
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  padding: .45rem .6rem;
+  font: inherit;
+  font-size: .85rem;
+}
+
+.exemplos .check { display: flex; align-items: center; gap: .3rem; cursor: pointer; }
+
+.descricao {
+  font-size: .8rem;
+  color: var(--texto-suave);
+  margin: 0 0 .6rem;
+  line-height: 1.4;
+}
+
+.parametros {
+  background: var(--painel);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  padding: .5rem .75rem;
+  margin-bottom: .75rem;
+  font-size: .85rem;
+}
+
+.parametros summary { cursor: pointer; color: var(--texto-suave); }
+
+.parametros .campos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+  margin: .75rem 0;
+}
+
+.parametros .campos label {
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+  font-size: .75rem;
+  color: var(--texto-suave);
+}
+
+.parametros input,
+.parametros select {
+  background: var(--fundo);
+  color: var(--texto);
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  padding: .35rem .5rem;
+  font: inherit;
+  font-size: .8rem;
+  min-width: 9rem;
+}
+
 textarea {
   width: 100%;
   min-height: 320px;

@@ -50,8 +50,8 @@ type NotaResumo struct {
 
 // LerResponse devolve a nota completa mais o resumo.
 type LerResponse struct {
-	Resumo NotaResumo   `json:"resumo"`
-	NFAg  *nfag.NFAg `json:"nfag"`
+	Resumo NotaResumo `json:"resumo"`
+	NFAg   *nfag.NFAg `json:"nfag"`
 }
 
 // LoteResponse devolve o resultado da importacao em lote.
@@ -111,6 +111,7 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 			"GET /api/status",
 			"POST /api/gerar", "POST /api/assinar", "POST /api/transmitir",
 			"GET /api/status-sefaz", "POST /api/consultar-sefaz", "POST /api/cancelar",
+			"GET /api/exemplos", "GET /api/exemplos/{id}", "GET /api/exemplos/{id}/download",
 		},
 	})
 }

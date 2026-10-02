@@ -28,6 +28,136 @@
     f.text().then(function (texto) { conteudo.value = texto; });
   });
 
+  // -------------------------------------------------------------------------
+  // Catálogo de exemplos
+  // -------------------------------------------------------------------------
+
+  const seletor = document.getElementById("exemplo");
+  const gerarExemplo = document.getElementById("gerarExemplo");
+  const gerarComDados = document.getElementById("gerarComDados");
+  const baixarExemplo = document.getElementById("baixarExemplo");
+  const variarDados = document.getElementById("variarDados");
+  const exemploDescricao = document.getElementById("exemploDescricao");
+  const campoItens = document.getElementById("campoItens");
+
+  const catalogo = {};
+
+  const campos = {
+    cnpj: document.getElementById("pCnpj"),
+    uf: document.getElementById("pUf"),
+    serie: document.getElementById("pSerie"),
+    nnf: document.getElementById("pNnf"),
+    tpamb: document.getElementById("pTpAmb"),
+    itens: document.getElementById("pItens")
+  };
+
+  fetch("/api/exemplos")
+    .then(function (r) { return r.json(); })
+    .then(function (dados) {
+      seletor.innerHTML = "";
+      const grupos = {
+        documento: document.createElement("optgroup"),
+        evento: document.createElement("optgroup")
+      };
+      grupos.documento.label = "Documento";
+      grupos.evento.label = "Evento";
+
+      dados.exemplos.forEach(function (ex) {
+        catalogo[ex.id] = ex;
+        const op = document.createElement("option");
+        op.value = ex.id;
+        op.textContent = ex.nome;
+        (grupos[ex.tipo] || grupos.documento).appendChild(op);
+      });
+      Object.keys(grupos).forEach(function (k) {
+        if (grupos[k].childElementCount) seletor.appendChild(grupos[k]);
+      });
+      atualizarCamposDoExemplo();
+      // Só agora há um id para gerar: antes disso o clique não faria nada,
+      // e botão que não responde parece defeito.
+      gerarExemplo.disabled = false;
+      gerarComDados.disabled = false;
+    })
+    .catch(function () {
+      seletor.innerHTML = "<option value=''>(catálogo indisponível)</option>";
+      atualizarCamposDoExemplo();
+    });
+
+  seletor.addEventListener("change", atualizarCamposDoExemplo);
+
+  function atualizarCamposDoExemplo() {
+    const ex = catalogo[seletor.value];
+    campoItens.hidden = !(ex && ex.aceitaItens);
+    baixarExemplo.hidden = true;
+    if (ex) {
+      exemploDescricao.textContent = ex.descricao;
+      exemploDescricao.hidden = false;
+    } else {
+      // Sem exemplo selecionado (catálogo indisponível), a descrição do
+      // anterior ficaria na tela descrevendo coisa nenhuma.
+      exemploDescricao.hidden = true;
+    }
+  }
+
+  // Monta a query só com o que o usuário preencheu. Vazia = dados fictícios
+  // fixos, que é o caminho do "clicar e gerar".
+  function queryDosParametros(usarFormulario) {
+    const q = new URLSearchParams();
+    if (usarFormulario) {
+      Object.keys(campos).forEach(function (nome) {
+        const el = campos[nome];
+        if (!el || el.closest("[hidden]")) return;
+        const v = (el.value || "").trim();
+        if (v) q.set(nome, v);
+      });
+    }
+    if (variarDados.checked) q.set("variar", "1");
+    const s = q.toString();
+    return s ? "?" + s : "";
+  }
+
+  function carregarExemplo(usarFormulario) {
+    const id = seletor.value;
+    if (!id) return;
+
+    erro.hidden = true;
+    const query = queryDosParametros(usarFormulario);
+
+    fetch("/api/exemplos/" + encodeURIComponent(id) + query)
+      .then(function (resp) {
+        return resp.json().then(function (dados) {
+          return { ok: resp.ok, dados: dados };
+        });
+      })
+      .then(function (r) {
+        if (!r.ok) {
+          mostrarErro(r.dados.erro || "Não foi possível gerar o exemplo.");
+          return;
+        }
+        conteudo.value = r.dados.xml;
+
+        let texto = r.dados.descricao;
+        if (r.dados.chave) texto += " · chave " + r.dados.chave;
+        if (r.dados.observacao) texto += " — " + r.dados.observacao;
+        exemploDescricao.textContent = texto;
+        exemploDescricao.hidden = false;
+
+        baixarExemplo.href = "/api/exemplos/" + encodeURIComponent(id) + "/download" + query;
+        baixarExemplo.hidden = false;
+
+        // Seleciona a aba sugerida pelo mesmo caminho do clique humano, para
+        // não duplicar o controle de estado da barra de abas.
+        const alvo = document.querySelector('.aba[data-acao="' + r.dados.acaoSugerida + '"]');
+        if (alvo) alvo.click();
+      })
+      .catch(function (e) {
+        mostrarErro("Erro de rede: " + e.message);
+      });
+  }
+
+  gerarExemplo.addEventListener("click", function () { carregarExemplo(false); });
+  gerarComDados.addEventListener("click", function () { carregarExemplo(true); });
+
   processar.addEventListener("click", function () {
     erro.hidden = true;
     resumo.hidden = true;

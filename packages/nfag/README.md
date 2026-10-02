@@ -18,7 +18,7 @@ da água — não é um rename.
 | Retorno de consulta (`retConsSitNFAg`) e de status (`retConsStatServNFAg`) | ✔ completo |
 | Formato `.ini` do ACBr (leitura **e** escrita) | ✔ completo |
 | Regras de negócio 226, 227, 247, 252 + chave de acesso | ✔ completo |
-| **Geração de XML** (`GerarXML`, `GerarXMLProc`, `GerarXMLEvento`) | ✔ completo |
+| **Geração de XML** (`GerarXML`, `GerarXMLProc`, `GerarXMLEvento`, `GerarXMLProcEvento`) | ✔ completo |
 | **Assinatura** XMLDSig (`Assinar`, `AssinarEvento`, via `packages/dfe`) | ✔ completo |
 | **Transmissão à SEFAZ** — recepção síncrona, consulta, status, cancelamento | ✔ completo |
 | QR-Code e URL de consulta pública | ✔ completo |
@@ -118,6 +118,15 @@ para descobrir o protocolo — o `nProt` é responsabilidade do chamador.
 - `DescricaoTipoEvento` devolve `"CANCELAMENTO DE NF3-e"` (typo do ACBr; só descritivo).
 - `IdentificaSchema` do ACBr procura `<infNFGas` (typo inofensivo — o default já é
   `schNFAg`); aqui a busca é pela raiz, com o mesmo resultado.
+
+### Acréscimos ao porte
+
+Marcados `ACRESCIMO` no código: leitura do **evento enviado** dentro de
+`procEventoNFAg` (única fonte da justificativa de cancelamento) e dos campos
+`CNPJDest`/`emailDest`/`cOrgaoAutor` do retorno, que o ACBr declara e não lê; e
+`GerarXMLProcEvento`, que **escreve** o `procEventoNFAg` — o `TRetEventoNFAg` do
+ACBr só tem leitura, e sem isso não há como produzir o envelope que o
+contribuinte arquiva.
 
 ## Testes
 

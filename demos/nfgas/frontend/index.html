@@ -10,8 +10,8 @@
   <header>
     <h1>OpenFiscalBR — NFGas</h1>
     <p>Nota Fiscal de Fornecimento de Gás Canalizado · modelo 76 · leiaute 1.00</p>
-    <p class="aviso">Esta demo cobre a <strong>leitura</strong> (XML, lote, evento, consulta, .ini).
-      A emissão será adicionada em fase futura.</p>
+    <p class="aviso">Leitura (XML, lote, evento, consulta, .ini) e emissão (gerar, assinar, transmitir).
+      Não tem um XML à mão? Escolha um exemplo abaixo e clique em <strong>Gerar com dados fictícios</strong>.</p>
   </header>
 
   <main>
@@ -29,8 +29,36 @@
         <button class="aba" data-acao="transmitir">Transmitir</button>
       </div>
 
+      <div class="exemplos">
+        <label for="exemplo">Exemplo:</label>
+        <select id="exemplo"><option value="">Carregando…</option></select>
+        <button id="gerarExemplo" class="botao" disabled>Gerar com dados fictícios</button>
+        <label class="check"><input type="checkbox" id="variarDados"> Variar dados</label>
+        <a id="baixarExemplo" class="botao secundario" hidden download>Baixar .xml</a>
+      </div>
+      <p id="exemploDescricao" class="descricao" hidden></p>
+
+      <details class="parametros">
+        <summary>Ajustar dados (opcional)</summary>
+        <div class="campos">
+          <label>CNPJ do emitente <input type="text" id="pCnpj" placeholder="11222333000181" maxlength="18"></label>
+          <label>UF <input type="text" id="pUf" placeholder="SP" maxlength="2"></label>
+          <label>Série <input type="number" id="pSerie" placeholder="1" min="0" max="889"></label>
+          <label>Número <input type="number" id="pNnf" placeholder="1" min="1"></label>
+          <label>Ambiente
+            <select id="pTpAmb">
+              <option value="">(do exemplo)</option>
+              <option value="2">Homologação</option>
+              <option value="1">Produção</option>
+            </select>
+          </label>
+          <label id="campoItens">Itens <input type="number" id="pItens" placeholder="5" min="1" max="990"></label>
+        </div>
+        <button id="gerarComDados" class="botao secundario" disabled>Gerar com estes dados</button>
+      </details>
+
       <textarea id="conteudo" spellcheck="false"
-        placeholder="Cole aqui o XML da NFGas, o lote de XMLs concatenados, o XML de evento/consulta ou o .ini"></textarea>
+        placeholder="Cole aqui o XML da NFGas, o lote de XMLs concatenados, o XML de evento/consulta ou o .ini — ou gere um exemplo acima"></textarea>
 
       <div class="acoes">
         <label class="botao secundario">

@@ -11,8 +11,22 @@ import sys
 import os
 import glob
 
-ACBR = r"C:\Sistemas\Componentes\DelphiXE3\ACBR\Fontes\ACBrTXT\ACBrSPED\ACBrSPEDFiscal"
-GO = r"C:\GitHub\OpenFiscalBR\packages\sped"
+# Caminhos vem do ambiente: cada maquina instala o ACBr onde quer, e caminho
+# de maquina cravado no fonte nao serve para mais ninguem.
+#
+#   ACBR_FONTES  raiz dos fontes do ACBr SPED Fiscal (.pas)
+#   GO_SPED      pasta do package sped (default: deste proprio repositorio)
+_AQUI = os.path.dirname(os.path.abspath(__file__))
+
+ACBR = os.environ.get("ACBR_FONTES", "")
+GO = os.environ.get("GO_SPED", os.path.join(_AQUI, "..", "packages", "sped"))
+
+if not ACBR:
+    sys.exit(
+        "Defina ACBR_FONTES com a pasta dos fontes do ACBr SPED Fiscal.\n"
+        "  Windows: set ACBR_FONTES=C:\\caminho\\ACBr\\Fontes\\ACBrTXT\\ACBrSPED\\ACBrSPEDFiscal\n"
+        "  bash:    export ACBR_FONTES=/caminho/ACBr/Fontes/ACBrTXT/ACBrSPED/ACBrSPEDFiscal"
+    )
 
 
 def le(path):

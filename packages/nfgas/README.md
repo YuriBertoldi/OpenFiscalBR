@@ -16,7 +16,7 @@ e `dfe`.
 | Retorno de consulta (`retConsSitNFGas`) e de status (`retConsStatServNFGas`) | ✔ completo |
 | Formato `.ini` do ACBr (leitura **e** escrita) | ✔ completo |
 | Regras de negócio 226, 227, 247, 252 + chave de acesso (montagem, DV, concatenação) | ✔ completo |
-| **Geração de XML** (`GerarXML`, `GerarXMLProc`, `GerarXMLEvento`) | ✔ completo |
+| **Geração de XML** (`GerarXML`, `GerarXMLProc`, `GerarXMLEvento`, `GerarXMLProcEvento`) | ✔ completo |
 | **Assinatura** XMLDSig (`Assinar`, `AssinarEvento`, via `packages/dfe`) | ✔ completo |
 | **Transmissão à SEFAZ** — recepção síncrona, consulta, status, cancelamento | ✔ completo |
 | QR-Code e URL de consulta pública (`GerarQRCode`, `URLConsultaNFGas`) | ✔ completo |
@@ -136,7 +136,21 @@ A lista completa, com as linhas do `.pas`, está em
 
 Acréscimos ao porte (marcados `ACRESCIMO`): leitura do **evento enviado** dentro de
 `procEventoNFGas` (única fonte da justificativa de cancelamento) e dos campos
-`CNPJDest`/`emailDest`/`cOrgaoAutor` do retorno, que o ACBr declara e não lê.
+`CNPJDest`/`emailDest`/`cOrgaoAutor` do retorno, que o ACBr declara e não lê; e
+`GerarXMLProcEvento`, que **escreve** o `procEventoNFGas` — o `TRetEventoNFGas` do
+ACBr só tem leitura, e sem isso não há como produzir o envelope que o
+contribuinte arquiva.
+
+### Ramo inalcançável herdado do ACBr
+
+`tpMotNaoLeitura` e `xMotNaoLeitura` **nunca são emitidos**, aqui nem no Delphi:
+`gerarProd` só chama `gerarGMedicao` quando `nMed > 0` **e** `gMedida.vMed > 0`
+(`xml_writer.go:377`), mas dentro de `gerarGMedicao` essas duas tags só saem no
+ramo `vMed == 0` (`xml_writer.go:415`). A mesma guarda está em
+`ACBrNFGas.XmlWriter.pas:687`, antes do `Gerar_det_prod_gMedicao`. O porte
+replica o defeito por fidelidade; `demos/nfgas/exemplos_test.go` registra a
+lacuna na lista `tagsForaDoWriter`. Repare que a **NFAg não tem esse problema**:
+lá a guarda exige apenas `nMed > 0`, e o ramo é alcançável.
 
 ## Cobertura — declarado × exercitado
 

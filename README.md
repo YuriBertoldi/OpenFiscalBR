@@ -28,7 +28,7 @@ Licenciado sob **LGPL 2.1+** (obra derivada do Projeto ACBr).
 | Demo | Descricao | Status |
 |------|-----------|--------|
 | `demos/sped` | API REST + Frontend para geracao de arquivo SPED Fiscal | Completo |
-| `demos/nfgas` | API REST + Frontend para NFGas: leitura, importacao em lote, geracao, assinatura e transmissao (certificado via env) | Completo |
+| `demos/nfgas` | API REST + Frontend para NFGas: leitura, importacao em lote, geracao, assinatura, transmissao (certificado via env) e catalogo de XMLs de exemplo | Completo |
 | `demos/nfag` | API REST + Frontend para NFAg: mesmas rotas da demo NFGas | Completo |
 
 ## Inicio Rapido

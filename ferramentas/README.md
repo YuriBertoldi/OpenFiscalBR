@@ -2,6 +2,26 @@
 
 Scripts de desenvolvimento. Não fazem parte do módulo Go e não são compilados.
 
+## Configuração
+
+Os dois scripts leem os fontes Delphi do ACBr, que ficam fora deste repositório.
+Informe onde eles estão pela variável `ACBR_FONTES` — sem ela o script avisa e
+sai, em vez de falhar com "arquivo não encontrado" lá adiante:
+
+```bash
+# Windows (cmd)
+set ACBR_FONTES=C:\caminho\ACBr\Fontes\ACBrTXT\ACBrSPED\ACBrSPEDFiscal
+
+# Windows (PowerShell)
+$env:ACBR_FONTES = "C:\caminho\ACBr\Fontes\ACBrTXT\ACBrSPED\ACBrSPEDFiscal"
+
+# bash
+export ACBR_FONTES=/caminho/ACBr/Fontes/ACBrTXT/ACBrSPED/ACBrSPEDFiscal
+```
+
+`GO_SPED` aponta para o `packages/sped` e tem default relativo ao próprio
+repositório — só precisa ser definida para comparar com outra cópia.
+
 ## `comparar-campos.py`
 
 Compara a sequência de campos de um writer do ACBr Delphi com a do writer Go

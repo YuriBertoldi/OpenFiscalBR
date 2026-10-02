@@ -325,6 +325,176 @@ func TestGerarXMLEvento_TipoNaoSuportado(t *testing.T) {
 	}
 }
 
+// procEventoTeste monta um retorno de cancelamento completo, nos moldes de
+// testdata/proc_evento_cancelamento.xml.
+func procEventoTeste() *RetEventoNFGas {
+	return &RetEventoNFGas{
+		Versao:    "1.00",
+		TemEvento: true,
+		Evento: EventoNFGas{
+			InfEvento: InfEvento{
+				TpAmb:      pcn.TaHomologacao,
+				ChNFGas:    chaveTeste,
+				DhEvento:   time.Date(2026, 3, 10, 9, 0, 0, 0, time.UTC),
+				TpEvento:   TeCancelamento,
+				NSeqEvento: 1,
+				DetEvento:  DetEvento{NProt: "335260000000001", XJust: "cancelamento em teste unitario"},
+			},
+		},
+		RetInfEvento: RetInfEvento{
+			TpAmb:       pcn.TaHomologacao,
+			VerAplic:    "SP_NFGAS_1.0.0",
+			COrgao:      35,
+			CStat:       135,
+			XMotivo:     "Evento registrado e vinculado a NFGas",
+			ChNFGas:     chaveTeste,
+			TpEvento:    TeCancelamento,
+			XEvento:     "Cancelamento",
+			NSeqEvento:  1,
+			CNPJDest:    "99888777000166",
+			EmailDest:   "dest@teste.com.br",
+			COrgaoAutor: 35,
+			DhRegEvento: time.Date(2026, 3, 10, 9, 5, 0, 0, time.UTC),
+			NProt:       "135260000000099",
+		},
+	}
+}
+
+func TestGerarXMLProcEvento(t *testing.T) {
+	r := procEventoTeste()
+	xml, err := GerarXMLProcEvento(r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range []string{
+		`<procEventoNFGas versao="1.00" xmlns="` + Namespace + `">`,
+		`<eventoNFGas versao="1.00">`, // namespace so na raiz, nao repetido aqui
+		"<evCancNFGas>",
+		`<retEventoNFGas versao="1.00">`,
+		"<cStat>135</cStat>",
+		"<nProt>135260000000099</nProt>",
+		"<CNPJDest>99888777000166</CNPJDest>",
+	} {
+		if !strings.Contains(xml, m) {
+			t.Fatalf("procEvento sem %q:\n%s", m, xml)
+		}
+	}
+
+	// round-trip: o leitor tem que achar as DUAS partes do envelope
+	lido, err := LerEventoString(xml)
+	if err != nil {
+		t.Fatalf("reler procEvento: %v", err)
+	}
+	if !lido.TemEvento {
+		t.Fatal("round-trip perdeu a parte enviada do evento")
+	}
+	if got := lido.Justificativa(); got != "cancelamento em teste unitario" {
+		t.Fatalf("xJust = %q", got)
+	}
+	if !lido.RetInfEvento.Registrado() || lido.RetInfEvento.NProt != "135260000000099" {
+		t.Fatalf("retorno do evento nao sobreviveu: %+v", lido.RetInfEvento)
+	}
+	if lido.ChaveAcesso() != chaveTeste {
+		t.Fatalf("chave = %q", lido.ChaveAcesso())
+	}
+}
+
+// TestGerarXMLProcEvento_OrdemDosCampos trava a ORDEM das tags do
+// retEventoNFGas. O leitor usa FindAnyNs campo a campo e e insensivel a
+// ordem, entao o round-trip nao protege nada aqui: trocar cStat de lugar com
+// xMotivo passaria em build, vet e em todos os outros testes, e geraria XML
+// que o XSD da SEFAZ rejeita. A ordem esperada vem de
+// testdata/proc_evento_cancelamento.xml.
+func TestGerarXMLProcEvento_OrdemDosCampos(t *testing.T) {
+	r := procEventoTeste()
+	xml, err := GerarXMLProcEvento(r)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ret := trecho(xml, "retEventoNFGas")
+	if ret == "" {
+		// a tag tem atributo, entao trecho() nao a encontra pelo nome puro
+		ini := strings.Index(xml, "<retEventoNFGas")
+		if ini < 0 {
+			t.Fatal("retEventoNFGas ausente")
+		}
+		ret = xml[ini:]
+	}
+
+	ordem := []string{
+		"<tpAmb>", "<verAplic>", "<cOrgao>", "<cStat>", "<xMotivo>",
+		"<chNFGas>", "<tpEvento>", "<xEvento>", "<nSeqEvento>",
+		"<CNPJDest>", "<emailDest>", "<cOrgaoAutor>", "<dhRegEvento>",
+		"<nProt>",
+	}
+	anterior := -1
+	for _, tag := range ordem {
+		pos := strings.Index(ret, tag)
+		if pos < 0 {
+			t.Fatalf("retEventoNFGas sem %s:\n%s", tag, ret)
+		}
+		if pos <= anterior {
+			t.Fatalf("%s fora de ordem no retEventoNFGas (posicao %d, anterior %d):\n%s",
+				tag, pos, anterior, ret)
+		}
+		anterior = pos
+	}
+}
+
+// TestGerarXMLProcEvento_RetornoParcial cobre o fallback para o evento
+// enviado: retorno so com nProt e cStat -- o caso de quem preenche a mao --
+// nao pode produzir tpEvento "-99999" (o String() do zero value).
+func TestGerarXMLProcEvento_RetornoParcial(t *testing.T) {
+	r := procEventoTeste()
+	r.RetInfEvento = RetInfEvento{
+		TpAmb:   pcn.TaHomologacao,
+		CStat:   135,
+		XMotivo: "Evento registrado e vinculado a NFGas",
+		NProt:   "135260000000099",
+	}
+
+	xml, err := GerarXMLProcEvento(r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(xml, "-99999") {
+		t.Fatalf("tpEvento caiu no zero value do enum:\n%s", xml)
+	}
+	for _, m := range []string{
+		"<tpEvento>110111</tpEvento>",
+		"<nSeqEvento>1</nSeqEvento>",
+		"<cOrgao>35</cOrgao>",
+		"<xEvento>Cancelamento</xEvento>",
+		"<chNFGas>" + chaveTeste + "</chNFGas>",
+	} {
+		if !strings.Contains(xml, m) {
+			t.Errorf("retorno parcial nao herdou %q do evento enviado", m)
+		}
+	}
+}
+
+func TestGerarXMLProcEvento_Incompleto(t *testing.T) {
+	if _, err := GerarXMLProcEvento(nil); !errors.Is(err, ErrXMLVazio) {
+		t.Fatalf("nil deveria dar ErrXMLVazio, veio %v", err)
+	}
+	// retorno sem a parte enviada: sem ela nao ha xJust, e o envelope sairia
+	// pela metade -- recusa explicita em vez de documento incompleto
+	semEvento := &RetEventoNFGas{RetInfEvento: RetInfEvento{NProt: "1"}}
+	if _, err := GerarXMLProcEvento(semEvento); !errors.Is(err, ErrEventoAusente) {
+		t.Fatalf("sem evento deveria dar ErrEventoAusente, veio %v", err)
+	}
+	semProt := &RetEventoNFGas{
+		TemEvento: true,
+		Evento: EventoNFGas{InfEvento: InfEvento{
+			TpEvento: TeCancelamento, ChNFGas: chaveTeste, NSeqEvento: 1,
+		}},
+	}
+	if _, err := GerarXMLProcEvento(semProt); !errors.Is(err, ErrProtocoloAusente) {
+		t.Fatalf("sem protocolo deveria dar ErrProtocoloAusente, veio %v", err)
+	}
+}
+
 // ---------------------------------------------------------------------------
 // QR-Code e URLs
 // ---------------------------------------------------------------------------

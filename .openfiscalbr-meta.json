@@ -4,7 +4,6 @@
       "delphiFileHashes": {
         "ACBrTXTClass.pas": "sha256:c44043fc5dd14bf504c1485badda7180d1ae1787b88fd0dcc40432d1189c42eb"
       },
-      "delphiSourcePath": "C:\\Sistemas\\Componentes\\DelphiXE3\\ACBR\\Fontes\\ACBrTXT",
       "goFiles": [
         "base.go",
         "doc.go",
@@ -22,7 +21,6 @@
         "ACBrDFeUtil.pas": "sha256:8dfd8e87c4422345a4e3e748df733e86ca9500cb4d437668ee0e2e90cf1f406f",
         "ACBrDFeWebService.pas": "sha256:71be721aa6827145bef2fa39c5015db017c90545c0e6998a51dc3119c395bbd4"
       },
-      "delphiSourcePath": "C:\\Sistemas\\Componentes\\DelphiXE3\\ACBR\\Fontes\\ACBrDFe",
       "escopo": "certificado A1 (PFX/PEM), assinatura XMLDSig com C14N 1.0, cliente SOAP 1.2 TLS mutuo, gzip+base64; sem A3/proxy/validacao de cadeia",
       "goFiles": [
         "assinatura.go",
@@ -45,7 +43,6 @@
         "ACBrDFe.RTC.XmlReader.pas": "sha256:37b566b9aae918552a56b48a5b61c6e4e2a266dd2125bf3e5ba1cdd6feaf9ce0",
         "ACBrDFe.RTC.XmlWriter.pas": "sha256:d90380f2bc20cff9a9771ac90a724fb1c772ad374cb83b66df260b2f9d531589"
       },
-      "delphiSourcePath": "C:\\Sistemas\\Componentes\\DelphiXE3\\ACBR\\Fontes\\ACBrDFe",
       "escopo": "classes + leitor + gerador XML completos; ini apenas os grupos usados pela NFGas (sem gIBSCBSMono/IS)",
       "goFiles": [
         "classes.go",
@@ -80,7 +77,6 @@
         "ACBrNFAgNotasFiscais.pas": "sha256:634100da1f595e17b531f9275cd1e27b20434a1adc1d8d53e902f6facdeeb50f",
         "ACBrNFAgWebServices.pas": "sha256:d7c9e43267b536786a7a664b8e0c992b268568fd0df780484864c843aaa9933f"
       },
-      "delphiSourcePath": "C:\\Sistemas\\Componentes\\DelphiXE3\\ACBR\\Fontes\\ACBrDFe\\ACBrNFAg",
       "escopo": "leitura e emissao completas (XML, INI, eventos, assinatura, SOAP, QR-Code); gerador de evento so cancelamento, como o ACBr; sem DANFAg",
       "goFiles": [
         "classes.go",
@@ -134,7 +130,6 @@
         "ACBrNFGasServicos.ini": "sha256:529a52d7dc1fbe35aa4c92a3982dafe4e5feb48b29fcdd93199d6db6a7707830",
         "ACBrNFGasWebServices.pas": "sha256:35f29dd1f20d475541c788a302c747a367a4b743a6b0f3443bbd95dd1894dbb7"
       },
-      "delphiSourcePath": "C:\\Sistemas\\Componentes\\DelphiXE3\\ACBR\\Fontes\\ACBrDFe\\ACBrNFGas",
       "escopo": "leitura + geracao + assinatura + web services (recepcao sincrona, consulta, status, evento de cancelamento)",
       "goFiles": [
         "classes.go",
@@ -195,7 +190,6 @@
         "ACBrEFDBlocos.pas": "sha256:fa33f00859829af08d82ae3b749f04bb2423f530a18d050ba7b446fb91810b70",
         "ACBrSpedFiscal.pas": "sha256:6d2e8d57fe2cc61812dbec03216c529a3cce6fe08722a3c6f2791d684504eeaa"
       },
-      "delphiSourcePath": "C:\\Sistemas\\Componentes\\DelphiXE3\\ACBR\\Fontes\\ACBrTXT\\ACBrSPED\\ACBrSPEDFiscal",
       "goFiles": [
         "bloco_0.go",
         "bloco_1.go",
@@ -234,7 +228,6 @@
         "ACBrXmlReader.pas": "sha256:d03b8cc4248b896651605a012e9c8a2d0e835df39eb7e8d669c7bd7db8c70ac9",
         "ACBrXmlWriter.pas": "sha256:2bf4e77cb02b2a8ba3f0cf3064b8a43f16158b0dfb1ee91f5d890a6808efbc8a"
       },
-      "delphiSourcePath": "C:\\Sistemas\\Componentes\\DelphiXE3\\ACBR\\Fontes",
       "escopo": "base de LEITURA de DFe: mini-DOM, tipos de campo, enums DFe, validador CNPJ/CPF, chave de acesso, ini; geracao de XML fica para a fase de emissao",
       "goFiles": [
         "chave_acesso.go",

@@ -44,6 +44,12 @@ func main() {
 	mux.HandleFunc("POST /api/consultar-sefaz", handleConsultarSefaz)
 	mux.HandleFunc("POST /api/cancelar", handleCancelar)
 
+	// Exemplos -- XMLs sinteticos para testar a importacao, com dados
+	// ficticios completos. Sem parametro na query, o XML sai sempre igual.
+	mux.HandleFunc("GET /api/exemplos", handleListarExemplos)
+	mux.HandleFunc("GET /api/exemplos/{id}", handleExemplo)
+	mux.HandleFunc("GET /api/exemplos/{id}/download", handleBaixarExemplo)
+
 	// Serve frontend static files
 	staticDir := os.Getenv("STATIC_DIR")
 	if staticDir == "" {

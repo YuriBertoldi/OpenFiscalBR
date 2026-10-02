@@ -1,0 +1,42 @@
+# Este repositorio e PUBLICO. O que entra aqui fica visivel para qualquer um,
+# e historico de git nao se apaga facilmente -- as regras abaixo existem para
+# que um descuido nao vire incidente.
+
+# Credenciais e chaves. Nunca, em hipotese alguma.
+*.pem
+*.key
+*.pfx
+*.p12
+*.cer
+*.crt
+id_rsa*
+.oci/
+.ssh/
+
+# Skills de ambiente pessoal: carregam IP, OCID, host e caminho de chave de
+# infraestrutura que nao e deste projeto.
+.claude/skills/deploy-*/
+.claude/settings.local.json
+
+# Binarios compilados: o repositorio distribui FONTE. Binario commitado incha
+# o historico e fica desatualizado em relacao ao codigo no mesmo commit.
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Artefatos de build e deploy
+*.tar.gz
+*.wasm
+cloudbuild.yaml
+.gcloudignore
+
+# Saida de teste e cobertura
+*.out
+coverage.*
+
+# Sistema operacional / editor
+.DS_Store
+Thumbs.db
+*.swp
+*~

@@ -58,6 +58,10 @@ var (
 	// autorizacao (nfgasProc) sem ProcNFGas.NProt preenchido.
 	ErrProtocoloAusente = errors.New("nfgas: documento sem protocolo de autorizacao")
 
+	// ErrEventoAusente indica retorno de evento sem a parte enviada, de que
+	// o procEventoNFGas nao pode prescindir (o xJust so existe la).
+	ErrEventoAusente = errors.New("nfgas: retorno sem o evento enviado")
+
 	// ErrSemURL indica UF sem web service de NFGas definido -- MA e PA
 	// constam como SVAN no ACBrNFGasServicos.ini, mas o SVAN nao tem URLs
 	// de NFGas publicadas (lacuna herdada do ACBr).

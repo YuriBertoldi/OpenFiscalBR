@@ -374,6 +374,14 @@ func (w *xmlWriter) gerarProd(p Prod) *pcn.Elem {
 		// DIVERGENCIA 2: codigo do leiaute; o ACBr grava o ordinal.
 		Filho(pcn.NodeStr("indOrigemQtd", p.IndOrigemQtd.String(), true))
 
+	// OMISSAO DO ACBr REPLICADA: a guarda exige vMed > 0
+	// (ACBrNFGas.XmlWriter.pas:687), mas dentro de gerarGMedicao o
+	// tpMotNaoLeitura/xMotNaoLeitura so sai no ramo vMed == 0 -- ou seja,
+	// esse ramo e INALCANCAVEL, aqui e no Delphi. Nao "corrigir" sem decidir
+	// a divergencia: trocar a guarda faria o Go emitir tag que o ACBr nunca
+	// emite. Ver packages/nfgas/README.md e a lista tagsForaDoWriter de
+	// demos/nfgas/exemplos_test.go. A NFAg nao tem o problema: la a guarda
+	// exige apenas nMed > 0.
 	if p.GMedicao.NMed > 0 && p.GMedicao.GMedida.VMed > 0 {
 		e.Filho(w.gerarGMedicao(p.GMedicao))
 	}
