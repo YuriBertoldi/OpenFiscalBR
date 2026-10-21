@@ -128,3 +128,55 @@ Fase de emissão: o construtor `Elem` (porte da escrita de `TACBrXmlNode`) e os 
 Regra herdada do ACBr: campo **obrigatório** com valor vazio gera a **tag vazia**; opcional com
 valor vazio não gera nada. A `ListaDeAlertas` (wAlerta) não foi portada — omissão deliberada,
 a validação efetiva é o XSD da SEFAZ.
+
+## Validadores de documento
+
+Além do CPF/CNPJ e da chave de acesso, o package traz os validadores que as **regras de
+negócio** dos DFe consomem:
+
+| Função | Arquivo | Origem no ACBr |
+|---|---|---|
+| `ValidarIE(ie, uf)` | `validador_ie.go` | `ACBrValidador.pas:1101-1580` |
+| `ValidarMunicipio(codigo)` | `validador_dfe.go` | `ACBrDFeUtil.pas:893` |
+| `ValidarGTIN(numero)` | `validador_dfe.go` | `ACBrValidador.pas:1924` |
+| `ValidarPrefixoGTIN(numero)` | `validador_dfe.go` | `ACBrValidador.pas:1690` |
+| `ValidarISUF(isuf)` | `validador_dfe.go` | `ACBrDFeUtil.pas:950` |
+| `CompararValor(a, b, tolerância)` | `validador_dfe.go` | `ComparaValor` (ACBrUtil.Math) |
+
+### `ValidarIE` é table-driven, como o original
+
+Cada UF tem seu próprio algoritmo, mas o ACBr não os escreve um a um: descreve cada UF como
+uma **linha de tabela** — tamanho, o que cada posição aceita, linha de pesos, módulo, ajustes
+e um segundo dígito opcional — e roda um motor único sobre ela.
+
+O porte mantém o arranjo, porque é o que torna a conferência com o original possível. A
+tabela (`validador_ie_tabela.go`) segue a mesma ordem do `.pas`, para leitura lado a lado.
+
+Dois detalhes que o motor precisa acertar e que são fáceis de inverter:
+
+- **as posições são listadas da direita para a esquerda**: `digitos[0]` é o último caractere;
+- **as colunas de pesos também**: a coluna 1 multiplica o último caractere do documento
+  alinhado em 14 posições.
+
+Algumas UFs **mutam** o documento antes de validar (BA e MT completam com zeros), outras
+escolhem a regra pelo **tamanho** (AC, PE, RN, RO, SP, TO) e duas pelo **valor** (AP e GO
+comparam o documento como texto contra faixas).
+
+`ISENTO` é aceito: é o conteúdo que o leiaute manda informar quando o contribuinte não tem
+inscrição.
+
+### Como foram verificados
+
+Os testes usam os **vetores da própria suíte do ACBr**
+(`Testes/FPCUnit/ACBrDiversos/acbrvalidadortest.pas`): 37 inscrições válidas e 34 inválidas,
+cobrindo as 27 UFs e as variantes por tamanho. Usar os vetores do original, e não exemplos
+gerados aqui, é o que torna o teste capaz de reprovar o porte — uma IE calculada pelo próprio
+motor validaria contra si mesma mesmo com o algoritmo errado.
+
+Além deles, há três guardas que os vetores sozinhos não dariam:
+
+- cada IE válida tem o **último dígito trocado** pelos outros nove e precisa reprovar;
+- a matriz de pesos é **transcrita de novo** no teste, a partir do `.pas`, e comparada célula
+  a célula;
+- a tabela de prefixos GTIN é conferida quanto a faixa invertida e sobreposição.
+

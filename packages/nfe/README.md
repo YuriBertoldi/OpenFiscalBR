@@ -397,6 +397,96 @@ A correspondência ordinal→código foi conferida **mecanicamente** contra
 `pcnConversaoNFe.pas` nos 43 enums, aplicando a semântica de última ocorrência
 do `EnumeradoToStr`.
 
+
+## Regras de negócio, QR-Code e URLs
+
+### As 155 rejeições
+
+`regras_negocio.go`, `regras_negocio_itens.go` e `regras_negocio_totais.go` portam
+`ACBrNFe.ValidarRegrasdeNegocio.pas`. São as rejeições que a SEFAZ aplicaria e que o
+componente antecipa localmente.
+
+Três coisas mudam como elas se leem:
+
+1. **Rodam sobre o documento pronto**, depois do gerador, e várias comparam o XML com a
+   **configuração** — o ambiente da nota contra o do web service (regra 252), a UF do
+   emitente contra a UF autorizadora (226). Sem `Configuracoes`, metade delas não existe.
+2. **O "agora" entra por parâmetro**, não de `time.Now()`. Oito regras comparam datas com o
+   momento da transmissão, e validação que muda de resultado conforme o relógio não é
+   testável.
+3. **Cada rejeição é um valor** (`ErroRegraNegocio`, com código, mensagem e `nItem`
+   separados), não uma string concatenada como no ACBr — é o que o consumidor precisa para
+   decidir o que fazer com cada uma.
+
+```go
+erros := nfe.ValidarRegrasNegocio(&nota, cfg, time.Now())
+for _, e := range erros {
+    fmt.Println(e) // 777-Rejeicao: Obrigatoria a informacao do NCM completo [nItem: 2]
+}
+```
+
+Quatorze regras estão **comentadas** no ACBr e por isso não foram portadas; a lista e o
+motivo de cada uma estão no doc-comment de `ValidarRegrasNegocio`.
+
+### A parte difícil: os três níveis de acumulação
+
+O laço que confere cada item é o mesmo que **acumula** os somatórios com que os totais serão
+comparados. A divisão tem três níveis, e é ela que torna as regras de total fáceis de errar
+em silêncio:
+
+| Nível | O que entra | Condição |
+|---|---|---|
+| 1 | frete, seguro, desconto, outros, II, IPI, IPI devolvido, ICMS desonerado | **sempre**, mesmo em item fora do total |
+| 2 | PIS e COFINS | num de **dois** somatórios, conforme o item seja mercadoria ou serviço |
+| 3 | base e valor do ICMS, ST, FCP, valor do produto | só com `indTot = soma`; e o valor do produto ainda tem a exceção da nota de ajuste |
+
+### QR-Code
+
+`urls.go` porta as três versões (`ACBrNFe.pas:535-790`). A versão efetiva passa por
+`AjustarVersaoQrCode`, que **rebaixa** a pedida conforme a versão do leiaute.
+
+A versão 3 é a única que depende do **certificado**, e só em contingência offline: ela fecha
+com uma assinatura RSA-SHA1, não com um hash. Para não arrastar o certificado para dentro do
+leiaute, a assinatura entra como função:
+
+```go
+qr, err := nfe.GerarQRCode(&nota, cfg, func(texto string) (string, error) {
+    return certificado.AssinarSHA1Base64(texto)
+})
+```
+
+Quem decide se a nota está em contingência é o **tpEmis lido da chave**, não o do grupo
+`ide` — é a chave que o consumidor tem em mãos ao conferir o documento.
+
+### Tabela de URLs
+
+`urls_tabela.go` traz 135 entradas do `ACBrNFeServicos.ini`, limitadas às duas famílias que o
+QR-Code e o `urlChave` consomem. Os três passos de resolução do ACBr — chave versionada
+exata, maior versão `<=` a pedida, chave sem versão — e o redirecionamento `Usar=` entre
+seções já estão **resolvidos** nos valores: são codificação do `.ini`, não regra fiscal.
+
+`ferramentas/conferir-urls-dfe.py` reimplementa a resolução e compara entrada a entrada.
+
+### Validadores que passaram a existir no `pcn`
+
+As regras dependiam de quatro validadores que o projeto não tinha. Entraram em
+`packages/pcn` porque são Layer 1 e CTe, MDFe e NFSe vão reusá-los:
+
+| Função | Origem |
+|---|---|
+| `ValidarIE` | `ACBrValidador.pas:1101-1580` — 27 algoritmos, um por UF |
+| `ValidarMunicipio` | `ACBrDFeUtil.pas:893` |
+| `ValidarGTIN` / `ValidarPrefixoGTIN` | `ACBrValidador.pas:1924` e `:1690` |
+| `ValidarISUF` | `ACBrDFeUtil.pas:950` |
+
+O `ValidarIE` mantém o arranjo **table-driven** do original: cada UF é uma linha de tabela e
+um motor único roda sobre ela. Vinte e sete funções separadas esconderiam a diferença entre
+as UFs no meio do código repetido — e é a diferença que importa.
+
+Ele é verificado pelos **71 vetores da própria suíte de testes do ACBr** (37 válidos e 34
+inválidos), não por exemplos inventados. Fica o registro para CTe e MDFe: o ACBr **tem**
+suíte de testes, em `Testes/FPCUnit/`, e ela é fonte melhor do que exemplo construído à mão.
+
 ## Roteiro
 
 | # | Etapa | Estado |
@@ -405,10 +495,10 @@ do `EnumeradoToStr`.
 | 2a | `classes.go` — cabeçalho, totais, transporte, cobrança | concluída |
 | 2b | `classes_det.go` — `det` (produto e impostos) + `NFe.Det` | concluída |
 | 3 | `xml_reader.go` | concluída |
-| 4a | `xml_writer.go` — cabeçalho, totais, transporte, cobrança | **nesta entrega** |
-| 4b | `xml_writer.go` — `det` (produto e impostos) | pendente |
-| 5 | regras de negócio, QR-Code e URL de consulta | pendente |
-| 6a | status, consulta e `urls.go` por UF | pendente |
+| 4a | `xml_writer.go` — cabeçalho, totais, transporte, cobrança | concluída |
+| 4b | `xml_writer_det.go` — `det` (produto e impostos) | concluída |
+| 5 | regras de negócio, QR-Code e URLs públicas | **nesta entrega** |
+| 6a | status e consulta + endpoints dos web services | pendente |
 | 6b | autorização, inutilização, consulta cadastro, CSC | pendente |
 | 7 | eventos (cancelamento, CC-e, manifestação) + `StrToTpEventoNFe` | pendente |
 | 8 | Distribuição DF-e | pendente |

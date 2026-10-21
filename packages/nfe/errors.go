@@ -45,4 +45,14 @@ var (
 
 	// ErrNaoImplementado marca fase do porte ainda nao entregue.
 	ErrNaoImplementado = errors.New("nfe: nao implementado")
+
+	// ErrSemURL indica que a tabela de URLs nao tem entrada para a UF, o
+	// modelo ou o servico pedido. No ACBr o caso devolve string vazia em
+	// silencio, e o QR-Code sai sem o endereco da SEFAZ -- aqui vira erro.
+	ErrSemURL = errors.New("nfe: URL nao encontrada para a UF")
+
+	// ErrCertificadoObrigatorio indica QR-Code versao 3 em contingencia
+	// offline sem funcao de assinatura. A versao 3 fecha com assinatura RSA,
+	// nao com hash, e sem o certificado nao ha o que gerar.
+	ErrCertificadoObrigatorio = errors.New("nfe: QR-Code versao 3 offline exige o certificado")
 )

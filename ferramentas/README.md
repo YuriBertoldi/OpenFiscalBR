@@ -244,3 +244,74 @@ qualquer uma das duas escolhas.
 5. **Comentário do Delphi é descartado** (`//`, `{...}`, `(*...*)`), para não
    contar campo desativado. Na NFe isso acontece com `indISSRet`, `RENAVAM` e as
    duas tags da NT 2016.002 que o ACBr comentou e reescreveu logo abaixo.
+
+## `conferir-regras-dfe.py`
+
+Confere as regras de negócio portadas contra o `ValidarRegrasdeNegocio` do ACBr.
+
+```bash
+py ferramentas/conferir-regras-dfe.py <ValidarRegrasdeNegocio.pas> <arquivo.go>...
+
+py ferramentas/conferir-regras-dfe.py \
+   "$ACBR_FONTES/ACBrDFe/ACBrNFe/Base/ACBrNFe.ValidarRegrasdeNegocio.pas" \
+   packages/nfe/regras_negocio*.go
+```
+
+O risco que ele cobre não é **errar** uma regra — é **esquecer** uma. Regra que
+some não quebra build, não quebra `vet`, não quebra teste e não aparece no
+round-trip; só aparece quando a SEFAZ recusa o documento em produção.
+
+Separa as regras **ativas** das **comentadas**. O ACBr comenta regra que a
+SEFAZ revogou ou que ainda não entrou em vigor, e isso é informação: o porte
+não deve implementá-las, mas quem lê precisa saber que existem. Na NFe são 14
+(502, 508, 529, 571, 600, 629, 630, 719, 720, 806, 856, 858, 883, 888).
+
+### Limites
+
+1. **Reconhece o código por POSIÇÃO SINTÁTICA**, não por contexto: um literal
+   de três dígitos cercado por `(`, `{` ou `,` de um lado e `,` ou `)` do
+   outro. Cobre as quatro formas que o porte usa — chamada direta, chamada com
+   `item`, tabela de confrontos e código passado como parâmetro — sem casar com
+   números de conta, como o `100` de uma divisão por cem.
+2. **Não confere a CONDIÇÃO da regra**, só a presença. Regra portada com o
+   `and` trocado por `or` passa. Para isso são os testes Go e a revisão.
+3. **A lista "só no Go" não reprova** — pode ser falso positivo da extração.
+   Precisa ser lida.
+
+## `conferir-urls-dfe.py`
+
+Confere a tabela de URLs portada contra o `<Componente>Servicos.ini` do ACBr.
+
+```bash
+py ferramentas/conferir-urls-dfe.py <servicos.ini> <urls_tabela.go>
+
+py ferramentas/conferir-urls-dfe.py \
+   "$ACBR_FONTES/ACBrDFe/ACBrNFe/ACBrNFeServicos.ini" \
+   packages/nfe/urls_tabela.go
+```
+
+A tabela de URLs é **dado**: mais de cem entradas transcritas de um `.ini` de
+1388 linhas. Nenhum teste Go consegue dizer se uma delas foi digitada errada —
+um teste só pode repetir o valor que está no Go, o que não prova nada. A única
+fonte de verdade é o `.ini`.
+
+O script reimplementa a resolução do ACBr (`ACBrDFe.pas:456-607`), que tem três
+etapas — chave versionada exata, maior versão `<=` a pedida, chave sem versão —
+mais o redirecionamento `Usar=` entre seções, com proteção contra ciclo.
+
+Além de comparar entrada a entrada, confere as **invariantes** que o porte
+assume para poder simplificar a tabela (por exemplo: "a URL do QR-Code não
+varia com a versão"). Se o ACBr publicar um `.ini` em que isso deixe de valer,
+o script acusa antes de a simplificação virar defeito.
+
+### Limites
+
+1. **Resolve o `Usar=` em tempo de PORTE**, e o Go guarda o resultado. Isso é
+   deliberado: o redirecionamento é codificação do `.ini`, não regra fiscal.
+   Em troca, o Go não reproduz a estrutura de seções do original.
+2. **Tabela parcial precisa ser declarada** em `PARCIAIS`. São as que listam só
+   as divergências em relação a outra (`urlsQRCodeModelo55` tem duas UFs, não
+   27). Sem a declaração, as 25 ausentes virariam "FALTA".
+3. **Acusa entrada REDUNDANTE** numa tabela de divergências — UF declarada que
+   repete o valor da tabela base. É ruído que esconde o fato de a divergência
+   existir em poucos lugares.
