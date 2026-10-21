@@ -660,10 +660,8 @@ type InfPAA struct {
 
 // NFe e a nota fiscal eletronica completa. Porte de TNFe.
 //
-// Use NovaNFe para obter os defaults do TNFe.Create.
-//
-// O campo Det (itens da nota) entra na etapa 2b, junto com o subgrupo det
-// inteiro -- produto, impostos e os grupos especificos por tipo de mercadoria.
+// Use NovaNFe para obter os defaults do TNFe.Create. Para acrescentar item,
+// use NovoDetItem -- o Prod tem default que o zero value nao reproduz.
 type NFe struct {
 	InfNFe       InfNFe       // infNFe
 	Ide          Ide          // ide
@@ -673,6 +671,7 @@ type NFe struct {
 	Retirada     Retirada     // retirada
 	Entrega      Entrega      // entrega
 	AutXML       []AutXML     // autXML
+	Det          []DetItem    // det
 	Total        Total        // total
 	Transp       Transp       // transp
 	Cobr         Cobr         // cobr

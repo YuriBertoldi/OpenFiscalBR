@@ -690,3 +690,85 @@ func ParseTpIntegra(s string) (TpIntegra, error) {
 	}
 	return TiNaoInformado, erroEnum("TpIntegra", s)
 }
+
+// ===========================================================================
+// CSOSNIcms (TCSOSNIcms) -- tag CSOSN
+// ===========================================================================
+
+// CSOSNIcms e o codigo de situacao da operacao no Simples Nacional, usado no
+// lugar do CST quando o emitente e optante.
+//
+// Como em CSTIcms, o primeiro membro e o VAZIO -- um ICMS recem-criado nao
+// declara CSOSN nenhum.
+type CSOSNIcms int
+
+const (
+	CsosnVazio CSOSNIcms = iota // vazio
+	Csosn101                    // 101
+	Csosn102                    // 102
+	Csosn103                    // 103
+	Csosn201                    // 201
+	Csosn202                    // 202
+	Csosn203                    // 203
+	Csosn300                    // 300
+	Csosn400                    // 400
+	Csosn500                    // 500
+	Csosn900                    // 900
+)
+
+var csosnIcmsCodigos = [...]string{
+	"", "101", "102", "103", "201", "202", "203", "300", "400", "500", "900",
+}
+
+// String retorna o codigo do leiaute.
+func (v CSOSNIcms) String() string {
+	if int(v) < 0 || int(v) >= len(csosnIcmsCodigos) {
+		return ""
+	}
+	return csosnIcmsCodigos[v]
+}
+
+// ParseCSOSNIcms converte o codigo do leiaute no enum. String vazia e valida.
+func ParseCSOSNIcms(s string) (CSOSNIcms, error) {
+	for i, c := range csosnIcmsCodigos {
+		if c == s {
+			return CSOSNIcms(i), nil
+		}
+	}
+	return CsosnVazio, erroEnum("CSOSNIcms", s)
+}
+
+// ===========================================================================
+// IndIncentivo (TindIncentivo) -- tag indIncentivo do ISSQN
+// ===========================================================================
+
+// IndIncentivo indica se o servico e incentivado.
+//
+// Atencao: o "nao" vale "2", nao "0" -- como em IndISSRet, e diferente do
+// Indicador comum.
+type IndIncentivo int
+
+const (
+	IiSim IndIncentivo = iota // 1
+	IiNao                     // 2
+)
+
+var indIncentivoCodigos = [...]string{"1", "2"}
+
+// String retorna o codigo do leiaute.
+func (v IndIncentivo) String() string {
+	if int(v) < 0 || int(v) >= len(indIncentivoCodigos) {
+		return ""
+	}
+	return indIncentivoCodigos[v]
+}
+
+// ParseIndIncentivo converte o codigo do leiaute no enum.
+func ParseIndIncentivo(s string) (IndIncentivo, error) {
+	for i, c := range indIncentivoCodigos {
+		if c == s {
+			return IndIncentivo(i), nil
+		}
+	}
+	return IiSim, erroEnum("IndIncentivo", s)
+}
