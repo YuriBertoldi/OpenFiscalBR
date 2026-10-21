@@ -228,3 +228,28 @@ São **50 códigos** na leitura contra 31 na geração: a NF-e precisa nomear re
 passagem, averbação de exportação e eventos de MDFe e CTe que chegam amarrados à chave da
 nota. Estreitar a tabela para "o que a NF-e gera" é o atalho que faz a consulta devolver evento
 sem nome.
+
+
+## Schema de DF-e (`conversao_schema_dfe.go`)
+
+`SchemaDFe` porta `TSchemaDFe` (`ACBrDFe.Conversao.pas:223`): o atributo `schema` de cada
+`<docZip>` da Distribuição DF-e. Vive aqui porque o mesmo lote mistura documentos de NF-e,
+CT-e, MDF-e, BP-e e GTV-e — o leitor de qualquer um deles precisa saber nomear o que achou.
+
+O atributo vem com a versão colada (`resNFe_v1.01`), e o `ParseSchemaDFe` corta no primeiro
+`_` antes de resolver.
+
+### Schema desconhecido não derruba o lote
+
+O `StrToSchemaDFe` do ACBr **levanta exceção** quando o nome não está no enum. Num lote de
+cinquenta documentos isso descarta a leitura inteira porque um deles trouxe schema novo — e a
+RFB acrescenta schema sem avisar.
+
+Aqui o caso devolve `SchemaDesconhecido` **junto com o erro**, e o chamador decide. O
+`packages/nfe` segue com os outros quarenta e nove.
+
+### `EDocumento()`
+
+Distingue o **resumo** (`resNFe`, `resEvento`...) do **documento completo** (`procNFe`,
+`procEventoNFe`...). Governa o que o consumidor pode fazer com o item: do resumo saem chave,
+emitente e valor; do documento completo sai o XML que se arquiva.

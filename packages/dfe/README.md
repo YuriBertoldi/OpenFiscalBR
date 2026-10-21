@@ -16,7 +16,7 @@ qualquer DFe (NFGas hoje; NFe/CTe/MDFe quando forem portados).
 | `c14n.go` | `CanonicalizarFragmento` — Canonical XML 1.0 sem comentários, com transform enveloped-signature | delegado a libxml2/xmlsec no ACBr |
 | `assinatura.go` | `AssinarXML`, `VerificarAssinatura`, `HashCSRT`, `AssinarSHA1Base64` | `TDFeSSL.Assinar` + template `TSignature.GerarXML` |
 | `soap.go` | `ClienteSOAP`, `MontarEnvelope` (soap12), `ExtrairResultadoSOAP` (Fault + `*ResultMsg` caso-insensitivo) | `TDFeWebService.Executar`/`EnviarDados` |
-| `compress.go` | `GzipBase64` / `Base64Gunzip` | `EncodeBase64(GZipCompress(...))` |
+| `compress.go` | `GzipBase64` / `Base64Gunzip` (descarta brancos antes de decodificar) | `EncodeBase64(GZipCompress(...))` |
 | `errors.go` | sentinelas `errors.Is` + `ErroTransmissao` com URL/ação/status HTTP | — |
 
 ## Uso
@@ -43,6 +43,11 @@ resultado, err := cliente.Chamar(ctx, url, servico, soapAction,
   serialização trabalha sobre os bytes originais), então verificação de XML identado funciona.
 - `VerificarAssinatura` confere digest e RSA contra o certificado do KeyInfo; **não** valida a
   cadeia ICP-Brasil (exige repositório de ACs — a cargo do consumidor).
+- `Base64Gunzip` **descarta espaço, tabulação, CR e LF** antes de decodificar. O base64 do Go
+  recusa qualquer byte fora do alfabeto; o do ACBr (`Decode4to3Ex`, `synacode.pas:609-613`)
+  testa `y in [33..127]` e ignora branco em qualquer posição. A diferença aparece com base64
+  quebrado em colunas — o que sai de pretty-printer e de arquivo gravado por outra ferramenta —
+  e o sintoma seria perder um `docZip` da Distribuição DF-e em silêncio.
 
 ## Testes
 

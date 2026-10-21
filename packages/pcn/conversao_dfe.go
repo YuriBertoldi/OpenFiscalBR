@@ -772,3 +772,44 @@ func ParseIndIncentivo(s string) (IndIncentivo, error) {
 	}
 	return IiSim, erroEnum("IndIncentivo", s)
 }
+
+// ===========================================================================
+// SituacaoDFe (TSituacaoDFe) -- tag cSitNFe do resumo da Distribuicao DF-e
+// ===========================================================================
+
+// SituacaoDFe e a situacao de um documento no resumo que a Distribuicao
+// DF-e devolve. Porte de TSituacaoDFe (ACBrDFe.Conversao.pas:214).
+//
+// NAO e o cStat: e um codigo proprio de quatro valores, e no schema
+// `procNFe` ele nem vem pronto -- sai de um `case` sobre o cStat do
+// protocolo (RetDistDFeInt.pas:620).
+type SituacaoDFe int
+
+const (
+	SnAutorizado SituacaoDFe = iota // 1
+	SnDenegado                      // 2
+	SnCancelado                     // 3
+	SnEncerrado                     // 4
+	// _fimSituacaoDFe conta os membros declarados; nao e valor do leiaute.
+	_fimSituacaoDFe
+)
+
+var situacaoDFeCodigos = [...]string{"1", "2", "3", "4"}
+
+// String retorna o codigo do leiaute.
+func (v SituacaoDFe) String() string {
+	if int(v) < 0 || int(v) >= len(situacaoDFeCodigos) {
+		return ""
+	}
+	return situacaoDFeCodigos[v]
+}
+
+// ParseSituacaoDFe converte o codigo do leiaute no enum.
+func ParseSituacaoDFe(s string) (SituacaoDFe, error) {
+	for i, c := range situacaoDFeCodigos {
+		if c == s {
+			return SituacaoDFe(i), nil
+		}
+	}
+	return SnAutorizado, erroEnum("SituacaoDFe", s)
+}
