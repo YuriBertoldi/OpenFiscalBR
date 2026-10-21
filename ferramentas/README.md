@@ -157,3 +157,90 @@ falsa confiança, que é pior do que não ter teste.
    continuam sendo conferência manual contra o `.pas`.
 4. **Linha comentada no Delphi é descartada** (`//`), para não contar campo
    desativado — `RENAVAM` do `veicProd` é o caso na NFe.
+
+## `conferir-gerador-dfe.py`
+
+O par do anterior, para o lado da **escrita**. Confere um gerador de DFe portado
+contra o `XmlWriter` Delphi de origem, tag a tag, nos dois eixos que o build, o
+`go vet` e o **round-trip** não alcançam:
+
+1. a **precisão** de cada campo (`tcDe2` × `NodeDec(..., 2, ...)`,
+   `FormatoValor4ou2` × `nodeAliquota`, ...);
+2. a **obrigatoriedade** — o `nOcorrencias` do `AddNode`, que vale `1` (sai mesmo
+   zerado) ou `0` (some quando vazio);
+3. no modo `--ordem`, a **sequência** das tags de um grupo — o eixo mais caro de
+   errar, porque o XSD é `xs:sequence` e campo fora de ordem é documento
+   rejeitado pela SEFAZ.
+
+```bash
+py ferramentas/conferir-gerador-dfe.py <arquivo.pas> <arquivo.go> [--linhas INICIO:FIM]
+
+py ferramentas/conferir-gerador-dfe.py \
+   "$ACBR_FONTES/ACBrDFe/ACBrNFe/Base/ACBrNFe.XmlWriter.pas" \
+   packages/nfe/xml_writer_det.go --linhas 1118:3507
+```
+
+O recorte por linha existe porque o writer Delphi é um arquivo só, de milhares
+de linhas, enquanto o porte Go está dividido em arquivos. Sem ele a comparação
+mistura grupos e produz ruído. Para auditar o gerador inteiro, concatene os
+arquivos Go num temporário e rode sobre a faixa toda.
+
+Sai com código 1 se houver divergência, para encaixar em CI.
+
+### Modo `--ordem`
+
+```bash
+py ferramentas/conferir-gerador-dfe.py <pas> <go> --ordem INICIO:FIM <funcaoGo> [prefixoDoCase]
+
+py ferramentas/conferir-gerador-dfe.py "$PAS" packages/nfe/xml_writer_det.go \
+   --ordem 2097:2199 gerarICMSRegimeNormal pcn.CST10
+```
+
+Imprime as duas sequências lado a lado e sai com código 1 **só** quando a ordem
+relativa das tags comuns diverge — que é o que o XSD cobra. É **interativo de
+propósito**: o mapeamento entre faixa do `.pas` e função Go muda a cada etapa do
+porte e envelheceria guardado num arquivo.
+
+Tag presente em um lado só **não** reprova; vai para uma lista à parte. É
+esperada em três casos, e o relatório os separa justamente para serem lidos:
+
+- sub-writer que o porte **inlinou** aparece só do lado Go — confira a POSIÇÃO em
+  que ele entra (foi assim com `NVE` e `gCred` dentro do `prod`);
+- sub-writer que o porte manteve em função própria **some dos dois lados**;
+- campo que o Delphi escreve com dois `AddNode` literais, um por ramo do `if`,
+  aparece **duplicado só do lado `.pas`** (`vAFRMM`, `pGLP`, `cListServ`).
+
+### Por que um script, e não um teste Go
+
+Pelo mesmo motivo do leitor, do outro lado do ciclo: **o round-trip
+(gerar→ler→gerar) é cego para os dois eixos**. A precisão some porque o leitor
+converte `"0.00"` e `"0.0000"` no mesmo `float64`; a obrigatoriedade some porque
+um campo zerado, lido de volta, continua zerado — as duas gerações concordam em
+qualquer uma das duas escolhas.
+
+### Limites — leia antes de confiar no resultado
+
+1. **Casa por NOME DE TAG, não por caminho**, igual ao do leitor. `vBC` aparece
+   em dez grupos e vira uma entrada só; o relatório mostra o conjunto de tipos
+   de cada lado justamente para isso ser conferido à mão quando divergir.
+2. **A ordem só é conferida quando você pede, grupo a grupo.** O modo `--ordem`
+   exige a faixa do `.pas` e o nome da função Go porque o porte reagrupa os
+   `case` do Delphi em funções próprias — descobrir esse mapeamento sozinho daria
+   mais falso positivo do que achado. Como guard permanente ficam os testes Go de
+   sequência (`xml_writer_ordem_test.go`, `xml_writer_det_test.go`), e é por onde
+   já passaram dois defeitos reais (`guiaTransito` e `pBCOp`/`UFST`).
+3. **Campo decidido por EXPRESSÃO no Go vira pendência, não falha.** Onde o
+   Delphi usa duas chamadas literais (`AddNode(..., 1, ...)` e
+   `AddNode(..., 0, ...)`) e o porte usa uma chamada condicional, o script não
+   consegue decidir e lista o campo em "decididos por expressão". **Essa lista
+   precisa ser lida item a item.** Reprovar ali deixaria a ferramenta
+   permanentemente vermelha, e ferramenta vermelha para de ser lida.
+4. **Helper do porte precisa ser declarado.** Construtor de node próprio
+   (`nodeAliquota`, `nodeHora`, `nodeNumStr`) entra em `CONSTRUTORES_GO`; helper
+   que esconde a decisão de precisão dentro dele (`nodePercentualGLP`) entra em
+   `HELPERS_GO`, com o conjunto de pares copiado do `.pas`. Helper não declarado
+   some da conta e a tag cai em "sem construtor de node no Go" — lista que
+   também **precisa ser lida**, não ignorada.
+5. **Comentário do Delphi é descartado** (`//`, `{...}`, `(*...*)`), para não
+   contar campo desativado. Na NFe isso acontece com `indISSRet`, `RENAVAM` e as
+   duas tags da NT 2016.002 que o ACBr comentou e reescreveu logo abaixo.

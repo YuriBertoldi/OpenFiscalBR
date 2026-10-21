@@ -69,6 +69,24 @@ type Opcoes struct {
 	// So tem efeito a partir da versao 4.00 (XmlWriter.pas:3657).
 	FatCamposOpcionais bool
 
+	// OmitirTagIPIParaNaoTributado suprime o grupo IPI dos itens cujo CST
+	// nao e 00, 49, 50 ou 99.
+	//
+	// Invertida em relacao ao ACBr pelo mesmo motivo de FatCamposOpcionais:
+	// la o campo e GerarTagIPIparaNaoTributado e o Create o liga
+	// (XmlWriter.pas:214), entao o nome direto faria Opcoes{} divergir do
+	// original.
+	OmitirTagIPIParaNaoTributado bool
+
+	// ForcarGerarTagRejeicao938 forca o vICMSSubstituto (e, no grupo de
+	// repasse, o pST) a sair mesmo zerado -- exigencia de algumas UFs.
+	// Default do ACBr e fgtNunca, que coincide com o zero value.
+	ForcarGerarTagRejeicao938 ForcarGeracaoTag
+
+	// ForcarGerarTagRejeicao906 forca o bloco de ICMS efetivo a sair mesmo
+	// zerado, nas vendas a consumidor final. Default fgtNunca.
+	ForcarGerarTagRejeicao906 ForcarGeracaoTag
+
 	// AjustarTagNro troca um "nro" vazio por "S/N", como o
 	// ExecutarAjusteTagNro do ACBr.
 	AjustarTagNro bool
@@ -302,7 +320,7 @@ func (w *xmlWriter) gerarIde() *pcn.Elem {
 			Filho(pcn.NodeDat("dSaiEnt", n.Ide.DSaiEnt, false))
 		// hSaiEnt depende da DATA de saida, nao da hora.
 		if !n.Ide.DSaiEnt.IsZero() {
-			ide.Filho(pcn.NodeStr("hSaiEnt", formatarHora(n.Ide.HSaiEnt), false))
+			ide.Filho(nodeHora("hSaiEnt", n.Ide.HSaiEnt, false))
 		}
 	}
 
@@ -1223,8 +1241,12 @@ func ajustarMunicipioUF(cPais int, uf, xMun string, cMun int) (string, string, i
 // O .pas VARIA os dois ultimos argumentos por chamada: dest passa
 // obrigatorio := IsNFe (:849 e :852) e retirada/entrega passam
 // (True, False) (:955, :1005).
+// Limpa com OnlyAlphaNum, que NAO maiusculiza -- e o que o AddNodeCNPJCPF
+// usa (ACBrXmlWriter.pas:161). O AddNodeCNPJ, que atende o infRespTec, usa a
+// variante que maiusculiza (:203). A distincao so passa a ter efeito com o
+// CNPJ alfanumerico de 2026, e e deliberada no ACBr.
 func gerarCNPJCPF(valor string, obrigatorio, preencheZeros bool) *pcn.Elem {
-	valor = pcn.OnlyCPFCNPJAlphaNum(strings.TrimSpace(valor))
+	valor = pcn.OnlyAlphaNum(strings.TrimSpace(valor))
 	tam := len(valor)
 
 	if tam > 0 && tam <= 11 {
@@ -1233,7 +1255,10 @@ func gerarCNPJCPF(valor string, obrigatorio, preencheZeros bool) *pcn.Elem {
 		}
 		return pcn.NodeStrSemFiltro("CPF", valor, obrigatorio)
 	}
-	if preencheZeros && tam > 0 && tam != 14 {
+	// A condicao do ramo CNPJ e `obrigatorio OR tamanho > 0`, nao so o
+	// tamanho (ACBrXmlWriter.pas:179): um CNPJ obrigatorio e VAZIO sai como
+	// quatorze zeros, nao como tag vazia.
+	if preencheZeros && (obrigatorio || tam > 0) && tam != 14 {
 		valor = pcn.PreencherZerosEsquerda(valor, 14)
 	}
 	return pcn.NodeStrSemFiltro("CNPJ", valor, obrigatorio)
@@ -1260,13 +1285,27 @@ func gerarSignature(s *pcn.Signature) *pcn.Elem {
 				Filho(pcn.NovoElem("X509Certificate").Texto(s.X509Certificate))))
 }
 
-// formatarHora formata a hora de saida no padrao hh:mm:ss do leiaute.
-// So e usada abaixo da versao 3, unica faixa em que hSaiEnt existe.
-func formatarHora(t time.Time) string {
-	if t.IsZero() {
-		return ""
+// nodeHora e o AddNode tcHor: hh:mm:ss, e MEIA-NOITE CONTA COMO VAZIO.
+//
+// O criterio de vazio do ACBr olha so o relogio, nao a data que acompanha o
+// TDateTime (ACBrXmlWriter.pas:324): `EstaVazio := (wHor = 0) and (wMin = 0)
+// and (wSeg = 0)`. Um campo opcional com hora zerada some.
+//
+// Campo vazio e OBRIGATORIO sai como elemento VAZIO, nao como "00:00:00":
+// e a regra geral do AddNode (`ACBrXmlWriter.pas:442-446`), e e o que o
+// pcn.NodeDat ja faz para datas.
+//
+// Hoje o unico chamador passa obrigatorio=false, mas CTe e MDFe tem campos de
+// hora obrigatorios e vao herdar este helper.
+func nodeHora(nome string, t time.Time, obrigatorio bool) *pcn.Elem {
+	h, m, s := t.Clock()
+	if h == 0 && m == 0 && s == 0 {
+		if obrigatorio {
+			return pcn.NovoElem(nome)
+		}
+		return nil
 	}
-	return t.Format("15:04:05")
+	return pcn.NovoElem(nome).Texto(t.Format("15:04:05"))
 }
 
 // formatarDataHoraSemFuso formata data e hora com 19 posicoes, sem o fuso.
@@ -1282,16 +1321,6 @@ func formatarDataHoraSemFuso(t time.Time) string {
 // sobre a chave de acesso. Delega ao packages/dfe, que ja o implementa.
 func hashCSRT(csrt, chave string) string {
 	return dfe.HashCSRT(csrt, chave)
-}
-
-// gerarDet monta um item da nota.
-//
-// STUB da etapa 4a: devolve nil, e o Filho(nil) do construtor de elementos
-// absorve sem gerar nada. O gerador do det -- produto, dez grupos de imposto
-// e os grupos por tipo de mercadoria -- entra na etapa 4b, que preenche este
-// metodo sem mexer na estrutura acima.
-func (w *xmlWriter) gerarDet(_ int) *pcn.Elem {
-	return nil
 }
 
 // nodeNumStr reproduz o tcNumStr do AddNode (ACBrXmlWriter.pas:282-289):

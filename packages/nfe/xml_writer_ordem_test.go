@@ -59,6 +59,26 @@ func posicaoDaTag(xml, tag string) int {
 	return strings.Index(xml, "<"+tag+" ")
 }
 
+// fragmentoDoGrupo recorta o conteudo de um grupo, para que ordemDasTags nao
+// confunda uma tag do grupo com outra de mesmo nome em outro lugar do
+// documento.
+//
+// Sem isso, metade dos campos do ICMSTot (vBC, vICMS, vProd, vFrete, vSeg,
+// vDesc, vII, vIPI, vPIS, vCOFINS, vOutro) casaria com a primeira ocorrencia
+// delas no PRIMEIRO item, que vem antes no documento.
+func fragmentoDoGrupo(t *testing.T, xml, tag string) string {
+	t.Helper()
+	inicio := posicaoDaTag(xml, tag)
+	if inicio < 0 {
+		t.Fatalf("grupo <%s> ausente no XML", tag)
+	}
+	fim := strings.Index(xml[inicio:], "</"+tag+">")
+	if fim < 0 {
+		t.Fatalf("grupo <%s> sem tag de fechamento", tag)
+	}
+	return xml[inicio : inicio+fim]
+}
+
 // TestGerar_OrdemDosCamposSegueOXSD trava a sequencia dos grupos.
 func TestGerar_OrdemDosCamposSegueOXSD(t *testing.T) {
 	x := gerarDe(t, lerFixture(t, "nfe_400_completa.xml"))
@@ -86,7 +106,8 @@ func TestGerar_OrdemDosCamposSegueOXSD(t *testing.T) {
 	})
 
 	t.Run("ICMSTot", func(t *testing.T) {
-		ordemDasTags(t, x, "ICMSTot", "vBC", "vICMS", "vICMSDeson", "vFCP",
+		ordemDasTags(t, fragmentoDoGrupo(t, x, "ICMSTot"),
+			"ICMSTot", "vBC", "vICMS", "vICMSDeson", "vFCP",
 			"vBCST", "vST", "vFCPST", "vFCPSTRet", "vProd", "vFrete", "vSeg",
 			"vDesc", "vII", "vIPI", "vIPIDevol", "vPIS", "vCOFINS", "vOutro",
 			"vNF")

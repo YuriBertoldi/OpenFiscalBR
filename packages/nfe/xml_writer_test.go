@@ -32,10 +32,14 @@ import (
 // entre as geracoes so aparece se algum campo tiver sido perdido no caminho
 // -- escrito e nao lido, ou lido e nao escrito.
 //
+// Desde que o gerador do det existe, a fixture nfe_400_completa exercita
+// quatro itens (ICMS00 com DI e rastro, combustivel, ICMSPart com veicProd e
+// ICMSST com COFINSST) e e a cobertura mais ampla do gerador.
+//
 // Duas ressalvas, as duas deliberadas:
 //
-//   - perda FIEL passa no teste. O det, por exemplo, e lido e nao escrito
-//     (etapa 4b), e as geracoes concordam em nao emiti-lo;
+//   - perda FIEL passa no teste: campo que o gerador nao emite e o leitor nao
+//     le mantem as duas geracoes de acordo;
 //   - a comparacao obrigatoria e entre a SEGUNDA e a TERCEIRA geracoes. A
 //     primeira passagem NORMALIZA o documento (monta a chave, aplica o
 //     literal de homologacao, resolve o CDATA do qrCode), e e dali em diante

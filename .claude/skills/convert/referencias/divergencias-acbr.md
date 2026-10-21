@@ -303,3 +303,70 @@ chamada por `ACBrNFe.pas`. O `TSchemaNFeArrayStrings` **não é referenciado por
 unit da NFe** e discorda em dois membros: diz `InsucessoEntrega`/`CancInsucessoEntrega`
 onde a RTTI diz `InsucessoEntregaNFe`/`CancInsucessoEntregaNFe`. O nome decide qual XSD o
 componente procura em disco. Mesmo caso em `TLayOutArrayStrings`, também morto.
+
+### Divergências do GERADOR de XML da NFe — item `det` (2026-10-21)
+
+Porte de `GerarDet` e dos 24 métodos que ele encadeia (`ACBrNFe.XmlWriter.pas:1118-3507`).
+Testes em `packages/nfe/xml_writer_det_test.go`.
+
+| # | Onde | O ACBr faz | O porte faz |
+|---|---|---|---|
+| 1 | opção `GerarTagIPIparaNaoTributado` | o `Create` a **liga** (`:214`) | campo **invertido**: `Opcoes.OmitirTagIPIParaNaoTributado`. Mesma razão do `FatCamposOpcionais` — o zero value do `bool` precisa reproduzir o default do original |
+| 2 | `AddNodeCNPJCPF` com CNPJ obrigatório e vazio | preenche **quatorze zeros** (`ACBrXmlWriter.pas:179`: a condição é `obrigatorio OR tamanho > 0`) | idem — era um defeito do `gerarCNPJCPF` da etapa 4a, achado ao reler o helper para a DI |
+| 3 | `tcHor` com hora `00:00:00` | trata como **vazio**: omite quando opcional e emite elemento **vazio** quando obrigatório (`ACBrXmlWriter.pas:324` olha só o relógio, não a data do `TDateTime`; `:442-446` dá a regra do obrigatório) | `nodeHora`, idem. Era outro defeito de 4a, achado por `conferir-gerador-dfe.py` |
+| 4 | limpeza do CNPJ/CPF | `AddNodeCNPJCPF` usa `OnlyAlphaNum`, que **não** muda a caixa (`:161`); só `AddNodeCNPJ` usa a variante que maiusculiza (`:203`) | idem — `gerarCNPJCPF` passou a usar `pcn.OnlyAlphaNum`. A distinção é inerte hoje e passa a valer com o **CNPJ alfanumérico de 2026** |
+
+Replicado mesmo parecendo errado (**não** "corrigir"):
+
+- **O `det` MUTA o documento em quatro campos**: `cEAN`/`cEANTrib` vazios viram `"SEM GTIN"`,
+  o `xProd` do primeiro item vira o aviso de homologação, e `cEnq` vazio vira `"999"`
+  (`:1163`, `:1183`, `:1237`, `:2990`). Não dá para evitar sem mudar a saída — o próprio
+  ACBr relê `cEAN` logo depois para decidir se valida o GTIN.
+- **`PISST` e `COFINSST`: o segundo `if` SOBRESCREVE o `Result` do primeiro** (`:3150-3177`
+  e `:3322-3351`). Preenchendo `vBC`/`pPIS` **e** `qBCProd`/`vAliqProd`, o grupo por valor é
+  perdido. O ACBr emite alerta e segue; é determinístico, então foi replicado — e há teste
+  justamente para impedir que alguém "conserte" sem perceber a divergência.
+- **`tpNFDebito = 06` (pagamento antecipado) não gera imposto nenhum.** O comentário da
+  NT 2025.002 logo acima da condicional (`:1862`) lista o código entre as **exceções** que
+  devem detalhar, mas a lista externa do código só excetua `tdPerdaEmEstoque` (`:1871`). A
+  condicional interna (`:1875`), que existiria para dar a ele PIS/COFINS sem ICMS, fica
+  quase morta: só é alcançável com `tpNFCredito` de exceção **e** `tpNFDebito` antecipado ao
+  mesmo tempo. Comentário e código discordam no ACBr; o porte segue o **código**.
+- **Dois CSTs/CSOSN caem em tag SEM sufixo**, pelo mesmo motivo — `case` sem `else`, `Result`
+  de string fica vazio:
+  - **`cstPart20` foi esquecido no `BuscaTag`** (`XmlWriter.pas:1916-1941`), embora exista no
+    enum (`ACBrDFe.Conversao.pas:259`) e seja tratado no `case` do writer (`:2201`). Resultado:
+    `<ICMS><ICMS>` aninhado.
+  - **`csosnVazio` não é coberto pelo `CSOSNToStrTagPos`** (`ACBrDFe.Conversao.pas:1282`),
+    gerando `<ICMSSN>`.
+
+  Os dois são replicados e travados por `TestGerarDet_CSTSemEntradaNoMapaGeraTagAninhada` —
+  que existe justamente para impedir que alguém "conserte" sem perceber a divergência.
+- **`pMVAST` do grupo 90 sai sempre com duas casas** (`:2630`), enquanto todos os outros
+  percentuais do writer seguem o `FormatoValor4ou2`.
+- **`vBCFCPSTRet`/`pFCPSTRet`/`vFCPSTRet` são opcionais no `ICMSST` e obrigatórios no
+  `ICMS60`** (`:2713` × `:2443`), e o `vFCPSTRet` muda de ID entre os dois (`N27c` × `N27d`).
+- **`vBCFCPUFDest` e `pFCPUFDest` são marcados obrigatórios** contra a NT 2016.002 v1.50, que
+  os tornou opcionais — justificativa no próprio código: SEFAZ que não implantaram o schema
+  novo (`:3472`).
+- **O bloco de ICMS do combustível (`ICMSComb`/`ICMSInter`/`ICMSCons`) é inalcançável a partir
+  da 2.00** (`:1704`), e o comentário "Manter Disponível para versão 3.0" deixou o código
+  morto no lugar.
+- **`indISSRet` está comentado** (`:3409`) e não é gerado, embora a classe carregue o campo.
+
+> A conferência tag a tag de **tipo** e **obrigatoriedade** é mecânica:
+> `ferramentas/conferir-gerador-dfe.py` — 374 tags do gerador inteiro (4a + 4b), zero
+> divergências. O script existe pelo mesmo motivo do `conferir-leitor-dfe.py`: o round-trip
+> é cego para as duas coisas, porque o leitor converte `"0.00"` e `"0.0000"` no mesmo float
+> e um campo zerado relido continua zerado.
+>
+> A **ordem** tem o modo `--ordem` do mesmo script, usado grupo a grupo: conferidos os 9 ramos
+> de CST, os 5 de CSOSN e os 8 demais grupos do item, todos batendo. Como guard permanente
+> ficam os testes Go de sequência, e o `det` acrescentou `TestGerarDet_OrdemDosCamposSegueOXSD`
+> e `TestGerarDet_PBCOpVemAntesDeUFST`. Esse segundo é a mesma armadilha do `guiaTransito` da
+> etapa 4a: os IDs do leiaute dizem `N24 = UFST`, `N25 = pBCOp`, e o XSD manda `pBCOp` primeiro.
+>
+> **Cuidado com teste de condicional por versão que busca no documento inteiro.** O
+> `vICMSDeson` existe no item *e* no `ICMSTot`, e o do total sai a partir da 3.10 — um
+> `strings.Contains` no XML completo faz o teste passar mesmo com o item mudo. Os testes de
+> corte por versão recortam o grupo `imposto` antes de procurar.
