@@ -500,3 +500,141 @@ Replicado mesmo parecendo errado (**não** "corrigir"):
 > aviso para CTe e MDFe: o `.ini` do ACBr tem **três** eixos de configuração por seção, não
 > um — endereço, namespace do serviço e SoapAction — e os dois últimos são declarados por
 > redirecionamento para outra seção.
+
+### Divergências dos WEB SERVICES da NFe — autorização, inutilização, cadastro e CSC (2026-10-21)
+
+Porte de `TNFeRecepcao`, `TNFeRetRecepcao`, `TNFeRecibo`, `TNFeInutilizacao`,
+`TNFeConsultaCadastro` e `TAdministrarCSCNFCe` (`ACBrNFeWebServices.pas`).
+
+| # | Onde | O ACBr faz | O porte faz |
+|---|---|---|---|
+| 1 | `TNFeRetRecepcao.Executar` | consulta o recibo em **laço**, com `Tentativas` e `IntervaloTentativas` da configuração (`:1475-1497`) | `ConsultarRecibo` faz **uma** chamada. Repetir é política de quem consome, e o `context.Context` já dá o cancelamento; quem quiser o original chama em laço enquanto `LoteEmProcessamento()` for verdadeiro |
+| 2 | `TratarResposta` de todos os seis | grava XML em disco (`GravarXML`, `Gravar`), atualiza as notas carregadas e monta nome de arquivo | só lê a resposta e, no caso síncrono, anexa o protocolo à nota em memória. Gravar é papel do consumidor |
+| 3 | montagem do `nfeProc` | cola o `XMLAssinado` **como texto** com o `XMLprotNFe` (`:1551`) | o mesmo para o `ProcInutNFe` (`GerarXMLProcInutNFe`); para a nota, o `GerarXML` regera a partir do struct quando `ProcNFe.NProt` está preenchido, reembutindo a `Signature` lida de volta pelo `PrepararEnvio` — decisão já tomada no `nfag` |
+| 4 | `ValidarDigest` | compara o `digVal` do protocolo com o `DigestValue` da nota e **levanta exceção** (`:1247`) | não implementado nesta etapa; o `digVal` é devolvido em `ProtDFe.DigVal` e a conferência fica com o consumidor |
+| 5 | `ProcInutNFe` | prefixa `<?xml ... ?>` porque grava em disco na mesma linha (`:2779`) | devolve sem prólogo, como o `GerarXML` da nota |
+| 6 | consulta de cadastro sem documento | monta `infCons` com `<CPF></CPF>` vazio e transmite | devolve `ErrDocumentoConsultaAusente` sem gastar a chamada |
+| 7 | `DefinirDadosIntegrador` | alimenta o Integrador Fiscal do Ceará | fora do escopo do porte |
+
+Replicado mesmo parecendo errado (**não** "corrigir"):
+
+- **`EhAutorizacao` não é só uma comparação de versão.** `ACBrNFe.pas:313` tem uma exceção por
+  UF: a **NFC-e 3.10 no Amazonas** (cUF 13) permanece no par antigo
+  `NfeRecepcao`/`NfeRetRecepcao`. Portar só `versao >= ve310` manda a NFC-e amazonense para um
+  endereço que não existe.
+- **A inutilização NÃO desvia para SVC.** `TNFeInutilizacao.DefinirURL` (`:2672`) usa
+  `Configuracoes.WebServices.UF` cru — sem o `case FormaEmissao` que a autorização tem
+  (`:1066`). Padronizar os dois é a "correção" que um revisor faria, e ela mandaria o pedido
+  para o ambiente virtual, que não o atende. Travado em
+  `TestEnviar_EInutilizar_EscolhemUFsDiferentesEmContingencia`.
+- **No cabeçalho SOAP do envio, a versão vem do DOCUMENTO e o cUF vem da CONFIGURAÇÃO.** São
+  eixos separados: `InicializarServico` (`:1026`) tira a versão do `infNFe.Versao` da primeira
+  nota, mas `TNFeRecepcao` **não** sobrescreve `GerarUFSoap`, então o cUF cai no do
+  `TDFeWebService`, que lê `Configuracoes.WebServices.UFCodigo` (`ACBrDFeWebService.pas:349`).
+  A URL, essa sim, sai do `Ide.cUF`. Unificar os três é a simplificação que quebra o SVC.
+- **O `indSinc` tem condição composta de três alternativas** (`:1146`): serviço de autorização
+  **ou** modelo 65 **ou** versão ≥ 3.10. O único caso em que as três falham — NF-e 2.00 no lote
+  antigo — sai sem a tag, e é a única configuração em que a presença dela causaria rejeição de
+  schema.
+- **O sufixo da SoapAction do lote zipado muda com a versão** (`:1113`): `ZIP` da 4.00 em
+  diante, `LoteZip` antes. E o limite de 500 KB é medido **depois** da compressão (`:1159`) —
+  medir antes recusaria lote que caberia.
+- **O ramo síncrono do `TratarResposta` tem condição composta** (`:1191`):
+  `(modelo 65 OU versão ≥ 3.10) E Sincrono`. Uma NF-e 2.00 pedida como síncrona ainda volta
+  como recibo.
+- **O protocolo síncrono só é anexado com DUAS condições** (`:1233`): `cStat` externo 104 **e**
+  `CstatProcessado` no protocolo. E a nota é escolhida pela **chave**, não pela posição
+  (`:1245`).
+- **O 563 da inutilização não é sucesso, mas gera o `ProcInutNFe`.** `TratarResposta` devolve
+  `True` só no 102 (`:2765`) e monta o documento em `[102, 563]` (`:2777`). O 563 diz que a
+  faixa já estava inutilizada: o pedido falhou, a inutilização existe.
+- **O Mato Grosso do Sul (cUF 51) aceita CPF na inutilização, com duas metades contraditórias**
+  (`ACBrNFe.Inut.pas:128-145`): no **ID** o CPF entra com três zeros à esquerda, para ocupar as
+  catorze posições do CNPJ; no **corpo** ele vai limpo, dentro de `<CPF>`. O original recalcula
+  o documento depois de montar o ID justamente para desfazer o preenchimento.
+- **O `<ano>` do corpo e o do ID saem por caminhos diferentes.** O ID usa
+  `Copy(IntToStrZero(ano,4),3,2)` e sempre tem duas posições; o corpo usa
+  `if ano > 2000 then ano := ano - 2000` e sai **sem** zero à esquerda. Para 2009 o ID traz
+  `09` e o corpo traz `9`. O limite é `> 2000`, não `>= 2000`: o ano 2000 sairia inteiro no
+  corpo — incoerência sem efeito prático, replicada de propósito.
+- **O 151 do CSC conta como sucesso.** A faixa é `[150..153]` (`:3925`), e o 151 é "não há CSC
+  ativo": a consulta funcionou, a resposta é que não há nada. Lendo só a descrição, o porte
+  natural o trata como falha.
+- **O `dadosCsc` só é emitido na REVOGAÇÃO** (`ACBrNFe.AdmCSC.pas:88`). Emiti-lo sempre faria a
+  consulta mandar um CSC que ela não deveria mandar — e o código é segredo.
+- **`TAdministrarCSCNFCe` manda `<soap12:Header>` em QUALQUER versão** (`:3940`), ao contrário
+  de todos os outros serviços da NF-e, que o suprimem da 4.00 em diante (`:692`).
+- **O Mato Grosso embrulha a consulta de cadastro duas vezes, da 4.00 em diante**: a mensagem
+  entra num `<nfeDadosMsg>` extra (`:2958`) **e** o elemento do Body vira `<consultaCadastro>`
+  (`:3019`). São duas mudanças na mesma condição.
+- **A exceção de notação de serviços da Bahia na inutilização tem quatro fatores** (`:2697`):
+  UF 29, modelo 55, versão 3.10 e emissão normal. Afrouxar qualquer um manda outra UF para um
+  endereço que só a Bahia expõe. E, nesse ramo, a `SoapAction` é atribuída **fora** do guard
+  `EstaVazio` — o guard protege só o `FPServico`.
+
+**A "versão achada" volta — e desta vez ela importa.** A etapa 6a dispensou essa dimensão
+(divergência #2 de lá) com o argumento de que o `AchaArquivoSchema` (`ACBrDFe.pas:580-590`)
+desfaz a queda de versão quando o `.xsd` da versão pedida existe. O argumento vale para
+`consStatServ`, `consSitNFe`, `inutNFe`, `nfe` e `retEnviNFe` — todos publicados em 3.10 e
+4.00. Mas **dois serviços desta etapa não têm esse resgate**:
+
+| Serviço | Chave no `.ini` | Schema instalado | Versão que o ACBr emite |
+|---|---|---|---|
+| `NfeConsultaCadastro` | `CadConsultaCadastro_2.00` | **só** `consCad_v2.00.xsd` | `2.00` |
+| `AdministrarCSCNFCe` | `AdministrarCSCNFCe_1.00` | **nenhum** | `1.00` |
+
+Emitir `versao="4.00"` nesses dois é rejeição certa: a SEFAZ valida a mensagem contra o XSD do
+**serviço**, não contra o da NF-e. O porte materializou os dois em `versaoFixaPorServico`
+(`urls_servicos.go`), e o `versaoDados` do cabeçalho acompanha. A supressão do cabeçalho
+continua governada pela versão **configurada** (`:692`) — na consulta de cadastro as duas
+divergem: um componente na 4.00 não manda cabeçalho, embora a mensagem seja 2.00.
+
+Duas correções de etapas anteriores entraram junto:
+
+- **O override de `SoapAction` do `.ini` só vence na 4.00.** O guard `if EstaVazio(FPSoapAction)`
+  existe apenas no ramo `>= ve400` de todo `DefinirServicoEAction`; abaixo dele o código
+  atribui sem guard e descarta o que o `LerServicoDeParams` trouxe. As etapas 5 e 6a aplicavam
+  o override em qualquer versão. Não muda nada hoje — as seções `[SOAP_V4*]` só declaram chaves
+  `_4.00` —, mas é a condicional que governa a atribuição. Materializada em `comOverrideDoIni`.
+- **O redirecionamento `Usar=` NÃO é de seção inteira.** `ACBrDFe.pas:550-571` resolve
+  **serviço a serviço**: tenta a seção local e só cai no `Usar=` quando aquela chave está
+  vazia. Uma UF faz as duas coisas — o **MA**, que no modelo 55 delega ao SVAN mas mantém o
+  próprio `NfeConsultaCadastro_2.00`. A tabela por autorizador continua válida porque o MA é a
+  **única** UF do grupo SVAN; o `conferir-endpoints-dfe.py` passou a emitir AVISO nesse caso e
+  a FALHAR se o grupo crescer. A premissa registrada na etapa 6a estava errada e foi corrigida.
+
+Achados do `revisor-go` nesta etapa, e o que saiu deles:
+
+- **bloqueante — versão do `admCscNFCe` e do `ConsCad`**: já descrito acima; o revisor chegou
+  à mesma conclusão por caminho independente (cadeia `DefinirURL` → `LerServicoDeParams` →
+  `AchaArquivoSchema`). Corrigido com `versaoFixaPorServico`.
+- **importante — o override de `SoapAction` era procurado na seção errada**: a URL saía da
+  seção do DOCUMENTO e o override, da seção da CONFIGURAÇÃO. No ACBr os três (URL,
+  `FPServico`, `FPSoapAction`) voltam de **uma** chamada a `LerServicoDeParams`
+  (`:1079-1087`), logo da mesma seção. Corrigido: `DestinoEnvio` e `ReciboDoLote` carregam o
+  modelo e a UF usados na busca, e o override sai dali. Hoje o efeito é nulo — a Bahia é a
+  única UF com `SoapAction=` e a action dela para autorização **coincide** com a que o código
+  monta —, e é por isso que o teste precisa injetar um override fictício para ser capaz de
+  falhar; está dito no comentário dele.
+- **importante — a derivação de `Enviar` não tinha teste**: versão, UF, modelo e par de
+  serviços saem da primeira nota, e os testes só exercitavam `enviarNaURL`, que recebe tudo
+  pronto. Extraído `enderecoDoEnvio`, com cinco testes — inclusive o que fecha o laço da
+  exceção do Amazonas, provando que ela chega ao ENDEREÇO e não só à função pura.
+- **menor — `ConsultarRecibo` não anexava protocolo**: `TNFeRetRecepcao.TratarRespostaFinal`
+  (`:1667-1679`) grava o `procNFe` **sempre** que a chave bate, inclusive em REJEIÇÃO — é o
+  `cStat` e o `xMotivo` do protocolo que explicam o motivo ao usuário. Só a montagem do
+  `nfeProc` é condicionada a `[100,120,150]`. A regra é **diferente** da do ramo síncrono, que
+  exige `cStat` 104 do lote E `CstatProcessado` do protocolo. Exportado `AnexarProtocolos`
+  com a regra assíncrona e teste que trava a assimetria.
+- **menor — `ConsultarRecibo` usava o modelo da configuração**: `TNFeRecibo.DefinirURL`
+  (`:1888-1899`) tira o modelo de `Items[0]`. Virou campo de `ReciboDoLote`, que o
+  `ResultadoEnvio` já devolve preenchido.
+- **menor — `rfIgnoreCase` do `StringReplace`**: conscientemente não replicado. O `pos` que o
+  ACBr faz ANTES de trocar é sensível a caixa, então o ignore-case só teria efeito numa
+  resposta que misturasse caixas no mesmo documento. Registrado no doc-comment da função.
+
+> **Chave do `.ini` que não é lida:** as três seções `[SOAP_V4*]` declaram
+> `CadConsultaCadastro_4.00`, mas o `LerServicoDeParams` procura pelo nome do serviço, que é
+> `NfeConsultaCadastro`. A chave **nunca é encontrada** e nenhum override de SoapAction se
+> aplica à consulta de cadastro — nem na Bahia. O porte replica isso porque o ACBr também não a
+> acha; a tabela `soapActionPorAutorizador` não tem a entrada.

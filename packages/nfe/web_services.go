@@ -102,10 +102,10 @@ func (c *Componente) StatusServico(ctx context.Context, agora time.Time) (*RetCo
 // qualquer conexao.
 func (c *Componente) statusServicoNaURL(ctx context.Context, url string, agora time.Time) (*RetConsStatServ, error) {
 	servico, soapAction := c.servicoEActionDoStatus()
-	if doIni := SoapActionDoIni(c.Config.ModeloDF, UFParaBusca(c.Config),
-		c.Config.Ambiente, ServicoStatus, c.Config.VersaoDF); doIni != "" {
-		soapAction = doIni
-	}
+	soapAction = comOverrideDoIni(soapAction,
+		SoapActionDoIni(c.Config.ModeloDF, UFParaBusca(c.Config),
+			c.Config.Ambiente, ServicoStatus, c.Config.VersaoDF),
+		c.Config.VersaoDF)
 
 	dadosMsg := "<consStatServ " + namespaceNFeServicos +
 		` versao="` + c.versaoServico() + `">` +
@@ -195,11 +195,11 @@ func (c *Componente) consultarNaURL(ctx context.Context, url, chave string) (*Re
 	// O override do `.ini` vence o que o DefinirServicoEAction montaria.
 	// E por ele que a consulta da Bahia na 4.00 usa "NFeConsulta4" e nao
 	// "NFeConsultaProtocolo4" -- ver soapActionPorAutorizador.
-	if doIni := SoapActionDoIni(ModeloDaChave(chave, c.Config.ModeloDF),
-		UFDaChave(chave), c.Config.Ambiente, ServicoConsultaProtocolo,
-		c.Config.VersaoDF); doIni != "" {
-		soapAction = doIni
-	}
+	soapAction = comOverrideDoIni(soapAction,
+		SoapActionDoIni(ModeloDaChave(chave, c.Config.ModeloDF),
+			UFDaChave(chave), c.Config.Ambiente, ServicoConsultaProtocolo,
+			c.Config.VersaoDF),
+		c.Config.VersaoDF)
 
 	// PENDENTE: o ACBr usa o tpAmb da NOTA CARREGADA quando ha uma, e so
 	// cai para a configuracao quando nao ha (ACBrNFeWebServices.pas:2086).

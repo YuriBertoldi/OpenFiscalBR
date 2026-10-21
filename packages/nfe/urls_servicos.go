@@ -132,12 +132,31 @@ func UFDaChave(chave string) string {
 	return pcn.SiglaUF(cUF)
 }
 
+// comOverrideDoIni devolve a SoapAction efetiva, aplicando o override do
+// `.ini` SO quando ele pode vencer.
+//
+// Porte do guard `if EstaVazio(FPSoapAction)`, que existe apenas no ramo da
+// 4.00 de todo DefinirServicoEAction (ACBrNFeWebServices.pas:820, :2124,
+// :2089, :2697). Abaixo da 4.00 o codigo atribui a SoapAction SEM guard, e
+// o que o LerServicoDeParams trouxe do `.ini` e simplesmente descartado.
+//
+// A distincao nao muda nada hoje -- as unicas secoes `[SOAP_V4*]` do `.ini`
+// declaram so chaves `_4.00` --, mas e a condicional que governa a
+// atribuicao, e e justamente esse tipo de condicional que se perde num
+// porte. Materializa-la deixa o dia em que a SEFAZ publicar um override de
+// 3.10 ser um caso ja tratado, e nao uma regressao silenciosa.
+func comOverrideDoIni(soapAction, doIni string, versao VersaoDF) string {
+	if versao >= Ve400 && doIni != "" {
+		return doIni
+	}
+	return soapAction
+}
+
 // SoapActionDoIni devolve o override de SoapAction declarado no `.ini`,
 // ou vazio quando nao ha.
 //
-// Porte do efeito de `LerServicoDeParams` (ACBrDFe.pas:546) somado ao
-// `EstaVazio(FPServico)` do DefinirServicoEAction: o que vem do `.ini`
-// VENCE o que o codigo montaria.
+// Porte do efeito de `LerServicoDeParams` (ACBrDFe.pas:546). Quem decide se
+// ele VENCE o valor montado pelo codigo e o comOverrideDoIni.
 func SoapActionDoIni(modelo ModeloDF, uf string, ambiente pcn.TipoAmbiente, servico Servico, versao VersaoDF) string {
 	autorizador, err := autorizadorDe(modelo, uf)
 	if err != nil {
