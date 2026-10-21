@@ -38,6 +38,11 @@ var (
 	// "Nao encontrei o atributo: versao".
 	ErrAtributoVersaoAusente = errors.New("nfe: atributo versao ausente em infNFe")
 
+	// ErrDocumentoNulo indica chamada de geracao sem documento. O sentinela
+	// do leitor (ErrXMLVazio) nao serve: ali o caso e XML ausente, aqui e
+	// *NFe nil.
+	ErrDocumentoNulo = errors.New("nfe: documento nao informado")
+
 	// ErrNaoImplementado marca fase do porte ainda nao entregue.
 	ErrNaoImplementado = errors.New("nfe: nao implementado")
 )

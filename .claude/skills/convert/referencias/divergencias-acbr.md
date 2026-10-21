@@ -252,6 +252,41 @@ Replicado mesmo parecendo errado (**não** "corrigir**"**):
 > `FloatIsIntString`, que o parser nunca liga. A precisão é contrato declarativo,
 > e só se verifica contra o `.pas`.
 
+### Divergências do GERADOR de XML da NFe — cabeçalho (2026-10-21)
+
+Porte de `Base/ACBrNFe.XmlWriter.pas` (o grupo `det` fica para a etapa 4b). Todas com
+teste em `packages/nfe/xml_writer_test.go` ou `xml_writer_ordem_test.go`.
+
+| # | Onde | O ACBr faz | O porte faz |
+|---|---|---|---|
+| 1 | opção `CamposFatObrigatorios` | o `Create` a liga (`:220`); o campo se chama `CamposFatObrigatorios` | campo **invertido**: `Opcoes.FatCamposOpcionais`. Em Go o zero value de `bool` é `false`, e manter o nome original faria `Opcoes{}` gerar **diferente** do ACBr. Invertido, o zero value reproduz o default |
+| 2 | `protNFe/infProt` | grava `Content` direto, sem `FiltrarTextoXML` | `NodeStrSemFiltro`, para o `xMotivo` voltar igual ao que a SEFAZ devolveu, acento incluso |
+| 3 | `ErrXMLVazio` × documento nulo | — | sentinela próprio `ErrDocumentoNulo`: o do leitor significa "XML ausente", não "`*NFe` nil" |
+| 4 | extração do dígito da chave | `ExtrairDigitoChaveAcesso` pega o ÚLTIMO caractere | idem — e devolve **erro** se não for dígito, em vez de silenciar uma chave malformada |
+
+Replicado mesmo parecendo errado (**não** "corrigir"):
+
+- **`cPais` do emitente é a constante `CODIGO_BRASIL`**, não o campo do modelo (`:789`).
+- **`cMunFG` do `retTransp` é gravado com `tcStr`**, sem zero à esquerda, enquanto todos os
+  outros usam `tcInt` (`:3826`).
+- **`cRegTrib` é omitido quando vale `RTISSNenhum`**, apesar de esse membro valer `"0"` no
+  leiaute (`:3598`).
+- **`agropecuario` é else-if**: havendo `defensivo`, a `guiaTransito` não sai nem preenchida
+  (`:1071-1082`).
+- **`qrCode` só é embrulhado em CDATA quando NÃO contém `"?p="`** (`:345`).
+- **`cNF` sentinela:** `0`/`-1` sorteiam; qualquer outro negativo vira `0`. O `-2` que o
+  leitor grava, portanto, **não** dispara sorteio — é o que torna o round-trip estável.
+- **A chave usa o CNPJ do fisco em nota avulsa**, não o do contribuinte (`:311-314`).
+
+> **A ordem dos campos é contrato, e o round-trip é cego para ela.** O leitor acha tag por
+> nome, então gerar→ler→gerar fica estável mesmo com os campos fora de sequência — e o XSD é
+> `xs:sequence`. Foi assim que uma inversão de `tpGuia`/`UFGuia` no `guiaTransito` passou por
+> todos os outros testes da etapa 4a e só apareceu na conferência com o `.pas`. Desde então há
+> `TestGerar_OrdemDosCamposSegueOXSD`, que afirma ORDEM e não presença.
+>
+> Atenção ao portar CTe e MDFe: os IDs do leiaute (`ZF05`, `ZF06`) **não** seguem a ordem do
+> XSD, e seguir os IDs produz documento rejeitado.
+
 ### `TCSTIS` é string no ACBr vivo — não tipe campo com o enum
 
 O enum existe na unit, mas o ACBr **desistiu dele** até a publicação da tabela oficial:

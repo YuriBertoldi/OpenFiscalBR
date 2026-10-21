@@ -4,8 +4,9 @@ Nota Fiscal Eletrônica (modelo 55) e Nota Fiscal de Consumidor Eletrônica
 (modelo 65) — porte do componente **ACBrNFe** do [Projeto ACBr](http://projetoacbr.com.br).
 
 > **Estado:** em construção. Estão prontos os **tipos/enums**, o **modelo de
-> dados completo** e o **leitor de XML**. O gerador, os web services, os
-> eventos e o `.ini` chegam nas etapas seguintes — veja [Roteiro](#roteiro).
+> dados completo**, o **leitor de XML** e o **gerador do cabeçalho**. O gerador
+> do item, os web services, os eventos e o `.ini` chegam nas etapas seguintes —
+> veja [Roteiro](#roteiro).
 
 ## Origem dos fontes
 
@@ -14,6 +15,7 @@ Nota Fiscal Eletrônica (modelo 55) e Nota Fiscal de Consumidor Eletrônica
 | `PCNNFe/pcnConversaoNFe.pas` | `types.go` + `conversao.go` |
 | `Base/ACBrNFe.Classes.pas` | `classes.go` (nota) + `classes_det.go` (item) |
 | `Base/ACBrNFe.XmlReader.pas` | `xml_reader.go` |
+| `Base/ACBrNFe.XmlWriter.pas` | `xml_writer.go` + `chave_acesso.go` |
 
 > A unit de classes vem em **dois arquivos** porque o subgrupo `det` sozinho
 > tem 29 das 75 classes. `classes.go` traz a nota (identificação, emitente,
@@ -260,6 +262,29 @@ teste próprio e registro em
 | 5 | envelope sem `<NFe>` | devolve sucesso com a nota vazia | devolve `ErrNFeNaoEncontrada` |
 | 6 | `DecodeHTMLEntities` | decodifica entidades uma segunda vez | não aplica: o `encoding/xml` do Go já decodificou |
 
+**Do gerador de XML** — quatro, registradas em `divergencias-acbr.md`:
+
+| # | Onde | O ACBr faz | O porte faz |
+|---|---|---|---|
+| 1 | opção de campos da fatura | `CamposFatObrigatorios`, **ligada** pelo `Create` | `FatCamposOpcionais` — invertida, para o zero value do Go reproduzir o default do ACBr |
+| 2 | `protNFe/infProt` | grava sem filtrar | `NodeStrSemFiltro`, para o `xMotivo` voltar igual ao recebido |
+| 3 | documento nulo na geração | — | sentinela próprio `ErrDocumentoNulo` |
+| 4 | dígito da chave | último caractere | idem, mas devolve **erro** se não for dígito |
+
+#### A ordem dos campos é contrato — e o round-trip é cego para ela
+
+O leitor acha tag por nome, então gerar→ler→gerar fica estável **mesmo com os
+campos fora de sequência**. O XSD, porém, é `xs:sequence`: campo fora de ordem
+é documento rejeitado pela SEFAZ.
+
+Foi assim que uma inversão de `tpGuia`/`UFGuia` no `guiaTransito` passou por
+todos os outros testes desta etapa e só apareceu na conferência com o `.pas`.
+Desde então há `TestGerar_OrdemDosCamposSegueOXSD`, que afirma **ordem**, não
+presença — e que foi verificado reintroduzindo o defeito.
+
+> Atenção ao portar CT-e e MDF-e: os IDs do leiaute (`ZF05`, `ZF06`) **não**
+> seguem a ordem do XSD. Seguir os IDs produz documento rejeitado.
+
 #### Como a fidelidade do leitor foi verificada
 
 Os dois eixos silenciosos foram conferidos **tag a tag, mecanicamente**, por
@@ -379,9 +404,10 @@ do `EnumeradoToStr`.
 | 1 | `types.go` + `conversao.go` | concluída |
 | 2a | `classes.go` — cabeçalho, totais, transporte, cobrança | concluída |
 | 2b | `classes_det.go` — `det` (produto e impostos) + `NFe.Det` | concluída |
-| 3 | `xml_reader.go` | **nesta entrega** |
-| 4a/4b | `xml_writer.go` | pendente |
-| 5 | regras de negócio, chave de acesso, QR-Code | pendente |
+| 3 | `xml_reader.go` | concluída |
+| 4a | `xml_writer.go` — cabeçalho, totais, transporte, cobrança | **nesta entrega** |
+| 4b | `xml_writer.go` — `det` (produto e impostos) | pendente |
+| 5 | regras de negócio, QR-Code e URL de consulta | pendente |
 | 6a | status, consulta e `urls.go` por UF | pendente |
 | 6b | autorização, inutilização, consulta cadastro, CSC | pendente |
 | 7 | eventos (cancelamento, CC-e, manifestação) + `StrToTpEventoNFe` | pendente |
