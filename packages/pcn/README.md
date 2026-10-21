@@ -12,7 +12,7 @@ externa.
 |---|---|
 | `ACBrLibXML2/ACBrXmlDocument.pas` | `Document`, `Node`, `Find`, `FindAnyNs`, `FindAll`, `FindAllAnyNs`, `OuterXML` |
 | `ACBrDFe/ACBrXmlBase.pas` | `ConteudoStr/Int/Dec/Data/Bool`, `ConteudoCNPJCPF`, `Signature`, `LerSignature`, `NormatizarBoolean`, `RemoverCDATA` |
-| `ACBrDFe/ACBrDFe.Conversao.pas` | enums compartilhados: `TipoAmbiente`, `TipoEmissao`, `Indicador`, `IndicadorEx`, `OrigemMercadoria`, `CSTIcms`, `CSTPis`, `CSTCofins`, `TpPagAnt`, `TipoNFe`, `TipoImpressao`, `ProcessoEmissao`, `IndIEDest`, `RegTribISSQN`, `TpIntegra` |
+| `ACBrDFe/ACBrDFe.Conversao.pas` | enums compartilhados: `TipoAmbiente`, `TipoEmissao`, `Indicador`, `IndicadorEx`, `OrigemMercadoria`, `CSTIcms`, `CSTPis`, `CSTCofins`, `TpPagAnt`, `TipoNFe`, `TipoImpressao`, `ProcessoEmissao`, `IndIEDest`, `RegTribISSQN`, `TpIntegra`, `CSOSNIcms`, `IndIncentivo` |
 
 | `ACBrDFe/Comum/ACBrDFeComum.Proc.pas` | `ProcDFe`, `LerInfProt` |
 | `ACBrDFe/ACBrDFeUtil.pas` | `DigitoChaveAcesso`, `ValidarChaveAcesso`, `RemoverLiteralChave`, `ValidarAAMM`, `ValidarCodigoUF` |
@@ -20,12 +20,12 @@ externa.
 | `ACBrComum/ACBrUtil.*` | `OnlyNumber`, `StringToFloat`, `StringDecimalToFloat`, `EncodeDataHora`, `ParseCompetencia` |
 | `TMemIniFile` (RTL) | `INI` — leitor/gravador `.ini` mínimo, sem dependência externa |
 
-> `TipoNFe`, `TipoImpressao`, `ProcessoEmissao`, `IndIEDest`, `RegTribISSQN` e
-> `TpIntegra` entraram com a etapa 2a do `packages/nfe`. Moram aqui, e não no
+> Os oito ultimos entraram com as etapas 2a e 2b do `packages/nfe`. Moram aqui, e não no
 > package do documento, porque são de **todo DFe** — CT-e e MDF-e usam os
 > mesmos. Dois têm código fora de ordem e merecem atenção ao portar:
 > `IndIEDest` (o terceiro membro vale `"9"`, não `"3"`) e `RegTribISSQN`
-> (`RTISSNenhum` é o **último** membro e vale `"0"`, não vazio).
+> (`RTISSNenhum` é o **último** membro e vale `"0"`, não vazio). `IndIncentivo`
+> repete a armadilha do `IndISSRet`: o "não" vale `"2"`, não `"0"`.
 
 ## Por que um mini-DOM e não `xml.Unmarshal`
 

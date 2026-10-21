@@ -1162,6 +1162,15 @@ func TestEnumsDFe_CodigosForaDeOrdemNumerica(t *testing.T) {
 
 		{"PeAplicativoContribuinte", PeAplicativoContribuinte.String(), "0"},
 		{"PeProvedorAssinaturaAutorizacao", PeProvedorAssinaturaAutorizacao.String(), "4"},
+
+		// acrescentados com a etapa 2b: CSOSN tem o VAZIO no ordinal zero,
+		// como CSTIcms, e IndIncentivo repete a armadilha do IndISSRet --
+		// o "nao" vale "2", nao "0".
+		{"CsosnVazio", CsosnVazio.String(), ""},
+		{"Csosn101", Csosn101.String(), "101"},
+		{"Csosn900", Csosn900.String(), "900"},
+		{"IiSim", IiSim.String(), "1"},
+		{"IiNao", IiNao.String(), "2"},
 	}
 	for _, c := range casos {
 		if c.obtido != c.esperado {
@@ -1204,6 +1213,16 @@ func TestEnumsDFe_ParseIdaEVolta(t *testing.T) {
 			t.Errorf("TpIntegra %d nao sobreviveu ao round-trip: %v %v", i, v, err)
 		}
 	}
+	for i := CsosnVazio; i <= Csosn900; i++ {
+		if v, err := ParseCSOSNIcms(i.String()); err != nil || v != i {
+			t.Errorf("CSOSNIcms %d nao sobreviveu ao round-trip: %v %v", i, v, err)
+		}
+	}
+	for i := IiSim; i <= IiNao; i++ {
+		if v, err := ParseIndIncentivo(i.String()); err != nil || v != i {
+			t.Errorf("IndIncentivo %d nao sobreviveu ao round-trip: %v %v", i, v, err)
+		}
+	}
 }
 
 // TestEnumsDFe_ParseInvalidoDevolveErro confirma que os seis novos devolvem
@@ -1219,6 +1238,8 @@ func TestEnumsDFe_ParseInvalidoDevolveErro(t *testing.T) {
 		{"IndIEDest", segundoRetorno(ParseIndIEDest("3"))}, // "3" NAO e codigo valido
 		{"RegTribISSQN", segundoRetorno(ParseRegTribISSQN("7"))},
 		{"TpIntegra", segundoRetorno(ParseTpIntegra("3"))},
+		{"CSOSNIcms", segundoRetorno(ParseCSOSNIcms("104"))},
+		{"IndIncentivo", segundoRetorno(ParseIndIncentivo("0"))}, // "0" NAO e codigo valido
 	}
 	for _, c := range casos {
 		if !errors.Is(c.err, ErrEnumInvalido) {

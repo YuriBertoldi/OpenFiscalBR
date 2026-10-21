@@ -4,16 +4,21 @@ Nota Fiscal Eletrônica (modelo 55) e Nota Fiscal de Consumidor Eletrônica
 (modelo 65) — porte do componente **ACBrNFe** do [Projeto ACBr](http://projetoacbr.com.br).
 
 > **Estado:** em construção. Estão prontos os **tipos/enums** e o **modelo de
-> dados exceto o subgrupo `det`** (item da nota). O leitor, o gerador, os web
-> services, os eventos e o `.ini` chegam nas etapas seguintes — veja
-> [Roteiro](#roteiro).
+> dados completo**. O leitor, o gerador, os web services, os eventos e o
+> `.ini` chegam nas etapas seguintes — veja [Roteiro](#roteiro).
 
 ## Origem dos fontes
 
 | Unit Delphi | Arquivo Go |
 |---|---|
 | `PCNNFe/pcnConversaoNFe.pas` | `types.go` + `conversao.go` |
-| `Base/ACBrNFe.Classes.pas` | `classes.go` |
+| `Base/ACBrNFe.Classes.pas` | `classes.go` (nota) + `classes_det.go` (item) |
+
+> A unit de classes vem em **dois arquivos** porque o subgrupo `det` sozinho
+> tem 29 das 75 classes. `classes.go` traz a nota (identificação, emitente,
+> destinatário, totais, transporte, cobrança, informações adicionais) e
+> `classes_det.go` traz o item (produto, os dez grupos de imposto e os grupos
+> por tipo de mercadoria regulada).
 
 ### Por que `pcnConversaoNFe.pas`, e não `ACBrNFe.Conversao.pas`
 
@@ -99,33 +104,35 @@ Cada um expõe `String()` com o código exato do leiaute e `ParseXxx(string) (T,
 Vivem em [`packages/pcn`](../pcn), que é o porte de `ACBrDFe.Conversao.pas`:
 `TipoAmbiente`, `TipoEmissao`, `Indicador`, `IndicadorEx`, `OrigemMercadoria`,
 `CSTIcms`, `CSTPis`, `CSTCofins`, `TpPagAnt` e — acrescentados pela etapa 2a —
-`TipoNFe`, `TipoImpressao`, `ProcessoEmissao`, `IndIEDest`, `RegTribISSQN` e
-`TpIntegra`.
+`TipoNFe`, `TipoImpressao`, `ProcessoEmissao`, `IndIEDest`, `RegTribISSQN`,
+`TpIntegra` e — pela etapa 2b — `CSOSNIcms` e `IndIncentivo`.
 
-Os seis novos foram para o `pcn` em vez de serem declarados aqui porque são
+Os oito novos foram para o `pcn` em vez de serem declarados aqui porque são
 enums de **todo DFe**, não da NF-e: CT-e e MDF-e usam os mesmos. Declará-los no
 `nfe` garantiria a triplicação, que é exatamente o problema já registrado em
 [`TpNFDebito`](#duplicação-de-tpnfdebito-com-packagesrtc).
 
-## Modelo de dados (`classes.go`)
+## Modelo de dados
 
-Porte de `Base/ACBrNFe.Classes.pas`. **46 classes / 330 campos**, conferidos
-nome a nome e tipo a tipo contra o `.pas`.
+Porte de `Base/ACBrNFe.Classes.pas`. **75 classes / 651 campos**, conferidos
+nome a nome e tipo a tipo contra o `.pas` (490 campos primitivos, zero
+divergência de tipo).
 
-Fora desta etapa: o subgrupo `det` (produto, impostos, e os grupos por tipo de
-mercadoria — linhas 478–1484 do `.pas`) e o campo `NFe.Det`, que entram na
-etapa 2b.
+| Arquivo | Escopo | Classes |
+|---|---|---|
+| `classes.go` | a nota | 46 |
+| `classes_det.go` | o item (`det`) | 30 |
 
 ### Coleções
 
 Todo `TXxxCollection`/`TXxxCollectionItem` virou slice simples. **Exceção
 única:** `TpagCollection` carrega `vTroco` na própria coleção
 (`Classes.pas:1933`) — o troco é um só para a nota inteira, não por forma de
-pagamento. Virou `type Pag struct { Itens []PagItem; VTroco float64 }`.
+pagamento. Virou `type Pag struct { DetPag []PagItem; VTroco float64 }`.
 
 ### O `default` da property NÃO inicializa nada
 
-É a armadilha central desta etapa. No Delphi, `property X: T ... default valor`
+É a armadilha central do modelo de dados. No Delphi, `property X: T ... default valor`
 é metadado de streaming de design-time; quem inicializa é o `constructor
 Create`. Na NF-e os dois **divergem**:
 
@@ -148,6 +155,8 @@ ausência.
 | `NovoPagItem` | `Classes.pas:4441` | `IndPag = IpNenhum`, `TBand = BcNenhum` | o zero do Go grava `"0"` e `"01"` — declararia pagamento à vista com cartão Visa |
 | `NovoEmit` | `Classes.pas:2702` | `CRT = CrtRegimeNormal` | o zero do Go grava `"1"` (Simples Nacional) |
 | `NovaNFe` | `Classes.pas:2406` | `xPais`/`cPais` = `BRASIL`/`1058` no emitente e no destinatário, mais o `CRT` herdado | sem isso o país sai vazio nos dois endereços |
+| `NovoProd` | `Classes.pas:2747` | `IndEscala = IeNenhum` (ordinal **2**) | o zero do Go grava `"S"` — todo item declararia produção em escala relevante |
+| `NovoDetItem` | `Classes.pas:2537` | herda o `Prod` de `NovoProd` | idem, via item |
 
 `NovoPagItem` é o mesmo defeito que o porte da NFGas encontrou em `tiSim`: o
 membro que significa "ausente" não está no ordinal zero.
@@ -176,6 +185,27 @@ Três campos são numéricos no modelo mas exigem zero à esquerda no XML. O
 | `CEP` | `[0-9]{8}` | `tcInt, 08, 08` (`XmlWriter.pas:787`, `929`, `974`, `1024`) |
 | `RefNF.Modelo` e `RefNFP.Modelo` | `"01"`/`"02"` | `tcInt, 02, 02` (`XmlWriter.pas:663` e `:692`) |
 | `InfNFe.Versao` | `"4.00"` | `FloatToString '#0.00'` (`XmlWriter.pas:330`, `392`) |
+| `Comb.CProdANP` | `[0-9]{9}` | `tcInt, 09, 09` (`XmlWriter.pas:1657`) |
+| `ISSQN.CMunFG` | 7 dígitos | `tcInt, 07, 07` (`XmlWriter.pas:3372`) |
+| `OrigComb.CUFOrig` | 2 dígitos | `tcInt, 2, 2` (`XmlWriter.pas:1791`) |
+
+`Comb.CProdANP` é o mais exposto: qualquer código ANP abaixo de 100.000.000
+sai com menos de nove dígitos e o documento é rejeitado. O preenchimento vem de
+`PadLeft` em `ACBrXmlWriter.pas:410-411`, não do tipo.
+
+### Condicional por versão de leiaute — `med`
+
+Único grupo do modelo com comportamento que muda pela **versão**, e não por
+conteúdo (`XmlWriter.pas:1593-1620`):
+
+| `infNFe.Versao` | Campos emitidos | `MaxMed` |
+|---|---|---|
+| `>= 4` | `cProdANVISA`, `xMotivoIsencao` | 1 |
+| `< 4` | `nLote`, `qLote`, `dFab`, `dVal` | 500 |
+
+Os quatro campos antigos viraram o grupo `rastro` na 4.00. Emitir os dois
+conjuntos juntos produz XML rejeitado, e o limite de ocorrências também muda —
+é a dimensão que o `CLAUDE.md` aponta como a mais fácil de perder no writer.
 
 ## Fidelidade
 
@@ -237,6 +267,9 @@ equivalente em Go:
 
 - `*ToStrTagPosText`, `*ToDescricao`, `*ToDescStr`, `indProcToDescrStr`,
   `modFreteToDesStr`, `ArmaTipoStr` e a família `Veiculos*Str`.
+- `TveicProd.CombDescricao` (`getCombDescricao`, `Classes.pas:3698`) — property
+  somente-leitura que devolve texto de impressão (`"01 - ALCOOL"`). Se o DANFE
+  for portado um dia, note que o `else` da função devolve `tpComb` cru.
 - Os enums usados **unicamente** pelo DANFE: `TpcnPercentualTributos`,
   `TpcnImprimeDescAcrescItem`, `TImprimirUnidQtdeValor` e
   `TpcnInformacoesDePagamento`.
@@ -292,6 +325,11 @@ Sem rede, sem certificado e sem dependência externa.
 | `TestNovaNFe_AplicaOsDefaultsDoConstrutorDelphi` | país do emitente/destinatário sair vazio |
 | `TestIde_ZeroValueReproduzOACBr` | "corrigir" o `Ide` com os defaults que a property declara e trocar produção por homologação |
 | `TestGuiaTransito_ZeroValueNaoDeclaraGuia` | reordenar `TpGuia` e fazer toda nota nascer declarando uma guia de trânsito |
+| `TestNovoProd_IndEscalaNaoComecaNoZero` | perder o construtor e gravar `indEscala="S"` em todo item |
+| `TestICMS_ZeroValueReproduzOACBr` | "corrigir" o ICMS com `CST00` por causa do `default cst00` da property, fazendo todo item sem ICMS declarar tributação integral |
+| `TestICMS_MotDesICMSNasceTaxi` | "consertar" para `MdiNenhum` e divergir do ACBr |
+| `TestArma_TpArmaZeroEhUsoPermitido` | reordenar `TipoArma` |
+| `TestImposto_DefaultsDeCSTCoincidemComOZero` | reordenar `CstIpi`/`CSTPis`/`CSTCofins` e mudar o CST default de todo item |
 | `TestParseVersaoDFFloat_ResolvePorFaixaENaoPorIgualdade` | trocar faixa por igualdade e recusar `3.01`/`4.01` |
 | `TestAjustarVersaoQrCode_NaoExisteQRCodeAteALeiaute310` | gerar QR-Code em leiaute que não o admite |
 
@@ -304,8 +342,8 @@ do `EnumeradoToStr`.
 | # | Etapa | Estado |
 |---|---|---|
 | 1 | `types.go` + `conversao.go` | concluída |
-| 2a | `classes.go` — cabeçalho, totais, transporte, cobrança | **nesta entrega** |
-| 2b | `classes.go` — `det` (produto e impostos) + `NFe.Det` | pendente |
+| 2a | `classes.go` — cabeçalho, totais, transporte, cobrança | concluída |
+| 2b | `classes_det.go` — `det` (produto e impostos) + `NFe.Det` | **nesta entrega** |
 | 3 | `xml_reader.go` | pendente |
 | 4a/4b | `xml_writer.go` | pendente |
 | 5 | regras de negócio, chave de acesso, QR-Code | pendente |
