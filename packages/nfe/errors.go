@@ -60,4 +60,37 @@ var (
 	// certificado. Os web services da NF-e exigem autenticacao mutua: sem
 	// ele nao ha conexao, nem para consultar.
 	ErrCertificadoNaoConfigurado = errors.New("nfe: certificado nao configurado")
+
+	// ErrLoteVazio indica envio sem nota nenhuma.
+	ErrLoteVazio = errors.New("nfe: lote sem notas")
+
+	// ErrLoteExcedido indica lote acima do permitido -- em quantidade de
+	// notas ou em tamanho da mensagem. Porte dos tres GerarException de
+	// TNFeRecepcao (ACBrNFeWebServices.pas:1013, :1021 e :1160).
+	ErrLoteExcedido = errors.New("nfe: lote excede o limite")
+
+	// ErrAmbienteDiferente indica nota emitida num ambiente e transmitida
+	// para outro. Porte do CErroAmbienteDiferente (:1053): e rejeicao certa
+	// na SEFAZ, e o componente a antecipa.
+	ErrAmbienteDiferente = errors.New("nfe: ambiente da nota difere do ambiente do web service")
+
+	// ErrReciboVazio indica consulta de recibo sem o numero.
+	ErrReciboVazio = errors.New("nfe: recibo nao informado")
+
+	// ErrJustificativaObrigatoria indica inutilizacao sem justificativa.
+	// Porte do primeiro GerarException de SetJustificativa (:2630).
+	ErrJustificativaObrigatoria = errors.New("nfe: justificativa obrigatoria na inutilizacao")
+
+	// ErrJustificativaCurta indica justificativa abaixo do minimo legal de
+	// quinze caracteres (:2634).
+	ErrJustificativaCurta = errors.New("nfe: justificativa abaixo do minimo de 15 caracteres")
+
+	// ErrModeloInvalido indica `mod` que nao e 55 nem 65. Porte do raise de
+	// TNFeInutilizacao.DefinirURL (:2668).
+	ErrModeloInvalido = errors.New("nfe: modelo invalido")
+
+	// ErrDocumentoConsultaAusente indica consulta de cadastro sem IE, CNPJ
+	// nem CPF. O ACBr nao confere e manda um infCons com <CPF></CPF> vazio;
+	// aqui o caso vira erro, porque a chamada nunca pode dar certo.
+	ErrDocumentoConsultaAusente = errors.New("nfe: informe IE, CNPJ ou CPF na consulta de cadastro")
 )

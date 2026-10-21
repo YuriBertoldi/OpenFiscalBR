@@ -5,9 +5,10 @@ Nota Fiscal Eletrônica (modelo 55) e Nota Fiscal de Consumidor Eletrônica
 
 > **Estado:** em construção. Estão prontos os **tipos/enums**, o **modelo de
 > dados completo**, o **leitor** e o **gerador de XML**, as **regras de
-> negócio**, o **QR-Code** e os web services de **status** e **consulta**.
-> Autorização, inutilização, eventos, distribuição DF-e e o `.ini` chegam nas
-> etapas seguintes — veja [Roteiro](#roteiro).
+> negócio**, o **QR-Code** e os web services de **status**, **consulta**,
+> **autorização**, **inutilização**, **consulta de cadastro** e **CSC**.
+> Eventos, distribuição DF-e e o `.ini` chegam nas etapas seguintes — veja
+> [Roteiro](#roteiro).
 
 ## Origem dos fontes
 
@@ -519,10 +520,16 @@ do emitente: é o **autorizador** que atende aquela UF naquele modelo.
 O porte guarda as duas coisas separadas, e as cinquenta e oito combinações de UF e ambiente
 colapsam em quinze autorizadores no modelo 55 e doze no 65.
 
-A separação depende de uma premissa: a de que o redirecionamento é sempre de **seção
-inteira** — não existe UF que defina um serviço localmente e delegue outro.
-`ferramentas/conferir-endpoints-dfe.py` reconfere essa premissa a cada execução, porque é
-ela que sustenta o modelo.
+O redirecionamento, porém, **não** é de seção inteira: o ACBr resolve serviço a serviço,
+tentando a seção local e só caindo no `Usar=` quando aquela chave está vazia
+(`ACBrDFe.pas:550-571`). Uma UF faz as duas coisas — o **MA**, que no modelo 55 delega ao
+SVAN mas mantém o próprio `NfeConsultaCadastro_2.00`.
+
+A tabela continua válida porque o MA é a **única** UF do grupo SVAN: a entrada `NFe/SVAN` é,
+na prática, só dele. `ferramentas/conferir-endpoints-dfe.py` vigia exatamente isso — hoje
+emite AVISO para o MA e passa a **falhar** se outra UF entrar nesse autorizador. Ele também
+confere, UF a UF, que o endereço da tabela é o mesmo que o `.ini` resolveria: 802 combinações
+na execução atual.
 
 ### Três sutilezas que o porte preserva
 
@@ -546,6 +553,77 @@ O que é leiaute e **ficou**: o XML cru do `protNFe` (`XMLProtNFe`), de onde sai
 e os eventos como XML cru em `ProcEventos` — a leitura estruturada deles depende do leitor
 de eventos, que entra na etapa própria.
 
+## Transmissão: autorização, inutilização, cadastro e CSC
+
+`web_services_autorizacao.go` porta `TNFeRecepcao`, `TNFeRetRecepcao`, `TNFeRecibo`,
+`TNFeInutilizacao`, `TNFeConsultaCadastro` e `TAdministrarCSCNFCe`.
+
+```go
+nota := &nfe.NotaFiscal{NFe: &n}
+res, err := c.Enviar(ctx, []*nfe.NotaFiscal{nota}, nfe.OpcoesEnvio{Lote: "1", Sincrono: true})
+if res.Sincrono && res.Processamento.Autorizada() {
+    processada, _ := nfe.GerarXML(nota.NFe) // ja traz o protocolo anexado
+}
+
+// No modo assincrono a resposta e um recibo, e o Lote ja vem montado
+// com os quatro dados que a consulta seguinte precisa.
+res, _ = c.Enviar(ctx, notas, nfe.OpcoesEnvio{Lote: "1"})
+ret, _ := c.ConsultarRecibo(ctx, res.Lote)
+for ret.LoteEmProcessamento() { /* consultar de novo */ }
+nfe.AnexarProtocolos(ret, notas)
+```
+
+### Anexar protocolo tem regra DIFERENTE nos dois ramos
+
+| Ramo | Quando o `procNFe` e gravado na nota |
+|---|---|
+| sincrono | `cStat` do LOTE = 104 **e** `CstatProcessado` no protocolo (`:1233`) |
+| assincrono | **sempre** que a chave bate, inclusive em rejeicao (`:1667-1679`) |
+
+No assincrono o `[100,120,150]` governa so a montagem do `nfeProc`, nao a gravacao. A
+assimetria e do ACBr e importa: numa nota rejeitada, o `cStat` e o `xMotivo` do `procNFe` sao
+o que explica o motivo ao usuario. Uniformizar os dois perde isso.
+
+### Três eixos que parecem um só
+
+A decisão mais fácil de errar aqui é supor que versão, UF e modelo saem do mesmo lugar. Não
+saem:
+
+| Eixo | De onde vem no envio | Delphi |
+|---|---|---|
+| versão do leiaute | do **documento** (`infNFe.Versao` da primeira nota) | `:1026` |
+| UF da busca do endereço | do **documento** (`Ide.cUF`), com desvio para SVC | `:1066-1073` |
+| `cUF` do cabeçalho SOAP | da **configuração** | `ACBrDFeWebService.pas:349` |
+| modelo | do **documento** (`Ide.mod`) | `:1047` |
+
+E a inutilização muda a regra de novo: ela usa a UF da **configuração** e **não** desvia para
+SVC (`:2672`). A consulta de cadastro usa a UF **consultada**, que é o alvo da pergunta, não o
+emissor.
+
+### `EhAutorizacao` decide o par de serviços
+
+`NfeAutorizacao`/`NfeRetAutorizacao` contra o par antigo `NfeRecepcao`/`NfeRetRecepcao`. A
+regra base é a versão, mas há uma exceção por UF: a **NFC-e 3.10 no Amazonas** permaneceu no
+serviço antigo (`ACBrNFe.pas:313`).
+
+### Dois serviços têm versão PRÓPRIA
+
+`consCad` existe só em **2.00** e `admCscNFCe` em **1.00**, independentemente do leiaute da
+nota. No ACBr isso emerge de dois estágios — a chave do `.ini` e, depois, o schema instalado,
+que vence quando existe (`ACBrDFe.pas:580-590`). Para `consStatServ`, `consSitNFe` e `inutNFe`
+o schema da 4.00 existe e restaura a versão pedida; para esses dois não há resgate.
+
+`VersaoDaMensagem` materializa a exceção. Emitir `versao="4.00"` ali é rejeição certa: a SEFAZ
+valida a mensagem contra o XSD do **serviço**.
+
+### O que ficou de fora desta etapa
+
+- **o laço de tentativas** do `TNFeRetRecepcao.Executar`: `ConsultarRecibo` faz uma chamada,
+  e repetir é política de quem consome — o `context.Context` já dá o cancelamento;
+- **`ValidarDigest`**: o `digVal` vem em `ProtDFe.DigVal` e a conferência fica com o
+  consumidor;
+- **gravação em disco** de todos os seis serviços.
+
 ## Roteiro
 
 | # | Etapa | Estado |
@@ -557,8 +635,8 @@ de eventos, que entra na etapa própria.
 | 4a | `xml_writer.go` — cabeçalho, totais, transporte, cobrança | concluída |
 | 4b | `xml_writer_det.go` — `det` (produto e impostos) | concluída |
 | 5 | regras de negócio, QR-Code e URLs públicas | concluída |
-| 6a | status e consulta + endpoints dos web services | **nesta entrega** |
-| 6b | autorização, inutilização, consulta cadastro, CSC | pendente |
+| 6a | status e consulta + endpoints dos web services | concluída |
+| 6b | autorização, inutilização, consulta cadastro, CSC | **nesta entrega** |
 | 7 | eventos (cancelamento, CC-e, manifestação) + `StrToTpEventoNFe` | pendente |
 | 8 | Distribuição DF-e | pendente |
 | 9 | `ini_reader.go` + `ini_writer.go` | pendente |

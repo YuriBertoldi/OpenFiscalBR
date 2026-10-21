@@ -32,6 +32,7 @@ divergencia, para encaixar em CI.
 
 import collections
 import io
+import os
 import re
 import sys
 
@@ -40,10 +41,32 @@ import sys
 SERVICOS = {
     "ServicoStatus": "NfeStatusServico",
     "ServicoConsultaProtocolo": "NfeConsultaProtocolo",
+    "ServicoAutorizacao": "NfeAutorizacao",
+    "ServicoRetAutorizacao": "NfeRetAutorizacao",
+    "ServicoRecepcaoLote": "NfeRecepcao",
+    "ServicoRetRecepcaoLote": "NfeRetRecepcao",
+    "ServicoInutilizacao": "NfeInutilizacao",
+    "ServicoConsultaCadastro": "NfeConsultaCadastro",
+    "ServicoAdministrarCSC": "AdministrarCSCNFCe",
 }
 
 # Campo Go -> versao de leiaute que ele atende.
 VERSOES = {"V200": 2.00, "V310": 3.10, "V400": 4.00}
+
+# Nome do servico no `.ini` -> prefixo do arquivo de schema, porte de
+# LayOutToSchema (ACBrNFe.Conversao.pas:1193). E este mapa que diz onde
+# procurar o `.xsd` que pode resgatar a versao pedida.
+SCHEMA_DO_SERVICO = {
+    "NfeStatusServico": "consStatServ",
+    "NfeConsultaProtocolo": "consSitNFe",
+    "NfeAutorizacao": "nfe",
+    "NfeRetAutorizacao": "retEnviNFe",
+    "NfeRecepcao": "nfe",
+    "NfeRetRecepcao": "consReciNFe",
+    "NfeInutilizacao": "inutNFe",
+    "NfeConsultaCadastro": "consCad",
+    "AdministrarCSCNFCe": "admCscNFCe",
+}
 
 
 def carregar_ini(caminho):
@@ -199,10 +222,76 @@ def ler_go(caminho):
     return mapas, tabela
 
 
+def versao_da_chave(dados, sessao, servico, versao):
+    """Versao da chave que o LerServicoChaveDeParams acharia, ou None."""
+    kv = dados.get(sessao)
+    if kv is None:
+        return None
+
+    base = (servico + "_").upper()
+    achada = 0.0
+    if any(k.upper() == base + "%.2f" % versao and kv[k] for k in kv):
+        achada = versao
+    if achada == 0.0:
+        for k in kv:
+            K = k.upper()
+            if K.startswith(base):
+                try:
+                    v = float(K[len(base):])
+                except ValueError:
+                    continue
+                if achada < v <= versao:
+                    achada = v
+    return achada or None
+
+
+def versao_resolvida(dados, modelo, uf, amb, servico, versao):
+    """Segue o `Usar=` ate achar a chave, e devolve a versao dela."""
+    sessao = f"{modelo}_{uf}_{amb}"
+    vistas = []
+    while True:
+        v = versao_da_chave(dados, sessao, servico, versao)
+        if v:
+            return v
+        if sessao in vistas:
+            return None
+        vistas.append(sessao)
+        usar = dados.get(sessao, {}).get("Usar", "")
+        if not usar:
+            return None
+        sessao = usar
+
+
+def versoes_de_schema(pasta, prefixo):
+    """Versoes para as quais existe `<prefixo>_vN.NN.xsd` na pasta."""
+    if not pasta or not os.path.isdir(pasta):
+        return None
+    achadas = set()
+    alvo = prefixo.lower() + "_v"
+    for nome in os.listdir(pasta):
+        n = nome.lower()
+        if n.startswith(alvo) and n.endswith(".xsd"):
+            try:
+                achadas.add(float(n[len(alvo):-len(".xsd")]))
+            except ValueError:
+                continue
+    return achadas
+
+
+def ler_versoes_fixas_go(caminho):
+    """Extrai o mapa versaoFixaPorServico do Go."""
+    fonte = re.sub(r"^\s*//.*$", "", io.open(caminho, encoding="utf-8").read(), flags=re.M)
+    bloco = re.search(r"var versaoFixaPorServico = .*?\n\}", fonte, re.S)
+    if not bloco:
+        return {}
+    return dict(re.findall(r'(Servico\w+):\s*"([\d.]+)"', bloco.group(0)))
+
+
 def main():
-    if len(sys.argv) != 3:
+    if len(sys.argv) not in (3, 4):
         sys.exit(__doc__)
 
+    pasta_schemas = sys.argv[3] if len(sys.argv) == 4 else ""
     dados = carregar_ini(sys.argv[1])
     mapas, tabela = ler_go(sys.argv[2])
 
@@ -258,11 +347,25 @@ def main():
                         print(f"             go ={got}")
     print(f"  {conferidos} combinacoes conferidas")
 
-    # 3) A premissa do modelo: o `Usar=` e sempre de SECAO INTEIRA.
-    print("\n== premissa: redirecionamento e de secao inteira ==")
-    quebras = []
-    for modelo in mapas:
-        for uf in mapas[modelo]:
+    # 3) A premissa do modelo: UF que mistura definicao local com delegacao.
+    #
+    # Misturar nao e, por si, um defeito: a entrada da tabela leva o nome do
+    # autorizador, mas carrega os valores de UMA UF -- a primeira do grupo.
+    # Enquanto o grupo tiver so aquela UF, os dois coincidem e a tabela esta
+    # certa (e a verificacao 2, que confere UF a UF, prova isso).
+    #
+    # Vira defeito quando o grupo tem mais de uma UF: as demais herdariam um
+    # endereco que o `.ini` nunca lhes daria. Por isso a severidade depende
+    # do tamanho do grupo -- grupo de um e AVISO, grupo maior e falha.
+    print("\n== UF que mistura definicao local com delegacao ==")
+    grupos = collections.defaultdict(set)
+    for modelo, mapa in mapas.items():
+        for uf, aut in mapa.items():
+            grupos[(modelo, aut)].add(uf)
+
+    avisos, quebras = [], []
+    for modelo, mapa in mapas.items():
+        for uf, aut in mapa.items():
             for amb in ("P", "H"):
                 secoes = set()
                 for nome in SERVICOS.values():
@@ -270,16 +373,28 @@ def main():
                         s, _ = secao_que_define(dados, modelo, uf, amb, nome, versao)
                         if s:
                             secoes.add(s)
-                if len(secoes) > 1:
-                    quebras.append(f"{modelo}/{uf}/{amb}: {sorted(secoes)}")
+                if len(secoes) <= 1:
+                    continue
+                companhia = sorted(grupos[(modelo, aut)] - {uf})
+                texto = f"{modelo}/{uf}/{amb} ({aut}): {sorted(secoes)}"
+                if companhia:
+                    quebras.append(f"{texto}; divide o autorizador com {companhia}")
+                else:
+                    avisos.append(texto)
+
+    for a in avisos:
+        print(f"  AVISO    {a}")
+    if avisos:
+        print("  sozinha no autorizador: a entrada da tabela e so dela, segue"
+              " correta. Se outra UF entrar nesse autorizador, vira falha.")
     if quebras:
         falhas += 1
-        print("  QUEBROU: ha UF que define um servico localmente e delega outro")
+        print("  QUEBROU: UF que mistura E divide o autorizador com outra")
         for q in quebras[:5]:
             print(f"    {q}")
-        print("  o modelo por autorizador NAO serve mais; a tabela precisa"
-              " voltar a ser por UF")
-    else:
+        print("  as demais UFs do grupo herdariam endereco que o .ini nao"
+              " lhes da; a tabela precisa de entrada propria para esta UF")
+    elif not avisos:
         print("  OK: nenhuma UF mistura definicao local com delegacao")
 
     # 4) Os overrides de SoapAction declarados no `.ini` estao no Go?
@@ -303,6 +418,48 @@ def main():
               if not falhas else f"  {achados} override(s) no .ini")
     else:
         print("  nenhum override no .ini para os servicos conferidos")
+
+    # 5) A versao da MENSAGEM: o `.ini` caiu de versao e o schema nao resgatou?
+    print("\n== versao da mensagem (chave do .ini + schema) ==")
+    fixas_go = ler_versoes_fixas_go(sys.argv[2])
+    if not pasta_schemas:
+        print("  pasta de schemas nao informada; so os casos de queda do .ini")
+
+    proprias = {}
+    for modelo, mapa in mapas.items():
+        for uf in mapa:
+            for const, nome in SERVICOS.items():
+                for versao in sorted(VERSOES.values()):
+                    achada = versao_resolvida(dados, modelo, uf, "P", nome, versao)
+                    if achada is None or abs(achada - versao) < 1e-9:
+                        continue
+                    schemas = versoes_de_schema(pasta_schemas,
+                                                SCHEMA_DO_SERVICO.get(nome, ""))
+                    if schemas is None:
+                        proprias.setdefault((const, achada), set()).add("?")
+                        continue
+                    # O AchaArquivoSchema pega o maior schema <= pedida.
+                    candidatos = [v for v in schemas if v <= versao]
+                    if candidatos and abs(max(candidatos) - versao) < 1e-9:
+                        continue  # o schema resgatou a versao pedida
+                    efetiva = max(candidatos) if candidatos else achada
+                    proprias.setdefault((const, efetiva), set()).add(f"{modelo}/{uf}")
+
+    if not proprias:
+        print("  OK: toda mensagem sai na versao do leiaute configurado")
+    for (const, efetiva), ufs in sorted(proprias.items(), key=lambda x: x[0]):
+        rotulo = "%.2f" % efetiva
+        declarada = fixas_go.get(const)
+        exemplo = sorted(ufs)[0]
+        if declarada == rotulo:
+            print(f"  OK       {const} sai em {rotulo} e o Go declara isso")
+        elif "?" in ufs:
+            print(f"  AVISO    {const}: o .ini cai para {rotulo}; informe a pasta"
+                  f" de schemas para decidir (ex.: {exemplo})")
+        else:
+            falhas += 1
+            print(f"  FALTA    {const} sai em {rotulo}, mas versaoFixaPorServico"
+                  f" diz {declarada or 'nada'} (ex.: {exemplo})")
 
     print()
     if falhas:
