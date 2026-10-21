@@ -141,3 +141,90 @@ teste em `packages/nfag/`:
   `IdentificaSchema` procura `<infNFGas` (typo inofensivo, default já é schNFAg).
 - Recepção síncrona: sucesso exige **cStat do retorno = 104** (não 100 como na NFGas) —
   não é bug, é o contrato do `TNFAgRecepcao.TratarResposta`, replicado e testado.
+
+## Decisões de origem do ACBrNFe (2026-10-20)
+
+Não são divergências — são leituras de qual código do ACBr está vivo. Ficam aqui porque
+a leitura ingênua leva ao arquivo errado, e o erro é silencioso.
+
+### A unit de conversão da NFe é `PCNNFe/pcnConversaoNFe.pas`
+
+O ACBrNFe declara os **mesmos 51 enums em duas units**, e elas divergem:
+`Base/ACBrNFe.Conversao.pas` e `PCNNFe/pcnConversaoNFe.pas`. **Vale a segunda**, por três
+evidências independentes:
+
+1. Todas as units vivas (`Base/ACBrNFe.XmlWriter.pas`, `.XmlReader.pas`, `.IniWriter.pas`,
+   `.IniReader.pas`, `ACBrNFe.Classes.pas`) listam `pcnConversaoNFe`, e o Delphi resolve
+   identificador duplicado pela **última** unit listada. Em `ACBrNFe.Classes.pas` — a única
+   que ainda lista as duas — `pcnConversaoNFe` vem depois.
+2. Os próprios autores do ACBr **comentaram** `ACBrNFe.Conversao` em
+   `ACBrNFe.ValidarRegrasdeNegocio.pas:45` e em `Base/Servicos/ACBrNFe.EventoClass.pas:48`,
+   logo abaixo do `pcnConversaoNFe` ativo.
+3. `Base/ACBrNFe.XmlWriter.pas:546` usa `fnDebito`, que só existe em
+   `pcnConversaoNFe.pas:303` — o gerador não compilaria contra a unit `Base/`.
+
+O que se perderia ao portar a unit `Base/`:
+
+| Perda | Onde |
+|---|---|
+| `fnCredito` (`"5"`) e `fnDebito` (`"6"`) em `finNFe` | `pcnConversaoNFe.pas:303` |
+| `fpPagInstantaneoPIXAutomatico` (`"23"`) e `fpTEFBookTransfer` (`"24"`) | `pcnConversaoNFe.pas:156` |
+
+Travado por `TestFormaPagamento_MembrosExclusivosDaUnitPCN` e
+`TestFinalidadeNFe_CreditoEDebitoExistem` em `packages/nfe`.
+
+> O mesmo par de units duplicadas existe no **CTe** e no **MDFe**. Confira o `uses` das
+> units `Base/` antes de portar os enums de cada um — não presuma que a resposta é igual.
+
+### `EnumeradoToStr` fica com a ÚLTIMA ocorrência
+
+`ACBrDFe.Conversao.pas:843` não interrompe o laço. Em tabela que repete um membro, vence
+a última posição. É o que faz `crtRegimeNormal` gravar `"3"` e não `""`, apesar de
+aparecer na posição 0 da tabela do `CRTToStr` (`pcnConversaoNFe.pas:776`).
+
+O par `StrToEnumerado` (`:826`) faz o oposto — para na **primeira** — e, quando nada casa,
+devolve `AEnumerados[0]`, **não** `-1`. Por isso todo `ParseXxx` de `packages/nfe` devolve
+o fallback do ACBr junto do `error`: o leitor que ignora o erro obtém o mesmo valor do
+Delphi.
+
+### `indPag` da NFe: o par vivo é `StrToIndpagEX`, não `StrToIndpag`
+
+`IndpagToStr`/`StrToIndpag` estão marcados **`deprecated`** na própria unit
+(`pcnConversaoNFe.pas:63-64`). Todo o código vivo usa o par `EX` (`:554-572`) —
+`XmlReader.pas:238` e `:1497`, `IniReader.pas:204` e `:1510`, `IniWriter.pas:225` e
+`:1348`, `JSONReader.pas:260`/`:1535`, `JSONWriter.pas:245`/`:2185`.
+
+Não é detalhe de estilo: o par `EX` usa laço próprio com `=` (**caixa respeitada**) e
+**levanta `EACBrException`** quando nada casa, em vez do fallback silencioso de
+`StrToEnumerado`. Portar o par deprecado planta a armadilha de o leitor gravar `indPag`
+zerado numa nota em que o ACBr teria abortado.
+
+> Vale a varredura equivalente no CTe e no MDFe: procure `deprecated` na unit de conversão
+> antes de portar qualquer `StrToXxx`.
+
+### Divergências deliberadas de `packages/nfe` (2026-10-20)
+
+Política do `CLAUDE.md`: não replicar comportamento indefinido, e biblioteca não entra em
+pânico. Ambas com teste e `errors.Is`.
+
+| # | Onde | O ACBr faz | O porte faz |
+|---|---|---|---|
+| 1 | `ParseCSTIS` | `TryStrToCSTIS` (`pcnConversaoNFe.pas:1789-1803`) **não atribui `Value`** quando não encontra — o chamador fica com variável não inicializada; `StrToCSTIS` levanta exceção | devolve `CstisNenhum` + `error` |
+| 2 | `ParseTpGuia`, `ParseTpNFDebito`, `ParseTpNFCredito`, `ParseIndicadorPagamento` | `raise EACBrException` | devolve o membro "Nenhum"/zero + `error` |
+
+### `TCSTIS` é string no ACBr vivo — não tipe campo com o enum
+
+O enum existe na unit, mas o ACBr **desistiu dele** até a publicação da tabela oficial:
+`ACBrDFe.RTC.Classes.pas:784-785` e `:796-797` têm a versão `TCSTIS` comentada e a
+`string` ativa; idem `ACBrNFe.JSONReader.pas:1816` e `JSONWriter.pas:2587`.
+`packages/rtc` já segue (`ISel.CSTIS` é `string`) e lê `"001"`, valor fora da tabela do
+enum. `packages/nfe` porta o enum só para o inventário ficar completo, com o aviso no
+doc-comment.
+
+### Nome de schema da NFe vem da RTTI, não do array
+
+`SchemaNFeToStr` (`pcnConversaoNFe.pas:1237`) usa `GetEnumName` + `Copy` e é a única
+chamada por `ACBrNFe.pas`. O `TSchemaNFeArrayStrings` **não é referenciado por nenhuma
+unit da NFe** e discorda em dois membros: diz `InsucessoEntrega`/`CancInsucessoEntrega`
+onde a RTTI diz `InsucessoEntregaNFe`/`CancInsucessoEntregaNFe`. O nome decide qual XSD o
+componente procura em disco. Mesmo caso em `TLayOutArrayStrings`, também morto.
