@@ -107,3 +107,53 @@ que ninguém chamava.
 
 O caminho do ACBr está fixo no topo do script (`ACBR`). Ajuste se os fontes
 Delphi estiverem em outro lugar na sua máquina.
+
+## `conferir-leitor-dfe.py`
+
+Confere um leitor de DFe portado contra o `XmlReader` Delphi de origem, tag a
+tag, nos dois eixos que o build, o `go vet` e o teste de leitura **não**
+alcançam:
+
+1. a **precisão** de cada campo (`tcDe2` × `ConteudoDe2`, `tcDe10` ×
+   `ConteudoDe10`, ...);
+2. a escolha entre **`Find`** (nome qualificado) e **`FindAnyNs`** (local name).
+
+```bash
+py ferramentas/conferir-leitor-dfe.py <arquivo.pas> <arquivo.go>
+
+py ferramentas/conferir-leitor-dfe.py \
+   "$ACBR_FONTES/ACBrDFe/ACBrNFe/Base/ACBrNFe.XmlReader.pas" \
+   packages/nfe/xml_reader.go
+```
+
+Sai com código 1 se houver divergência, para encaixar em CI.
+
+### Por que um script, e não um teste Go
+
+Porque **nenhum teste de leitura consegue distinguir `ConteudoDe2` de
+`ConteudoDe10`**. O parâmetro de casas do `pcn.ConteudoDec` só tem efeito
+quando o node está marcado com `FloatIsIntString`, flag que o parser nunca
+liga — no XML da SEFAZ o valor já vem com ponto decimal. Os dois devolvem o
+mesmo resultado.
+
+A precisão é um **contrato declarativo**, herdado do mesmo mecanismo do ACBr,
+e só se verifica comparando com o `.pas`. Um teste que afirme travá-la dá
+falsa confiança, que é pior do que não ter teste.
+
+### Limites — leia antes de confiar no resultado
+
+1. **Casa por NOME DE TAG, não por caminho.** A mesma tag em grupos diferentes
+   vira uma entrada só: se o `.pas` lê `vItem` como `tcDe10` em `prod` e
+   `tcDe8` em `gProcRef`, o script aceita qualquer um dos dois no Go. Tag com
+   precisão divergente entre grupos precisa de conferência manual — o relatório
+   mostra o conjunto de tipos encontrados de cada lado justamente para isso.
+2. **Só enxerga `ObterConteudo(...Find('tag'), tc...)` literal.** Campo lido por
+   variável, por helper próprio ou com o nó guardado antes some da conta. Na
+   NFe isso acontece com `tpViaTransp` e `tpIntermedio`, que o ACBr lê com
+   `tcInt` e converte depois — eles aparecem na lista de "sem contraparte", que
+   **precisa ser lida item a item**, não ignorada.
+3. **Não confere ordem, condicional nem guard.** Condicional por versão de
+   leiaute, `if` em volta da leitura e default aplicado na ausência do nó
+   continuam sendo conferência manual contra o `.pas`.
+4. **Linha comentada no Delphi é descartada** (`//`), para não contar campo
+   desativado — `RENAVAM` do `veicProd` é o caso na NFe.

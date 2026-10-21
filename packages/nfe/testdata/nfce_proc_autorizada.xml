@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Fixture do porte do ACBrNFe: NFC-e (modelo 65) dentro do envelope
+     nfeProc, com protocolo de autorizacao. Dados ficticios.
+     Exercita: leitura do protNFe, infNFeSupl com QR-Code em CDATA DUPLO
+     (o ACBr so remove a primeira ocorrencia de cada marcador) e o grupo
+     ICMSSN do Simples Nacional. -->
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+  <NFe>
+    <infNFe Id="NFe35260199999999000191650010000004561123456792" versao="4.00">
+      <ide>
+        <cUF>35</cUF>
+        <cNF>12345679</cNF>
+        <natOp>VENDA AO CONSUMIDOR</natOp>
+        <mod>65</mod>
+        <serie>1</serie>
+        <nNF>456</nNF>
+        <dhEmi>2026-01-20T18:45:00-03:00</dhEmi>
+        <tpNF>1</tpNF>
+        <idDest>1</idDest>
+        <cMunFG>3550308</cMunFG>
+        <tpImp>4</tpImp>
+        <tpEmis>1</tpEmis>
+        <cDV>2</cDV>
+        <tpAmb>2</tpAmb>
+        <finNFe>1</finNFe>
+        <indFinal>1</indFinal>
+        <indPres>1</indPres>
+        <procEmi>0</procEmi>
+        <verProc>OpenFiscalBR 1.0</verProc>
+      </ide>
+      <emit>
+        <CNPJ>99999999000191</CNPJ>
+        <xNome>LOJA DE TESTE ME</xNome>
+        <enderEmit>
+          <xLgr>RUA DO VAREJO</xLgr>
+          <nro>50</nro>
+          <xBairro>CENTRO</xBairro>
+          <cMun>3550308</cMun>
+          <xMun>SAO PAULO</xMun>
+          <UF>SP</UF>
+          <CEP>01001000</CEP>
+        </enderEmit>
+        <IE>444444444444</IE>
+        <CRT>1</CRT>
+      </emit>
+      <det nItem="1">
+        <prod>
+          <cProd>SKU01</cProd>
+          <cEAN>7891234567895</cEAN>
+          <xProd>CAFE 500G</xProd>
+          <NCM>09012100</NCM>
+          <CFOP>5102</CFOP>
+          <uCom>UN</uCom>
+          <qCom>2.0000</qCom>
+          <vUnCom>18.9900000000</vUnCom>
+          <vProd>37.98</vProd>
+          <cEANTrib>7891234567895</cEANTrib>
+          <uTrib>UN</uTrib>
+          <qTrib>2.0000</qTrib>
+          <vUnTrib>18.9900000000</vUnTrib>
+          <indTot>1</indTot>
+        </prod>
+        <imposto>
+          <ICMS>
+            <ICMSSN102>
+              <orig>0</orig>
+              <CSOSN>102</CSOSN>
+            </ICMSSN102>
+          </ICMS>
+        </imposto>
+      </det>
+      <total>
+        <ICMSTot>
+          <vBC>0.00</vBC>
+          <vICMS>0.00</vICMS>
+          <vProd>37.98</vProd>
+          <vNF>37.98</vNF>
+        </ICMSTot>
+      </total>
+      <transp>
+        <modFrete>9</modFrete>
+      </transp>
+      <pag>
+        <detPag>
+          <tPag>17</tPag>
+          <vPag>37.98</vPag>
+        </detPag>
+        <vTroco>0.00</vTroco>
+      </pag>
+    </infNFe>
+    <infNFeSupl>
+      <!-- CDATA DUPLO de proposito: o StringReplace do ACBr nao usa
+           rfReplaceAll, entao so o PRIMEIRO marcador de cada tipo sai. -->
+      <qrCode>&lt;![CDATA[&lt;![CDATA[https://nfce.exemplo.invalid/qrcode?p=35260199999999000191650010000004561123456792|2|2|1|abc]]&gt;]]&gt;</qrCode>
+      <urlChave>https://nfce.exemplo.invalid/consulta</urlChave>
+    </infNFeSupl>
+  </NFe>
+  <protNFe versao="4.00">
+    <infProt>
+      <tpAmb>2</tpAmb>
+      <verAplic>SP_NFCE_PL_009</verAplic>
+      <chNFe>35260199999999000191650010000004561123456792</chNFe>
+      <dhRecbto>2026-01-20T18:45:10-03:00</dhRecbto>
+      <nProt>135260000000001</nProt>
+      <digVal>abcdefghijklmnopqrstuvwxyz01</digVal>
+      <cStat>100</cStat>
+      <xMotivo>Autorizado o uso da NF-e</xMotivo>
+    </infProt>
+  </protNFe>
+</nfeProc>

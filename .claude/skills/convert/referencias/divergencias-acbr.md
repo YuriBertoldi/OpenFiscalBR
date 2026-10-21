@@ -212,6 +212,46 @@ pânico. Ambas com teste e `errors.Is`.
 | 1 | `ParseCSTIS` | `TryStrToCSTIS` (`pcnConversaoNFe.pas:1789-1803`) **não atribui `Value`** quando não encontra — o chamador fica com variável não inicializada; `StrToCSTIS` levanta exceção | devolve `CstisNenhum` + `error` |
 | 2 | `ParseTpGuia`, `ParseTpNFDebito`, `ParseTpNFCredito`, `ParseIndicadorPagamento` | `raise EACBrException` | devolve o membro "Nenhum"/zero + `error` |
 
+### Divergências do LEITOR de XML da NFe (2026-10-21)
+
+Porte de `Base/ACBrNFe.XmlReader.pas`. Todas com comentário `DIVERGENCIA` no
+código e teste em `packages/nfe/xml_reader_test.go`.
+
+| # | Onde | O ACBr faz | O porte faz | Fonte |
+|---|---|---|---|---|
+| 1 | `lerCobr`, pagamento na versão 3.xx | reaproveita a variável `AuxNode`: ela recebe `<cobr>` e **só** é reapontada para `<pag>` quando `Versao >= 4`. Na 3.xx o laço procura `<pag>` **dentro de `<cobr>`** — onde ele não existe — e **nenhum pagamento é lido**. Na 2.00 `tagPag` fica não inicializada | resolve o nó de pagamento separadamente do de cobrança; a 3.xx lê os `<pag>` do infNFe | `:1442-1519` |
+| 2 | `lerCana`, `forDia/@dia` | `StrToInt(Attributes.Items['dia'].Content)` sem `Def` e sem checar nil → **access violation** com o atributo ausente | vale 0 | `:1614` |
+| 3 | `lerInfAdic`, `obsCont`/`obsFisco` `@xCampo` | `if Attributes.Count > 0 then Items['xCampo'].Content` → AV quando há atributo que **não** é `xCampo` | vale vazio | `:1537`, `:1547` |
+| 4 | `lerIdeNFref`, `refNFP/mod` | lê com `tcInt` e atribui a property **string** (`Classes.pas:116`): o zero à esquerda de `"01"`/`"04"` se perde | lê como texto, como o XSD declara | `:334` |
+| 5 | `lerDocumento`, envelope sem `<NFe>` | `if NFeNode <> nil` sem `else`, e devolve `True`: o chamador fica com uma `TNFe` vazia sem saber | devolve `ErrNFeNaoEncontrada` | `:135-161` |
+| 6 | `xNome` de dest/retirada/entrega/transporta | aplica `DecodeHTMLEntities` sobre o texto já lido | não aplica: o `encoding/xml` do Go já resolve as referências de entidade ao produzir o `CharData`, e uma segunda passada reduziria `&amp;amp;` a `&` | `:452`, `:498`, `:519`, `:1373` |
+
+Replicado mesmo parecendo errado (**não** "corrigir**"**):
+
+- **`cNF == 0` vira `-2`** (`:235`) — sentinela para o gerador sortear um código novo.
+- **`dest` ausente marca `indIEDest = inNaoContribuinte`** (`:441-445`) — é o único
+  guard do leitor que grava valor quando o grupo não existe.
+- **Default de país só em `enderEmit`/`enderDest`** (`:383-389`, `:482-488`);
+  retirada e entrega ficam com `cPais` 0 e `xPais` vazio.
+- **`nItem` vem do contador, não do atributo `@nItem`** (`:543`) — nota com
+  `@nItem` fora de ordem é renumerada.
+- **ICMS (21 grupos), PIS (4) e COFINS (4) são lidos em SEQUÊNCIA**, e vale o
+  **último** encontrado — semântica oposta à de um `PrimeiroDe`.
+- **`motRedAdRem` só é lido com `pRedAdRem != 0`** (`:964`); sem o guard todo item
+  monofásico declararia "transporte coletivo", que é o ordinal zero do enum.
+- **`IPI.CST` ganha default por `tpNF`** antes de ler os subgrupos (`:1062-1066`),
+  e só dentro do bloco `<IPI>`.
+- **`qrCode`: CDATA removido só na primeira ocorrência** (`StringReplace` sem
+  `rfReplaceAll`, `:1645-1646`).
+- **Declarados e nunca lidos do XML:** `ISSQN.indISSRet` e `COFINS.vBCProd`.
+
+> A precisão `tcDeN` e a escolha `Find`/`FindAnyNs` foram conferidas tag a tag por
+> `ferramentas/conferir-leitor-dfe.py` — 356 e 487 tags, zero divergências. Esse
+> script existe porque **nenhum teste de leitura consegue** distinguir `ConteudoDe2`
+> de `ConteudoDe10`: o parâmetro de casas do `pcn.ConteudoDec` só tem efeito com
+> `FloatIsIntString`, que o parser nunca liga. A precisão é contrato declarativo,
+> e só se verifica contra o `.pas`.
+
 ### `TCSTIS` é string no ACBr vivo — não tipe campo com o enum
 
 O enum existe na unit, mas o ACBr **desistiu dele** até a publicação da tabela oficial:
