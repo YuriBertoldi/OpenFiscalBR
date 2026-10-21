@@ -638,3 +638,155 @@ Achados do `revisor-go` nesta etapa, e o que saiu deles:
 > `NfeConsultaCadastro`. A chave **nunca é encontrada** e nenhum override de SoapAction se
 > aplica à consulta de cadastro — nem na Bahia. O porte replica isso porque o ACBr também não a
 > acha; a tabela `soapActionPorAutorizador` não tem a entrada.
+
+### Divergências dos EVENTOS da NFe (2026-10-21)
+
+Porte de `TEventoNFe` (`ACBrNFe.EnvEvento.pas`, 3089 linhas), `TRetEventoNFe`
+(`ACBrNFe.RetEnvEvento.pas`) e `TNFeEnvEvento` (`ACBrNFeWebServices.pas:3030`), mais o catálogo
+`TACBrTipoEvento` (`ACBrDFe.Conversao.pas:93`), que foi para o `pcn` por ser compartilhado com
+CTe e MDFe.
+
+São **31 tipos de evento** no dispatch do gerador e **50 códigos** na tabela de leitura — a
+tabela de leitura é mais larga porque a NF-e precisa nomear registro de passagem, averbação de
+exportação e eventos de MDFe e CTe que chegam amarrados à chave da nota.
+
+| # | Onde | O ACBr faz | O porte faz |
+|---|---|---|---|
+| 1 | `chNFePend` (`RetEnvEvento.pas:620`) | procura uma tag `chNFePend` **dentro** do próprio elemento `chNFePend`, que no XSD é um `TChNFe` — tipo simples, com a chave como texto. **Nunca acha nada**; e grava em `Items[Idx]` com o índice do laço de `chNFePend`, que não é o do `retEvento` | lê o conteúdo do próprio nó e anexa ao item correto. Replicar um defeito que só produz vazio seria pior que corrigi-lo — a lista de EPEC pendentes é a única informação útil desse retorno |
+| 2 | `numItem` do `itemPedido` | **grava** como atributo (`:1100`) e **lê** como tag (`:679`) — o round-trip dele perde o campo | lê o atributo, com retrocesso para a tag |
+| 3 | `LerXml` (`:728-748`) | compara o nome da raiz contra quatro literais e sai calado quando nenhum casa | caminho genérico (procura `<evento>` e `<retEvento>` em paralelo, que são mutuamente inofensivos), com ramo próprio só para o `NFeDFe`, onde o `procEventoNFe` aparece **duas vezes aninhado** |
+| 4 | `xCondUso` da CC-e | o setter `setxCondUso` **sobrescreve sempre** o texto legal | só preenche quando vazio — senão não haveria como corrigir o texto se a legislação mudar antes do porte |
+| 5 | tipo de evento sem gerador | o `case` fica sem ramo e o `infEvento` sai **sem `detEvento`**; a SEFAZ rejeita sem dizer o porquê | devolve `ErrEventoNaoSuportado` |
+| 6 | laço de tentativas, gravação em disco, `DefinirDadosIntegrador`, validação contra XSD | faz | fora do escopo |
+| 7 | `ManifestarDestinatario` | o CNPJ do manifestante sai do componente | é **parâmetro obrigatório**: quem manifesta é o destinatário, e a chave carrega o documento do *emitente* |
+
+Replicado mesmo parecendo errado (**não** "corrigir"):
+
+- **O `gControleEstoque` tem SETE formas, todas com o mesmo nome de elemento.** No Delphi a
+  distinção é por **sobrecarga** — sete `Gerar_gControleEstoque` que diferem apenas no tipo do
+  parâmetro (`:2378`, `:2390`, `:2406`, `:2646`, `:2724`, `:2735`, `:3076`):
+
+  | contexto | tags |
+  |---|---|
+  | consumo pessoal | `qConsumo` / `uConsumo` |
+  | importação em ALC/ZFM | `qtde` / `unidade` |
+  | perecimento (adquirente) | `qPerecimento` / `uPerecimento` |
+  | perecimento (fornecedor) | `qPerecimento` / `uPerecimento` / **`vIBS`** / **`vCBS`** |
+  | imobilização | `qImobilizado` / `uImobilizado` |
+  | combustível | `qComb` / `uComb` |
+  | item não fornecido | `qNaoFornecida` / `uNaoFornecida` |
+
+  Um gerador genérico emitiria `qConsumo` nos sete casos e **nenhum round-trip pegaria** — o
+  elemento pai tem o mesmo nome nos dois lados da troca.
+
+- **Três elementos saem com nome repetido em contextos diferentes**: `<gConsumo>` vem do
+  consumo pessoal *e* da ALC/ZFM; `<gPerecimento>` vem do transporte do adquirente *e* do
+  fornecedor; `<gControleEstoque>` dos sete acima. O que decide a coleção, na leitura, é o
+  `tpEvento` — e é por isso que o `Ler_DetEvento` tem um `case` (`:508`) ao lado da leitura
+  achatada dos campos comuns.
+- **`gCredPres` é o nome da CLASSE; a tag é `<gCredPresOper>`** (`:2543`).
+- **`gCredito` é o único grupo da Reforma sem `gControleEstoque`**, e os valores têm nome
+  próprio: `vCredIBS` e `vCredCBS`, não `vIBS`/`vCBS` (`:2670`).
+- **O `tpAutor` é fixo `"1"` em seis eventos e vem do campo nos demais.** O ACBr comenta o
+  porquê em cada um: "Conforme o Schema o único valor aceito é 1". Uniformizar os dois grupos
+  — em qualquer direção — produz rejeição numa metade. O `indQuitacao` do 112110 é igual
+  (`:2503`), e nem campo tem.
+- **As quatro manifestações do destinatário diferem por UM parâmetro.** Confirmação e ciência
+  só têm `descEvento`; desconhecimento tem `xJust` **opcional**; operação não realizada tem
+  `xJust` **obrigatório** (`:696-739`).
+- **O `cOrgao` zero cai para o `cUF` da chave** (`getcOrgao`, `EventoClass.pas:705`). É o que
+  faz o evento ir para a SEFAZ da nota sem o consumidor informar nada — e é o que torna a
+  manifestação do destinatário um caso especial, porque ela precisa do **91** explícito.
+- **O autor do evento tem três condicionais empilhadas** (`:982-1013`): CNPJ vazio cai para o
+  documento da chave; um documento de catorze dígitos numa nota de **série 910..969** é um CPF
+  com três zeros à frente e tem os três descartados; e essa segunda regra **não** vale para a
+  manifestação, porque ali o autor é o destinatário e não o emitente da chave.
+- **O `Id` do evento tem 54 posições** e o `nSeqEvento` vai com **duas** (`%.2d`, `:286`).
+- **A lista de eventos que levam ACENTO** (`:947`) não é derivável: o cancelamento genérico é
+  da Reforma e está **fora**; o ator interessado não é e está **dentro** — e a descrição dele
+  é ASCII puro. A implicação só vale numa direção: toda descrição acentuada precisa estar na
+  lista.
+
+**O roteamento é a condicional mais rica de todo o porte da NF-e.** Eventos do mesmo documento
+vão para SEFAZ **diferentes**, e a ordem das atribuições em `DefinirURL` (`:3076-3160`) é o que
+decide:
+
+| evento | destino |
+|---|---|
+| CC-e, cancelamento, cancelamento por substituição, prorrogação (4) | SEFAZ da UF da **chave** (ou SVC em contingência) |
+| todo o resto, inclusive a manifestação do destinatário | Ambiente Nacional (`AN`) |
+| insucesso na entrega e seu cancelamento | `SVRS`, **sempre** |
+| conciliação financeira | `SVRS` na NF-e; UF da chave na NFC-e — **olha o modelo da CONFIGURAÇÃO**, não o da chave |
+| os 15 da Reforma Tributária | `SVRS`, **sempre** |
+| EPEC de NFC-e **em SP** | serviço **próprio** (`EventoEPEC`); fora de SP não existe |
+
+Os três últimos grupos são desvios **posteriores** ao desvio para o AN, e por isso vencem.
+Inverter a ordem deixaria o insucesso na entrega no Ambiente Nacional. E a contingência SVC é
+escolhida **antes** de tudo, então ela alcança o cancelamento mas **não** a manifestação.
+
+> **A versão do evento é 1.00, sempre.** A SEFAZ publica um único `envEvento_v1.00.xsd`, e o
+> `FPVersaoServico` do ACBr sai dele (`:3619`) — inclusive para os eventos da Reforma. Emitir
+> "4.00" porque o componente está na 4.00 é rejeição de schema, e é o erro natural: todos os
+> outros serviços acompanham a configuração. Entrou em `versaoFixaPorServico` junto com o
+> `EventoEPEC`, e o `conferir-endpoints-dfe.py` achou os dois sozinho.
+
+Achados do `revisor-go` nesta etapa, e o que saiu deles:
+
+- **bloqueante — o `descEvento` dos eventos acentuados saía SEM acento.** A lista
+  `EventoLevaAcentos` foi portada e testada, mas **nenhum gerador a consultava**: todo
+  `descEvento` passava por `pcn.NodeStr`, que aplica `FiltrarTextoXML` → `TiraAcentos`. O
+  evento 112120 saía com `Importacao em ALC/ZFM nao convertida em isencao` quando o ACBr emite
+  o texto acentuado. Corrigido com `pcn.NodeStrComAcentos` e `nodeDescEvento`, e travado por
+  teste que olha o **XML gerado** — afirmar sobre a lista ou sobre o mapa não bastava, e foi
+  por isso que a lacuna passou.
+
+  Junto veio uma **divergência nova**: no ACBr a flag `RetirarAcentos` é **global e não é
+  restaurada** depois de ligada, então o primeiro evento acentuado de um lote contamina todos
+  os seguintes. Isso depende da ordem de iteração, e o `CLAUDE.md` manda não replicar — aqui a
+  decisão é por evento, com teste.
+- **importante — `vNF`/`vICMS` do EPEC de NFC-e nunca eram lidos.** Na NFC-e os dois ficam
+  **fora** do grupo `dest`, e o `dest` pode nem existir; o `Ler_DetEvento` do ACBr só os lê
+  dentro do `Ler_Dest` (`:195`) e perde os dois no round-trip. O porte passou a lê-los também
+  no nível do `detEvento`, com o `dest` **vencendo** quando existe. É **acréscimo** ao ACBr.
+- **importante — EPEC e `detPag` sem nenhum teste.** São as duas estruturas mais ramificadas
+  do gerador, e o `conferir-eventos-dfe.py` não as alcança (ele compara conjunto e ordem de
+  tags, e não distingue ramos de condicional). Entraram nove testes: os dois ramos do EPEC por
+  modelo, a condição composta do `dest` opcional da NFC-e, as duas portas do `idEstrangeiro`,
+  e as quatro combinações dos dois blocos independentes do `detPag`.
+- **importante — troca de `Find` por `FindAnyNs` em onze tags**, sem registro nem teste. O
+  ACBr usa `FindAll` (com prefixo) para `retEvento`, `itemPedido`, `detPag` e os oito grupos da
+  Reforma, e `FindAnyNs` nas demais — inconsistência dele, já que nada no leiaute justifica
+  tratar `detPag` diferente de `autXML`. A troca é uniformemente mais permissiva; agora está
+  registrada no doc-comment e travada por teste com documento prefixado.
+- **menor — o comentário dizia "seis eventos" fixam `tpAutor`; são quatro** (`:490`, `:541`,
+  `:586`, `:633`). O código estava certo; só a especificação do comentário estava errada, e é
+  ela que o próximo porte vai usar.
+- **menor — o EPEC decidia o modelo pelo complemento da condição.** O ACBr escreve
+  `if sModelo = '55'`; o porte escrevia `== "65"`. Equivalente para 55 e 65, divergente para
+  chave curta ou modelo desconhecido — onde o ACBr cai no ramo da NFC-e. Invertido para
+  replicar o literal, com teste.
+- **menor — `autXML` é `maxOccurs=1` no schema do 110150.** O ACBr gera todos e apenas alerta
+  (`:322`); a SEFAZ rejeita. O porte emite só o **primeiro**.
+- **menor — `idLote` lido como `int`** onde o Delphi usa `tcInt64` e o campo tem quinze
+  dígitos. Corrigido com `pcn.ConteudoInt64`, e criado `pcn.NodeInt64` para o lado da escrita.
+- **menor — `DetEvento.Versao` recebia o `verEvento`**, que é outro campo do leiaute. Separados:
+  `InfEvento.VersaoEvento` é a tag, `DetEvento.Versao` é o atributo do `detEvento`.
+- **menor — `ParseTipoEventoNFe("-99999")` devolve erro**, enquanto o ACBr o considera válido.
+  Deliberado: aceitar o sentinela criaria um caminho em que evento sem tipo passa como se
+  tivesse um. Registrado no doc-comment e no teste.
+
+Mais três divergências que faltavam no registro:
+
+- **`descricaoDoEvento` dá precedência ao `DetEvento.DescEvento` informado.** No ACBr o
+  `DescEvento` é getter **somente leitura** (`EventoClass.pas:620`) e o campo do consumidor é
+  ignorado. Aqui ele vence — é o que permite emitir um evento novo antes de o porte conhecê-lo.
+- **Lote acima de 20 eventos vira erro.** O ACBr só emite `wAlerta` e **gera assim mesmo**
+  (`:2522`).
+- **O `nSeqEvento` do helper `Cancelamento` sai 1, não 0.** O `TACBrNFe.Cancelamento`
+  (`ACBrNFe.pas:812`) deixa o campo em zero, e o `Id` termina em `"00"` — que a SEFAZ não
+  aceita, porque a sequência começa em 1. É **correção de defeito determinístico** do ACBr.
+
+> **Ferramenta nova:** `ferramentas/conferir-eventos-dfe.py` confere, por evento, o conjunto e
+> a **ordem** das tags do `detEvento`, os literais fixos e as sete formas do `gControleEstoque`
+> — seguindo os helpers dos dois lados. Na entrega: 31 eventos, 5 literais e 7 formas,
+> idênticos ao Delphi.

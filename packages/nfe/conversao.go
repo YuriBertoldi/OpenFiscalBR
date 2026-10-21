@@ -1399,3 +1399,35 @@ func ParseCSTIS(s string) (CSTIS, error) {
 	i, err := indiceDeExato(cstISCodigos[:], s, "CSTIS")
 	return CSTIS(i), err
 }
+
+// ===========================================================================
+// IndAceitacao (TIndAceitacao) -- tag indAceitacao dos eventos da Reforma
+// ===========================================================================
+
+// IndAceitacao e a manifestacao do contribuinte sobre um debito ou sobre um
+// pedido de transferencia de credito.
+//
+// Vem de ACBrDFe.Conversao.pas:609, e os dois eventos que o usam o emitem
+// de formas DIFERENTES no ACBr: o aceite de debito passa o enum direto a um
+// no `tcInt` (:2857), e a manifestacao de sucessao passa pelo
+// indAceitacaoToStr (:744). Como o Delphi converte o enum pelo ordinal, os
+// dois produzem o mesmo "0"/"1" -- a divergencia e so de caminho.
+type IndAceitacao int
+
+const (
+	IaNaoAceite IndAceitacao = iota // 0
+	IaAceite                        // 1
+	// _fimIndAceitacao conta os membros declarados; nao e valor do leiaute.
+	_fimIndAceitacao
+)
+
+var indAceitacaoCodigos = [...]string{"0", "1"}
+
+// String retorna o codigo do leiaute.
+func (v IndAceitacao) String() string { return codigoEm(indAceitacaoCodigos[:], int(v)) }
+
+// ParseIndAceitacao converte o codigo do leiaute no enum.
+func ParseIndAceitacao(s string) (IndAceitacao, error) {
+	i, err := indiceDe(indAceitacaoCodigos[:], s, "IndAceitacao")
+	return IndAceitacao(i), err
+}

@@ -58,6 +58,18 @@ const (
 	// porque a 2.00 ainda e leitura valida.
 	ServicoRecepcaoLote    Servico = "NfeRecepcao"
 	ServicoRetRecepcaoLote Servico = "NfeRetRecepcao"
+
+	// ServicoRecepcaoEvento atende TODOS os eventos -- carta de correcao,
+	// cancelamento, manifestacao do destinatario e os da Reforma. No ACBr
+	// tres LayOut diferentes (LayNFeCCe, LayNFeEvento e LayNFeEventoAN)
+	// mapeiam para este mesmo nome de servico; o que muda entre eles e o
+	// SCHEMA e, sobretudo, a UF sob a qual o endereco e procurado.
+	ServicoRecepcaoEvento Servico = "RecepcaoEvento"
+
+	// ServicoEventoEPEC atende UM caso so: o EPEC de NFC-e em Sao Paulo,
+	// a unica UF que o oferece -- as demais usam a contingencia off-line
+	// (ACBrNFeWebServices.pas:3101).
+	ServicoEventoEPEC Servico = "EventoEPEC"
 )
 
 // endpointPorVersao guarda as URLs de um servico por versao de leiaute.
@@ -131,6 +143,7 @@ var autorizadorNFe = map[string]string{
 	"SVC-AN": "SVC-AN",
 	"SVC-RS": "SVC-RS",
 	"AN":     "AN",
+	"SVRS":   "SVRS",
 }
 
 var autorizadorNFCe = map[string]string{
@@ -164,6 +177,7 @@ var autorizadorNFCe = map[string]string{
 	"SVC-AN": "SVC-AN",
 	"SVC-RS": "SVC-RS",
 	"AN":     "AN",
+	"SVRS":   "SVRS",
 }
 
 // endpointsPorAutorizador e indexado por "<modelo>/<autorizador>", porque o
@@ -209,6 +223,18 @@ var endpointsPorAutorizador = map[string]map[Servico]endpointPorVersao{
 			V310: urlPorAmbiente{"https://nfe.sefaz.am.gov.br/services2/services/cadconsultacadastro2", "https://homnfe.sefaz.am.gov.br/services2/services/cadconsultacadastro2"},
 			V400: urlPorAmbiente{"https://nfe.sefaz.am.gov.br/services2/services/CadConsultaCadastro4", "https://homnfe.sefaz.am.gov.br/services2/services/CadConsultaCadastro4"},
 		},
+		ServicoRecepcaoEvento: {
+			V200: urlPorAmbiente{"https://nfe.sefaz.am.gov.br/services2/services/RecepcaoEvento", "https://homnfe.sefaz.am.gov.br/services2/services/RecepcaoEvento"},
+			V310: urlPorAmbiente{"https://nfe.sefaz.am.gov.br/services2/services/RecepcaoEvento", "https://homnfe.sefaz.am.gov.br/services2/services/RecepcaoEvento"},
+			V400: urlPorAmbiente{"https://nfe.sefaz.am.gov.br/services2/services/RecepcaoEvento4", "https://homnfe.sefaz.am.gov.br/services2/services/RecepcaoEvento4"},
+		},
+	},
+	"NFe/AN": {
+		ServicoRecepcaoEvento: {
+			V200: urlPorAmbiente{"https://www.nfe.fazenda.gov.br/RecepcaoEvento/RecepcaoEvento.asmx", "https://hom.nfe.fazenda.gov.br/RecepcaoEvento/RecepcaoEvento.asmx"},
+			V310: urlPorAmbiente{"https://www.nfe.fazenda.gov.br/RecepcaoEvento/RecepcaoEvento.asmx", "https://hom.nfe.fazenda.gov.br/RecepcaoEvento/RecepcaoEvento.asmx"},
+			V400: urlPorAmbiente{"https://www.nfe.fazenda.gov.br/NFeRecepcaoEvento4/NFeRecepcaoEvento4.asmx", "https://hom1.nfe.fazenda.gov.br/NFeRecepcaoEvento4/NFeRecepcaoEvento4.asmx"},
+		},
 	},
 	"NFe/BA": {
 		ServicoStatus: {
@@ -248,6 +274,11 @@ var endpointsPorAutorizador = map[string]map[Servico]endpointPorVersao{
 			V200: urlPorAmbiente{"https://nfe.sefaz.ba.gov.br/webservices/nfenw/CadConsultaCadastro2.asmx", "https://hnfe.sefaz.ba.gov.br/webservices/nfenw/CadConsultaCadastro2.asmx"},
 			V310: urlPorAmbiente{"https://nfe.sefaz.ba.gov.br/webservices/nfenw/CadConsultaCadastro2.asmx", "https://hnfe.sefaz.ba.gov.br/webservices/nfenw/CadConsultaCadastro2.asmx"},
 			V400: urlPorAmbiente{"https://nfe.sefaz.ba.gov.br/webservices/CadConsultaCadastro4/CadConsultaCadastro4.asmx", "https://hnfe.sefaz.ba.gov.br/webservices/CadConsultaCadastro4/CadConsultaCadastro4.asmx"},
+		},
+		ServicoRecepcaoEvento: {
+			V200: urlPorAmbiente{"https://nfe.sefaz.ba.gov.br/webservices/sre/recepcaoevento.asmx", "https://hnfe.sefaz.ba.gov.br/webservices/sre/recepcaoevento.asmx"},
+			V310: urlPorAmbiente{"https://nfe.sefaz.ba.gov.br/webservices/sre/recepcaoevento.asmx", "https://hnfe.sefaz.ba.gov.br/webservices/sre/recepcaoevento.asmx"},
+			V400: urlPorAmbiente{"https://nfe.sefaz.ba.gov.br/webservices/NFeRecepcaoEvento4/NFeRecepcaoEvento4.asmx", "https://hnfe.sefaz.ba.gov.br/webservices/NFeRecepcaoEvento4/NFeRecepcaoEvento4.asmx"},
 		},
 	},
 	"NFe/GO": {
@@ -289,6 +320,11 @@ var endpointsPorAutorizador = map[string]map[Servico]endpointPorVersao{
 			V310: urlPorAmbiente{"https://nfe.sefaz.go.gov.br/nfe/services/v2/CadConsultaCadastro2?wsdl", "https://homolog.sefaz.go.gov.br/nfe/services/v2/CadConsultaCadastro2?wsdl"},
 			V400: urlPorAmbiente{"https://nfe.sefaz.go.gov.br/nfe/services/CadConsultaCadastro4?wsdl", "https://homolog.sefaz.go.gov.br/nfe/services/CadConsultaCadastro4?wsdl"},
 		},
+		ServicoRecepcaoEvento: {
+			V200: urlPorAmbiente{"https://nfe.sefaz.go.gov.br/nfe/services/v2/RecepcaoEvento?wsdl", "https://homolog.sefaz.go.gov.br/nfe/services/v2/RecepcaoEvento?wsdl"},
+			V310: urlPorAmbiente{"https://nfe.sefaz.go.gov.br/nfe/services/v2/RecepcaoEvento?wsdl", "https://homolog.sefaz.go.gov.br/nfe/services/v2/RecepcaoEvento?wsdl"},
+			V400: urlPorAmbiente{"https://nfe.sefaz.go.gov.br/nfe/services/NFeRecepcaoEvento4?wsdl", "https://homolog.sefaz.go.gov.br/nfe/services/NFeRecepcaoEvento4?wsdl"},
+		},
 	},
 	"NFe/MG": {
 		ServicoStatus: {
@@ -328,6 +364,11 @@ var endpointsPorAutorizador = map[string]map[Servico]endpointPorVersao{
 			V200: urlPorAmbiente{"https://nfe.fazenda.mg.gov.br/nfe2/services/cadconsultacadastro2", "https://hnfe.fazenda.mg.gov.br/nfe2/services/cadconsultacadastro2"},
 			V310: urlPorAmbiente{"https://nfe.fazenda.mg.gov.br/nfe2/services/cadconsultacadastro2", "https://hnfe.fazenda.mg.gov.br/nfe2/services/cadconsultacadastro2"},
 			V400: urlPorAmbiente{"https://nfe.fazenda.mg.gov.br/nfe2/services/CadConsultaCadastro4", "https://hnfe.fazenda.mg.gov.br/nfe2/services/CadConsultaCadastro4"},
+		},
+		ServicoRecepcaoEvento: {
+			V200: urlPorAmbiente{"https://nfe.fazenda.mg.gov.br/nfe2/services/RecepcaoEvento", "https://hnfe.fazenda.mg.gov.br/nfe2/services/RecepcaoEvento"},
+			V310: urlPorAmbiente{"https://nfe.fazenda.mg.gov.br/nfe2/services/RecepcaoEvento", "https://hnfe.fazenda.mg.gov.br/nfe2/services/RecepcaoEvento"},
+			V400: urlPorAmbiente{"https://nfe.fazenda.mg.gov.br/nfe2/services/NFeRecepcaoEvento4", "https://hnfe.fazenda.mg.gov.br/nfe2/services/NFeRecepcaoEvento4"},
 		},
 	},
 	"NFe/MS": {
@@ -369,6 +410,11 @@ var endpointsPorAutorizador = map[string]map[Servico]endpointPorVersao{
 			V310: urlPorAmbiente{"https://nfe.fazenda.ms.gov.br/producao/services2/CadConsultaCadastro2", "https://homologacao.nfe.ms.gov.br/homologacao/services2/CadConsultaCadastro2"},
 			V400: urlPorAmbiente{"https://nfe.sefaz.ms.gov.br/ws/CadConsultaCadastro4", "https://hom.nfe.sefaz.ms.gov.br/ws/CadConsultaCadastro4"},
 		},
+		ServicoRecepcaoEvento: {
+			V200: urlPorAmbiente{"https://nfe.fazenda.ms.gov.br/producao/services2/RecepcaoEvento", "https://homologacao.nfe.ms.gov.br/homologacao/services2/RecepcaoEvento"},
+			V310: urlPorAmbiente{"https://nfe.fazenda.ms.gov.br/producao/services2/RecepcaoEvento", "https://homologacao.nfe.ms.gov.br/homologacao/services2/RecepcaoEvento"},
+			V400: urlPorAmbiente{"https://nfe.sefaz.ms.gov.br/ws/NFeRecepcaoEvento4", "https://hom.nfe.sefaz.ms.gov.br/ws/NFeRecepcaoEvento4"},
+		},
 	},
 	"NFe/MT": {
 		ServicoStatus: {
@@ -408,6 +454,11 @@ var endpointsPorAutorizador = map[string]map[Servico]endpointPorVersao{
 			V200: urlPorAmbiente{"https://nfe.sefaz.mt.gov.br/nfews/v2/services/CadConsultaCadastro2?wsdl", "https://homologacao.sefaz.mt.gov.br/nfews/v2/services/CadConsultaCadastro2?wsdl"},
 			V310: urlPorAmbiente{"https://nfe.sefaz.mt.gov.br/nfews/v2/services/CadConsultaCadastro2?wsdl", "https://homologacao.sefaz.mt.gov.br/nfews/v2/services/CadConsultaCadastro2?wsdl"},
 			V400: urlPorAmbiente{"https://nfe.sefaz.mt.gov.br/nfews/v2/services/CadConsultaCadastro4?wsdl", "https://homologacao.sefaz.mt.gov.br/nfews/v2/services/CadConsultaCadastro4"},
+		},
+		ServicoRecepcaoEvento: {
+			V200: urlPorAmbiente{"https://nfe.sefaz.mt.gov.br/nfews/v2/services/RecepcaoEvento?wsdl", "https://homologacao.sefaz.mt.gov.br/nfews/v2/services/RecepcaoEvento?wsdl"},
+			V310: urlPorAmbiente{"https://nfe.sefaz.mt.gov.br/nfews/v2/services/RecepcaoEvento?wsdl", "https://homologacao.sefaz.mt.gov.br/nfews/v2/services/RecepcaoEvento?wsdl"},
+			V400: urlPorAmbiente{"https://nfe.sefaz.mt.gov.br/nfews/v2/services/RecepcaoEvento4?wsdl", "https://homologacao.sefaz.mt.gov.br/nfews/v2/services/RecepcaoEvento4"},
 		},
 	},
 	"NFe/PE": {
@@ -449,6 +500,11 @@ var endpointsPorAutorizador = map[string]map[Servico]endpointPorVersao{
 			V310: urlPorAmbiente{"https://nfe.sefaz.pe.gov.br/nfe-service/services/CadConsultaCadastro2", ""},
 			V400: urlPorAmbiente{"https://nfe.sefaz.pe.gov.br/nfe-service/services/CadConsultaCadastro4", "https://nfehomolog.sefaz.pe.gov.br/nfe-service/services/CadConsultaCadastro4?wsdl"},
 		},
+		ServicoRecepcaoEvento: {
+			V200: urlPorAmbiente{"https://nfe.sefaz.pe.gov.br/nfe-service/services/RecepcaoEvento", "https://nfehomolog.sefaz.pe.gov.br/nfe-service/services/RecepcaoEvento"},
+			V310: urlPorAmbiente{"https://nfe.sefaz.pe.gov.br/nfe-service/services/RecepcaoEvento", "https://nfehomolog.sefaz.pe.gov.br/nfe-service/services/RecepcaoEvento"},
+			V400: urlPorAmbiente{"https://nfe.sefaz.pe.gov.br/nfe-service/services/NFeRecepcaoEvento4", "https://nfehomolog.sefaz.pe.gov.br/nfe-service/services/NFeRecepcaoEvento4?wsdl"},
+		},
 	},
 	"NFe/PR": {
 		ServicoStatus: {
@@ -475,6 +531,11 @@ var endpointsPorAutorizador = map[string]map[Servico]endpointPorVersao{
 			V200: urlPorAmbiente{"https://nfe.fazenda.pr.gov.br/nfe/CadConsultaCadastro2?wsdl", "https://homologacao.nfe.fazenda.pr.gov.br/nfe/CadConsultaCadastro2?wsdl"},
 			V310: urlPorAmbiente{"https://nfe.fazenda.pr.gov.br/nfe/CadConsultaCadastro2?wsdl", "https://homologacao.nfe.fazenda.pr.gov.br/nfe/CadConsultaCadastro2?wsdl"},
 			V400: urlPorAmbiente{"https://nfe.sefa.pr.gov.br/nfe/CadConsultaCadastro4?wsdl", "https://homologacao.nfe.sefa.pr.gov.br/nfe/CadConsultaCadastro4?wsdl"},
+		},
+		ServicoRecepcaoEvento: {
+			V200: urlPorAmbiente{"https://nfe.fazenda.pr.gov.br/nfe/NFeRecepcaoEvento?wsdl", "https://homologacao.nfe.fazenda.pr.gov.br/nfe/NFeRecepcaoEvento?wsdl"},
+			V310: urlPorAmbiente{"https://nfe.fazenda.pr.gov.br/nfe/NFeRecepcaoEvento?wsdl", "https://homologacao.nfe.fazenda.pr.gov.br/nfe/NFeRecepcaoEvento?wsdl"},
+			V400: urlPorAmbiente{"https://nfe.sefa.pr.gov.br/nfe/NFeRecepcaoEvento4?wsdl", "https://homologacao.nfe.sefa.pr.gov.br/nfe/NFeRecepcaoEvento4?wsdl"},
 		},
 	},
 	"NFe/RS": {
@@ -505,6 +566,11 @@ var endpointsPorAutorizador = map[string]map[Servico]endpointPorVersao{
 			V200: urlPorAmbiente{"https://cad.sefazrs.rs.gov.br/ws/cadconsultacadastro/cadconsultacadastro2.asmx", "https://cad.sefazrs.rs.gov.br/ws/cadconsultacadastro/cadconsultacadastro2.asmx"},
 			V310: urlPorAmbiente{"https://cad.sefazrs.rs.gov.br/ws/cadconsultacadastro/cadconsultacadastro2.asmx", "https://cad.sefazrs.rs.gov.br/ws/cadconsultacadastro/cadconsultacadastro2.asmx"},
 			V400: urlPorAmbiente{"https://cad.svrs.rs.gov.br/ws/cadconsultacadastro/cadconsultacadastro4.asmx", "https://cad.svrs.rs.gov.br/ws/cadconsultacadastro/cadconsultacadastro4.asmx"},
+		},
+		ServicoRecepcaoEvento: {
+			V200: urlPorAmbiente{"https://nfe.sefazrs.rs.gov.br/ws/recepcaoevento/recepcaoevento.asmx", "https://nfe-homologacao.sefazrs.rs.gov.br/ws/recepcaoevento/recepcaoevento.asmx"},
+			V310: urlPorAmbiente{"https://nfe.sefazrs.rs.gov.br/ws/recepcaoevento/recepcaoevento.asmx", "https://nfe-homologacao.sefazrs.rs.gov.br/ws/recepcaoevento/recepcaoevento.asmx"},
+			V400: urlPorAmbiente{"https://nfe.sefazrs.rs.gov.br/ws/recepcaoevento/recepcaoevento4.asmx", "https://nfe-homologacao.sefazrs.rs.gov.br/ws/recepcaoevento/recepcaoevento4.asmx"},
 		},
 	},
 	"NFe/SP": {
@@ -546,6 +612,11 @@ var endpointsPorAutorizador = map[string]map[Servico]endpointPorVersao{
 			V310: urlPorAmbiente{"https://nfe.fazenda.sp.gov.br/ws/cadconsultacadastro2.asmx", "https://homologacao.nfe.fazenda.sp.gov.br/ws/cadconsultacadastro2.asmx"},
 			V400: urlPorAmbiente{"https://nfe.fazenda.sp.gov.br/ws/cadconsultacadastro4.asmx", "https://homologacao.nfe.fazenda.sp.gov.br/ws/cadconsultacadastro4.asmx"},
 		},
+		ServicoRecepcaoEvento: {
+			V200: urlPorAmbiente{"https://nfe.fazenda.sp.gov.br/ws/RecepcaoEvento.asmx", "https://homologacao.nfe.fazenda.sp.gov.br/ws/RecepcaoEvento.asmx"},
+			V310: urlPorAmbiente{"https://nfe.fazenda.sp.gov.br/ws/RecepcaoEvento.asmx", "https://homologacao.nfe.fazenda.sp.gov.br/ws/RecepcaoEvento.asmx"},
+			V400: urlPorAmbiente{"https://nfe.fazenda.sp.gov.br/ws/nferecepcaoevento4.asmx", "https://homologacao.nfe.fazenda.sp.gov.br/ws/nferecepcaoevento4.asmx"},
+		},
 	},
 	"NFe/SVAN": {
 		ServicoStatus: {
@@ -586,6 +657,11 @@ var endpointsPorAutorizador = map[string]map[Servico]endpointPorVersao{
 			V310: urlPorAmbiente{"https://sistemas.sefaz.ma.gov.br/wscadastro/CadConsultaCadastro2?wsdl", "https://sistemas.sefaz.ma.gov.br/wscadastro/CadConsultaCadastro2?wsdl"},
 			V400: urlPorAmbiente{"https://sistemas.sefaz.ma.gov.br/wscadastro/CadConsultaCadastro2?wsdl", "https://sistemas.sefaz.ma.gov.br/wscadastro/CadConsultaCadastro2?wsdl"},
 		},
+		ServicoRecepcaoEvento: {
+			V200: urlPorAmbiente{"https://www.sefazvirtual.fazenda.gov.br/RecepcaoEvento/RecepcaoEvento.asmx", "https://hom.sefazvirtual.fazenda.gov.br/RecepcaoEvento/RecepcaoEvento.asmx"},
+			V310: urlPorAmbiente{"https://www.sefazvirtual.fazenda.gov.br/RecepcaoEvento/RecepcaoEvento.asmx", "https://hom.sefazvirtual.fazenda.gov.br/RecepcaoEvento/RecepcaoEvento.asmx"},
+			V400: urlPorAmbiente{"https://www.sefazvirtual.fazenda.gov.br/NFeRecepcaoEvento4/NFeRecepcaoEvento4.asmx", "https://hom.sefazvirtual.fazenda.gov.br/NFeRecepcaoEvento4/NFeRecepcaoEvento4.asmx"},
+		},
 	},
 	"NFe/SVC-AN": {
 		ServicoStatus: {
@@ -619,6 +695,11 @@ var endpointsPorAutorizador = map[string]map[Servico]endpointPorVersao{
 		ServicoInutilizacao: {
 			V400: urlPorAmbiente{"https://www.sefazvirtual.fazenda.gov.br/NFeInutilizacao4/NFeInutilizacao4.asmx", "https://hom.sefazvirtual.fazenda.gov.br/NFeInutilizacao4/NFeInutilizacao4.asmx"},
 		},
+		ServicoRecepcaoEvento: {
+			V200: urlPorAmbiente{"https://www.svc.fazenda.gov.br/RecepcaoEvento/RecepcaoEvento.asmx", "https://hom.svc.fazenda.gov.br/RecepcaoEvento/RecepcaoEvento.asmx"},
+			V310: urlPorAmbiente{"https://www.svc.fazenda.gov.br/RecepcaoEvento/RecepcaoEvento.asmx", "https://hom.svc.fazenda.gov.br/RecepcaoEvento/RecepcaoEvento.asmx"},
+			V400: urlPorAmbiente{"https://www.sefazvirtual.fazenda.gov.br/NFeRecepcaoEvento4/NFeRecepcaoEvento4.asmx", "https://hom.sefazvirtual.fazenda.gov.br/NFeRecepcaoEvento4/NFeRecepcaoEvento4.asmx"},
+		},
 	},
 	"NFe/SVC-RS": {
 		ServicoStatus: {
@@ -640,6 +721,11 @@ var endpointsPorAutorizador = map[string]map[Servico]endpointPorVersao{
 		ServicoInutilizacao: {
 			V310: urlPorAmbiente{"https://nfe.svrs.rs.gov.br/ws/nfeinutilizacao/nfeinutilizacao2.asmx", "https://nfe-homologacao.svrs.rs.gov.br/ws/nfeinutilizacao/nfeinutilizacao2.asmx"},
 			V400: urlPorAmbiente{"https://nfe.svrs.rs.gov.br/ws/nfeinutilizacao/nfeinutilizacao4.asmx", "https://nfe-homologacao.svrs.rs.gov.br/ws/nfeinutilizacao/nfeinutilizacao2.asmx"},
+		},
+		ServicoRecepcaoEvento: {
+			V200: urlPorAmbiente{"https://nfe.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento.asmx", "https://nfe-homologacao.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento.asmx"},
+			V310: urlPorAmbiente{"https://nfe.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento.asmx", "https://nfe-homologacao.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento.asmx"},
+			V400: urlPorAmbiente{"https://nfe.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento4.asmx", "https://nfe-homologacao.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento4.asmx"},
 		},
 	},
 	"NFe/SVRS": {
@@ -670,6 +756,11 @@ var endpointsPorAutorizador = map[string]map[Servico]endpointPorVersao{
 			V200: urlPorAmbiente{"https://cad.svrs.rs.gov.br/ws/cadconsultacadastro/cadconsultacadastro2.asmx", "https://cad-homologacao.svrs.rs.gov.br/ws/cadconsultacadastro/cadconsultacadastro2.asmx"},
 			V310: urlPorAmbiente{"https://cad.svrs.rs.gov.br/ws/cadconsultacadastro/cadconsultacadastro2.asmx", "https://cad-homologacao.svrs.rs.gov.br/ws/cadconsultacadastro/cadconsultacadastro2.asmx"},
 			V400: urlPorAmbiente{"https://cad.svrs.rs.gov.br/ws/cadconsultacadastro/cadconsultacadastro4.asmx", "https://cad-homologacao.svrs.rs.gov.br/ws/cadconsultacadastro/cadconsultacadastro4.asmx"},
+		},
+		ServicoRecepcaoEvento: {
+			V200: urlPorAmbiente{"https://nfe.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento.asmx", "https://nfe-homologacao.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento.asmx"},
+			V310: urlPorAmbiente{"https://nfe.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento.asmx", "https://nfe-homologacao.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento.asmx"},
+			V400: urlPorAmbiente{"https://nfe.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento4.asmx", "https://nfe-homologacao.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento4.asmx"},
 		},
 	},
 	"NFCe/AM": {
@@ -705,6 +796,11 @@ var endpointsPorAutorizador = map[string]map[Servico]endpointPorVersao{
 			V200: urlPorAmbiente{"https://nfce.sefaz.am.gov.br/nfce-services/services/CscNFCe", "https://homnfce.sefaz.am.gov.br/nfce-services/services/CscNFCe"},
 			V310: urlPorAmbiente{"https://nfce.sefaz.am.gov.br/nfce-services/services/CscNFCe", "https://homnfce.sefaz.am.gov.br/nfce-services/services/CscNFCe"},
 			V400: urlPorAmbiente{"https://nfce.sefaz.am.gov.br/nfce-services/services/CscNFCe", "https://homnfce.sefaz.am.gov.br/nfce-services/services/CscNFCe"},
+		},
+		ServicoRecepcaoEvento: {
+			V200: urlPorAmbiente{"https://nfce.sefaz.am.gov.br/nfce-services/services/RecepcaoEvento", "https://homnfce.sefaz.am.gov.br/nfce-services-nac/services/RecepcaoEvento"},
+			V310: urlPorAmbiente{"https://nfce.sefaz.am.gov.br/nfce-services/services/RecepcaoEvento", "https://homnfce.sefaz.am.gov.br/nfce-services-nac/services/RecepcaoEvento"},
+			V400: urlPorAmbiente{"https://nfce.sefaz.am.gov.br/nfce-services/services/RecepcaoEvento4", "https://homnfce.sefaz.am.gov.br/nfce-services-nac/services/RecepcaoEvento4"},
 		},
 	},
 	"NFCe/GO": {
@@ -751,6 +847,11 @@ var endpointsPorAutorizador = map[string]map[Servico]endpointPorVersao{
 			V310: urlPorAmbiente{"https://nfe.sefaz.go.gov.br/nfe/services/v2/CscNFCe?wsdl", "https://homolog.sefaz.go.gov.br/nfe/services/v2/CscNFCe?wsdl"},
 			V400: urlPorAmbiente{"https://nfe.sefaz.go.gov.br/nfe/services/v2/CscNFCe?wsdl", "https://homolog.sefaz.go.gov.br/nfe/services/v2/CscNFCe?wsdl"},
 		},
+		ServicoRecepcaoEvento: {
+			V200: urlPorAmbiente{"https://nfe.sefaz.go.gov.br/nfe/services/v2/RecepcaoEvento?wsdl", "https://homolog.sefaz.go.gov.br/nfe/services/v2/RecepcaoEvento?wsdl"},
+			V310: urlPorAmbiente{"https://nfe.sefaz.go.gov.br/nfe/services/v2/RecepcaoEvento?wsdl", "https://homolog.sefaz.go.gov.br/nfe/services/v2/RecepcaoEvento?wsdl"},
+			V400: urlPorAmbiente{"https://nfe.sefaz.go.gov.br/nfe/services/NFeRecepcaoEvento4?wsdl", "https://homolog.sefaz.go.gov.br/nfe/services/NFeRecepcaoEvento4?wsdl"},
+		},
 	},
 	"NFCe/MG": {
 		ServicoStatus: {
@@ -767,6 +868,9 @@ var endpointsPorAutorizador = map[string]map[Servico]endpointPorVersao{
 		},
 		ServicoInutilizacao: {
 			V400: urlPorAmbiente{"https://nfce.fazenda.mg.gov.br/nfce/services/NFeInutilizacao4", "https://hnfce.fazenda.mg.gov.br/nfce/services/NFeInutilizacao4"},
+		},
+		ServicoRecepcaoEvento: {
+			V400: urlPorAmbiente{"https://nfce.fazenda.mg.gov.br/nfce/services/NFeRecepcaoEvento4", "https://hnfce.fazenda.mg.gov.br/nfce/services/NFeRecepcaoEvento4"},
 		},
 	},
 	"NFCe/MS": {
@@ -794,6 +898,11 @@ var endpointsPorAutorizador = map[string]map[Servico]endpointPorVersao{
 			V310: urlPorAmbiente{"https://nfe.fazenda.ms.gov.br/producao/services2/CadConsultaCadastro2", "https://homologacao.nfce.fazenda.ms.gov.br/homologacao/services2/CadConsultaCadastro2"},
 			V400: urlPorAmbiente{"https://nfe.sefaz.ms.gov.br/ws/CadConsultaCadastro4", "https://hom.nfe.sefaz.ms.gov.br/ws/CadConsultaCadastro4"},
 		},
+		ServicoRecepcaoEvento: {
+			V200: urlPorAmbiente{"https://nfce.fazenda.ms.gov.br/producao/services2/RecepcaoEvento", "https://homologacao.nfce.fazenda.ms.gov.br/homologacao/services2/RecepcaoEvento"},
+			V310: urlPorAmbiente{"https://nfce.fazenda.ms.gov.br/producao/services2/RecepcaoEvento", "https://homologacao.nfce.fazenda.ms.gov.br/homologacao/services2/RecepcaoEvento"},
+			V400: urlPorAmbiente{"https://nfce.sefaz.ms.gov.br/ws/NFeRecepcaoEvento4", "https://hom.nfce.sefaz.ms.gov.br/ws/NFeRecepcaoEvento4"},
+		},
 	},
 	"NFCe/MT": {
 		ServicoStatus: {
@@ -815,6 +924,11 @@ var endpointsPorAutorizador = map[string]map[Servico]endpointPorVersao{
 		ServicoInutilizacao: {
 			V310: urlPorAmbiente{"https://nfce.sefaz.mt.gov.br/nfcews/services/NfeInutilizacao2?wsdl", "https://homologacao.sefaz.mt.gov.br/nfcews/services/NfeInutilizacao2?wsdl"},
 			V400: urlPorAmbiente{"https://nfce.sefaz.mt.gov.br/nfcews/services/NfeInutilizacao4", "https://homologacao.sefaz.mt.gov.br/nfcews/services/NfeInutilizacao4"},
+		},
+		ServicoRecepcaoEvento: {
+			V200: urlPorAmbiente{"https://nfce.sefaz.mt.gov.br/nfcews/services/RecepcaoEvento?wsdl", "https://homologacao.sefaz.mt.gov.br/nfcews/services/RecepcaoEvento?wsdl"},
+			V310: urlPorAmbiente{"https://nfce.sefaz.mt.gov.br/nfcews/services/RecepcaoEvento?wsdl", "https://homologacao.sefaz.mt.gov.br/nfcews/services/RecepcaoEvento?wsdl"},
+			V400: urlPorAmbiente{"https://nfce.sefaz.mt.gov.br/nfcews/services/RecepcaoEvento4", "https://homologacao.sefaz.mt.gov.br/nfcews/services/RecepcaoEvento4"},
 		},
 	},
 	"NFCe/PR": {
@@ -841,6 +955,11 @@ var endpointsPorAutorizador = map[string]map[Servico]endpointPorVersao{
 		ServicoConsultaCadastro: {
 			V400: urlPorAmbiente{"https://nfce.sefa.pr.gov.br/nfce/CadConsultaCadastro4", "https://homologacao.nfce.sefa.pr.gov.br/nfce/CadConsultaCadastro4"},
 		},
+		ServicoRecepcaoEvento: {
+			V200: urlPorAmbiente{"https://nfce.fazenda.pr.gov.br/nfce/NFeRecepcaoEvento", "https://homologacao.nfce.fazenda.pr.gov.br/nfce/NFeRecepcaoEvento"},
+			V310: urlPorAmbiente{"https://nfce.fazenda.pr.gov.br/nfce/NFeRecepcaoEvento", "https://homologacao.nfce.fazenda.pr.gov.br/nfce/NFeRecepcaoEvento"},
+			V400: urlPorAmbiente{"https://nfce.sefa.pr.gov.br/nfce/NFeRecepcaoEvento4", "https://homologacao.nfce.sefa.pr.gov.br/nfce/NFeRecepcaoEvento4"},
+		},
 	},
 	"NFCe/RS": {
 		ServicoStatus: {
@@ -862,6 +981,11 @@ var endpointsPorAutorizador = map[string]map[Servico]endpointPorVersao{
 		ServicoInutilizacao: {
 			V310: urlPorAmbiente{"https://nfce.sefazrs.rs.gov.br/ws/nfeinutilizacao/nfeinutilizacao2.asmx", "https://nfce-homologacao.sefazrs.rs.gov.br/ws/nfeinutilizacao/nfeinutilizacao2.asmx"},
 			V400: urlPorAmbiente{"https://nfce.sefazrs.rs.gov.br/ws/nfeinutilizacao/nfeinutilizacao4.asmx", "https://nfce-homologacao.sefazrs.rs.gov.br/ws/nfeinutilizacao/nfeinutilizacao4.asmx"},
+		},
+		ServicoRecepcaoEvento: {
+			V200: urlPorAmbiente{"https://nfce.sefazrs.rs.gov.br/ws/recepcaoevento/recepcaoevento.asmx", "https://nfce-homologacao.sefazrs.rs.gov.br/ws/recepcaoevento/recepcaoevento.asmx"},
+			V310: urlPorAmbiente{"https://nfce.sefazrs.rs.gov.br/ws/recepcaoevento/recepcaoevento.asmx", "https://nfce-homologacao.sefazrs.rs.gov.br/ws/recepcaoevento/recepcaoevento.asmx"},
+			V400: urlPorAmbiente{"https://nfce.sefazrs.rs.gov.br/ws/recepcaoevento/recepcaoevento4.asmx", "https://nfce-homologacao.sefazrs.rs.gov.br/ws/recepcaoevento/recepcaoevento4.asmx"},
 		},
 	},
 	"NFCe/SP": {
@@ -889,6 +1013,16 @@ var endpointsPorAutorizador = map[string]map[Servico]endpointPorVersao{
 			V310: urlPorAmbiente{"https://nfe.fazenda.sp.gov.br/ws/cadconsultacadastro2.asmx", "https://homologacao.nfe.fazenda.sp.gov.br/ws/cadconsultacadastro2.asmx"},
 			V400: urlPorAmbiente{"https://nfe.fazenda.sp.gov.br/ws/cadconsultacadastro4.asmx", "https://homologacao.nfe.fazenda.sp.gov.br/ws/cadconsultacadastro4.asmx"},
 		},
+		ServicoRecepcaoEvento: {
+			V200: urlPorAmbiente{"https://nfce.fazenda.sp.gov.br/ws/recepcaoevento.asmx", "https://homologacao.nfce.fazenda.sp.gov.br/ws/recepcaoevento.asmx"},
+			V310: urlPorAmbiente{"https://nfce.fazenda.sp.gov.br/ws/recepcaoevento.asmx", "https://homologacao.nfce.fazenda.sp.gov.br/ws/recepcaoevento.asmx"},
+			V400: urlPorAmbiente{"https://nfce.fazenda.sp.gov.br/ws/NFeRecepcaoEvento4.asmx", "https://homologacao.nfce.fazenda.sp.gov.br/ws/NFeRecepcaoEvento4.asmx"},
+		},
+		ServicoEventoEPEC: {
+			V200: urlPorAmbiente{"https://nfce.epec.fazenda.sp.gov.br/EPECws/RecepcaoEPEC.asmx", "https://homologacao.nfce.epec.fazenda.sp.gov.br/EPECws/RecepcaoEPEC.asmx"},
+			V310: urlPorAmbiente{"https://nfce.epec.fazenda.sp.gov.br/EPECws/RecepcaoEPEC.asmx", "https://homologacao.nfce.epec.fazenda.sp.gov.br/EPECws/RecepcaoEPEC.asmx"},
+			V400: urlPorAmbiente{"https://nfce.epec.fazenda.sp.gov.br/EPECws/RecepcaoEPEC.asmx", "https://homologacao.nfce.epec.fazenda.sp.gov.br/EPECws/RecepcaoEPEC.asmx"},
+		},
 	},
 	"NFCe/SVRS": {
 		ServicoStatus: {
@@ -910,6 +1044,11 @@ var endpointsPorAutorizador = map[string]map[Servico]endpointPorVersao{
 		ServicoInutilizacao: {
 			V310: urlPorAmbiente{"https://nfce.svrs.rs.gov.br/ws/nfeinutilizacao/nfeinutilizacao2.asmx", "https://nfce-homologacao.svrs.rs.gov.br/ws/nfeinutilizacao/nfeinutilizacao2.asmx"},
 			V400: urlPorAmbiente{"https://nfce.svrs.rs.gov.br/ws/nfeinutilizacao/nfeinutilizacao4.asmx", "https://nfce-homologacao.svrs.rs.gov.br/ws/nfeinutilizacao/nfeinutilizacao4.asmx"},
+		},
+		ServicoRecepcaoEvento: {
+			V200: urlPorAmbiente{"https://nfce.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento.asmx", "https://nfce-homologacao.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento.asmx"},
+			V310: urlPorAmbiente{"https://nfce.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento.asmx", "https://nfce-homologacao.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento.asmx"},
+			V400: urlPorAmbiente{"https://nfce.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento4.asmx", "https://nfce-homologacao.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento4.asmx"},
 		},
 	},
 }
@@ -948,6 +1087,9 @@ var soapActionPorAutorizador = map[string]map[Servico]endpointPorVersao{
 		ServicoInutilizacao: {
 			V400: urlPorAmbiente{"http://www.portalfiscal.inf.br/nfe/wsdl/NFeInutilizacao4/nfeInutilizacaoNF", "http://www.portalfiscal.inf.br/nfe/wsdl/NFeInutilizacao4/nfeInutilizacaoNF"},
 		},
+		ServicoRecepcaoEvento: {
+			V400: urlPorAmbiente{"http://www.portalfiscal.inf.br/nfe/wsdl/NFeRecepcaoEvento4/nfeRecepcaoEventoNF", "http://www.portalfiscal.inf.br/nfe/wsdl/NFeRecepcaoEvento4/nfeRecepcaoEventoNF"},
+		},
 	},
 }
 
@@ -961,8 +1103,12 @@ var soapActionPorAutorizador = map[string]map[Servico]endpointPorVersao{
 // consSitNFe, inutNFe, nfe e retEnviNFe, que a SEFAZ publica em 3.10 e
 // 4.00. Sobram dois servicos:
 //
-//	consCad      existe SO em 2.00 (consCad_v2.00.xsd); nao houve versao nova
-//	admCscNFCe   nao tem schema nenhum, entao vale a chave do `.ini`: 1.00
+//	consCad        existe SO em 2.00 (consCad_v2.00.xsd); nao houve versao nova
+//	admCscNFCe     nao tem schema nenhum, entao vale a chave do `.ini`: 1.00
+//	envEvento      existe SO em 1.00, mesmo onde o `.ini` publica a URL da
+//	               4.00 -- os eventos tem leiaute PROPRIO, que nao acompanha
+//	               o da NF-e. Vale tambem para os da Reforma Tributaria
+//	eventoEPEC     idem, 1.00
 //
 // Para esses dois, emitir a versao do leiaute da nota e rejeicao certa: a
 // SEFAZ valida a mensagem contra o XSD do servico, nao contra o da NF-e.
@@ -972,6 +1118,8 @@ var soapActionPorAutorizador = map[string]map[Servico]endpointPorVersao{
 var versaoFixaPorServico = map[Servico]string{
 	ServicoConsultaCadastro: "2.00",
 	ServicoAdministrarCSC:   "1.00",
+	ServicoRecepcaoEvento:   "1.00",
+	ServicoEventoEPEC:       "1.00",
 }
 
 // VersaoDaMensagem devolve a versao que vai no atributo `versao` da
