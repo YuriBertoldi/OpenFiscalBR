@@ -3,9 +3,9 @@
 Nota Fiscal Eletrônica (modelo 55) e Nota Fiscal de Consumidor Eletrônica
 (modelo 65) — porte do componente **ACBrNFe** do [Projeto ACBr](http://projetoacbr.com.br).
 
-> **Estado:** em construção. Estão prontos os **tipos/enums** e o **modelo de
-> dados completo**. O leitor, o gerador, os web services, os eventos e o
-> `.ini` chegam nas etapas seguintes — veja [Roteiro](#roteiro).
+> **Estado:** em construção. Estão prontos os **tipos/enums**, o **modelo de
+> dados completo** e o **leitor de XML**. O gerador, os web services, os
+> eventos e o `.ini` chegam nas etapas seguintes — veja [Roteiro](#roteiro).
 
 ## Origem dos fontes
 
@@ -13,6 +13,7 @@ Nota Fiscal Eletrônica (modelo 55) e Nota Fiscal de Consumidor Eletrônica
 |---|---|
 | `PCNNFe/pcnConversaoNFe.pas` | `types.go` + `conversao.go` |
 | `Base/ACBrNFe.Classes.pas` | `classes.go` (nota) + `classes_det.go` (item) |
+| `Base/ACBrNFe.XmlReader.pas` | `xml_reader.go` |
 
 > A unit de classes vem em **dois arquivos** porque o subgrupo `det` sozinho
 > tem 29 das 75 classes. `classes.go` traz a nota (identificação, emitente,
@@ -234,8 +235,10 @@ Replicado de propósito, mesmo parecendo errado:
 ### Divergências deliberadas
 
 A escolha de `pcnConversaoNFe.pas` **não** é divergência: é a leitura correta de
-qual unit o compilador Delphi usa. As divergências desta etapa são duas, ambas
-da política "não replicar comportamento indefinido" do `CLAUDE.md`:
+qual unit o compilador Delphi usa.
+
+**Dos enums e do modelo**, ambas da política "não replicar comportamento
+indefinido" do `CLAUDE.md`:
 
 | # | Onde | O ACBr faz | O porte faz |
 |---|---|---|---|
@@ -243,6 +246,36 @@ da política "não replicar comportamento indefinido" do `CLAUDE.md`:
 | 2 | `ParseTpGuia`, `ParseTpNFDebito`, `ParseTpNFCredito`, `ParseIndicadorPagamento` | `raise EACBrException` | devolve o membro "Nenhum"/zero + `error`, pela convenção de erros do projeto (biblioteca não entra em pânico) |
 
 Em ambos o `error` carrega o valor inválido e é testável com `errors.Is`.
+
+**Do leitor de XML** — seis, todas com comentário `DIVERGENCIA` no código,
+teste próprio e registro em
+[`divergencias-acbr.md`](../../.claude/skills/convert/referencias/divergencias-acbr.md):
+
+| # | Onde | O ACBr faz | O porte faz |
+|---|---|---|---|
+| 1 | pagamento na versão 3.xx | reaproveita `AuxNode` e procura `<pag>` **dentro de `<cobr>`** — nenhum pagamento é lido | resolve o nó de pagamento separadamente |
+| 2 | `cana/forDia/@dia` | `StrToInt` sem `Def` nem checagem → access violation | vale 0 |
+| 3 | `infAdic/obsCont/@xCampo` | AV quando há atributo que não é `xCampo` | vale vazio |
+| 4 | `refNFP/mod` | lê com `tcInt` numa property string: perde o zero à esquerda de `"04"` | lê como texto |
+| 5 | envelope sem `<NFe>` | devolve sucesso com a nota vazia | devolve `ErrNFeNaoEncontrada` |
+| 6 | `DecodeHTMLEntities` | decodifica entidades uma segunda vez | não aplica: o `encoding/xml` do Go já decodificou |
+
+#### Como a fidelidade do leitor foi verificada
+
+Os dois eixos silenciosos foram conferidos **tag a tag, mecanicamente**, por
+[`ferramentas/conferir-leitor-dfe.py`](../../ferramentas/conferir-leitor-dfe.py):
+
+| Eixo | Tags conferidas | Divergências |
+|---|---|---|
+| precisão `tcDeN` → `ConteudoDeN` | 356 | 0 |
+| `Find` × `FindAnyNs` | 487 | 0 |
+
+O script existe porque **nenhum teste de leitura alcança a precisão**: o
+parâmetro de casas do `pcn.ConteudoDec` só tem efeito quando o node está
+marcado com `FloatIsIntString`, flag que o parser nunca liga — no XML da SEFAZ
+o valor já vem com ponto decimal. `ConteudoDe2` e `ConteudoDe10` devolvem o
+mesmo resultado, e a precisão é **contrato declarativo**, herdado do mesmo
+mecanismo do ACBr. Só se verifica contra o `.pas`.
 
 ### Duplicação de `TpNFDebito` com `packages/rtc`
 
@@ -290,6 +323,8 @@ equivalente em Go:
 | Tipo | Situação |
 |---|---|
 | `IndicadorNFe` | nenhuma unit do componente o lê ou grava — a consulta de NF-e destinadas foi desativada pela SEFAZ |
+| `ISSQN.IndISSRet` | declarado na classe; o leitor de XML do ACBr **nunca o lê** (só o de `.ini`). Replicado |
+| `COFINS.VBCProd` | declarado na classe; nenhum dos quatro subgrupos de COFINS o lê. Replicado |
 | `CSTIS` | **não tipar campo com ele.** O próprio ACBr desistiu do enum até a publicação da tabela oficial e deixou o campo como `string`: `ACBrDFe.RTC.Classes.pas:784-785` e `:796-797` têm a versão `TCSTIS` comentada e a `string` ativa, idem `JSONReader.pas:1816` e `JSONWriter.pas:2587`. [`packages/rtc`](../rtc) já segue isso (`ISel.CSTIS` é `string`, `classes.go:397`) e lê valores fora desta tabela — `"001"` em `rtc_test.go:596`. Tipar o campo com `CSTIS` faria o leitor recusar conteúdo que o ACBr aceita hoje |
 
 Os dois são mantidos para o inventário da unit de origem ficar completo.
@@ -343,8 +378,8 @@ do `EnumeradoToStr`.
 |---|---|---|
 | 1 | `types.go` + `conversao.go` | concluída |
 | 2a | `classes.go` — cabeçalho, totais, transporte, cobrança | concluída |
-| 2b | `classes_det.go` — `det` (produto e impostos) + `NFe.Det` | **nesta entrega** |
-| 3 | `xml_reader.go` | pendente |
+| 2b | `classes_det.go` — `det` (produto e impostos) + `NFe.Det` | concluída |
+| 3 | `xml_reader.go` | **nesta entrega** |
 | 4a/4b | `xml_writer.go` | pendente |
 | 5 | regras de negócio, chave de acesso, QR-Code | pendente |
 | 6a | status, consulta e `urls.go` por UF | pendente |

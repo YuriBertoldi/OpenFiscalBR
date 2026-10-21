@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Fixture do porte do ACBrNFe, versao 3.10. Dados ficticios.
+     Existe para exercitar as condicionais POR VERSAO do leitor:
+       - pag solto no infNFe, sem o envelope detPag da 4.00;
+       - ausencia de tpNFDebito/tpNFCredito/indIntermed (so >= 4);
+       - ausencia de indEscala/CNPJFab/cBenef/gCred no prod (so >= 4).
+     O grupo dest foi OMITIDO de proposito: o ACBr marca indIEDest como
+     nao contribuinte quando ele falta. -->
+<NFe xmlns="http://www.portalfiscal.inf.br/nfe">
+  <infNFe Id="NFe35260199999999000191550010000001231123456784" versao="3.10">
+    <ide>
+      <cUF>35</cUF>
+      <!-- cNF ZERADO: o ACBr troca por -2 -->
+      <cNF>0</cNF>
+      <natOp>VENDA</natOp>
+      <mod>55</mod>
+      <serie>1</serie>
+      <nNF>123</nNF>
+      <dhEmi>2026-01-15T09:00:00-03:00</dhEmi>
+      <dhSaiEnt>2026-01-16T14:30:00-03:00</dhSaiEnt>
+      <tpNF>0</tpNF>
+      <idDest>1</idDest>
+      <cMunFG>3550308</cMunFG>
+      <tpImp>1</tpImp>
+      <tpEmis>1</tpEmis>
+      <cDV>4</cDV>
+      <tpAmb>2</tpAmb>
+      <finNFe>1</finNFe>
+      <indFinal>0</indFinal>
+      <indPres>9</indPres>
+      <!-- indIntermed so e lido a partir da 4.00: presente, mas ignorado -->
+      <indIntermed>1</indIntermed>
+      <procEmi>0</procEmi>
+      <verProc>OpenFiscalBR 1.0</verProc>
+    </ide>
+    <emit>
+      <CNPJ>99999999000191</CNPJ>
+      <xNome>EMPRESA DE TESTE LTDA</xNome>
+      <enderEmit>
+        <xLgr>RUA DE TESTE</xLgr>
+        <nro>100</nro>
+        <xBairro>CENTRO</xBairro>
+        <cMun>3550308</cMun>
+        <xMun>SAO PAULO</xMun>
+        <UF>SP</UF>
+        <CEP>01001000</CEP>
+      </enderEmit>
+      <IE>111111111111</IE>
+      <CRT>3</CRT>
+    </emit>
+    <det nItem="1">
+      <prod>
+        <cProd>P001</cProd>
+        <cEAN></cEAN>
+        <xProd>PRODUTO DE TESTE</xProd>
+        <NCM>84713012</NCM>
+        <!-- indEscala e cBenef so sao lidos a partir da 4.00 -->
+        <indEscala>S</indEscala>
+        <cBenef>SP999999</cBenef>
+        <CFOP>5102</CFOP>
+        <uCom>UN</uCom>
+        <qCom>1.0000</qCom>
+        <vUnCom>100.0000000000</vUnCom>
+        <vProd>100.00</vProd>
+        <cEANTrib></cEANTrib>
+        <uTrib>UN</uTrib>
+        <qTrib>1.0000</qTrib>
+        <vUnTrib>100.0000000000</vUnTrib>
+        <indTot>1</indTot>
+      </prod>
+      <imposto>
+        <ICMS>
+          <ICMS40>
+            <orig>0</orig>
+            <CST>40</CST>
+          </ICMS40>
+        </ICMS>
+      </imposto>
+    </det>
+    <total>
+      <ICMSTot>
+        <vBC>0.00</vBC>
+        <vICMS>0.00</vICMS>
+        <vProd>100.00</vProd>
+        <vNF>100.00</vNF>
+      </ICMSTot>
+      <ISSQNtot>
+        <vServ>0.00</vServ>
+        <vDeducao>5.00</vDeducao>
+        <cRegTrib>1</cRegTrib>
+      </ISSQNtot>
+    </total>
+    <transp>
+      <modFrete>9</modFrete>
+    </transp>
+    <!-- pag da 3.10: filho direto do infNFe, sem envelope detPag.
+         O ACBr NAO le este grupo por causa do reaproveitamento de AuxNode;
+         o porte corrige. -->
+    <pag>
+      <tPag>01</tPag>
+      <vPag>100.00</vPag>
+    </pag>
+  </infNFe>
+</NFe>

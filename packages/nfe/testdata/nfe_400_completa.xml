@@ -1,0 +1,519 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Fixture do porte do ACBrNFe. Dados ficticios, montados a partir do
+     leiauteNFe_v4.00.xsd. Nenhum CNPJ, certificado ou dado de cliente real.
+     A chave tem DV valido (calculado por pcn.DigitoChaveAcesso). -->
+<NFe xmlns="http://www.portalfiscal.inf.br/nfe">
+  <infNFe Id="NFe35260199999999000191550010000001231123456784" versao="4.00">
+    <ide>
+      <cUF>35</cUF>
+      <cNF>12345678</cNF>
+      <natOp>VENDA DE MERCADORIA</natOp>
+      <mod>55</mod>
+      <serie>1</serie>
+      <nNF>123</nNF>
+      <dhEmi>2026-01-15T10:30:00-03:00</dhEmi>
+      <dhSaiEnt>2026-01-15T14:00:00-03:00</dhSaiEnt>
+      <tpNF>1</tpNF>
+      <idDest>2</idDest>
+      <cMunFG>3550308</cMunFG>
+      <tpImp>1</tpImp>
+      <tpEmis>1</tpEmis>
+      <cDV>4</cDV>
+      <tpAmb>2</tpAmb>
+      <finNFe>1</finNFe>
+      <indFinal>1</indFinal>
+      <indPres>1</indPres>
+      <indIntermed>0</indIntermed>
+      <procEmi>0</procEmi>
+      <verProc>OpenFiscalBR 1.0</verProc>
+      <NFref>
+        <refNF>
+          <cUF>35</cUF>
+          <AAMM>2512</AAMM>
+          <CNPJ>99999999000272</CNPJ>
+          <mod>01</mod>
+          <serie>2</serie>
+          <nNF>99</nNF>
+        </refNF>
+      </NFref>
+      <NFref>
+        <refNFP>
+          <cUF>35</cUF>
+          <AAMM>2512</AAMM>
+          <CPF>11111111111</CPF>
+          <IE>ISENTO</IE>
+          <mod>04</mod>
+          <serie>1</serie>
+          <nNF>7</nNF>
+        </refNFP>
+      </NFref>
+      <NFref>
+        <refECF>
+          <mod>2B</mod>
+          <nECF>001</nECF>
+          <nCOO>123456</nCOO>
+        </refECF>
+      </NFref>
+    </ide>
+    <emit>
+      <CNPJ>99999999000191</CNPJ>
+      <xNome>EMPRESA DE TESTE LTDA</xNome>
+      <xFant>TESTE</xFant>
+      <enderEmit>
+        <xLgr>RUA DE TESTE</xLgr>
+        <nro>100</nro>
+        <xBairro>CENTRO</xBairro>
+        <cMun>3550308</cMun>
+        <xMun>SAO PAULO</xMun>
+        <UF>SP</UF>
+        <CEP>01001000</CEP>
+        <fone>1133334444</fone>
+      </enderEmit>
+      <IE>111111111111</IE>
+      <CRT>3</CRT>
+    </emit>
+    <dest>
+      <CNPJ>99999999000272</CNPJ>
+      <xNome>CLIENTE DE TESTE SA</xNome>
+      <enderDest>
+        <xLgr>AVENIDA DE TESTE</xLgr>
+        <nro>200</nro>
+        <xBairro>JARDIM</xBairro>
+        <cMun>3304557</cMun>
+        <xMun>RIO DE JANEIRO</xMun>
+        <UF>RJ</UF>
+        <CEP>20040002</CEP>
+      </enderDest>
+      <indIEDest>1</indIEDest>
+      <IE>222222222</IE>
+      <email>teste@exemplo.invalid</email>
+    </dest>
+    <!-- retirada NAO tem default de pais no leitor, ao contrario de
+         enderEmit/enderDest: fica vazio de proposito -->
+    <retirada>
+      <CNPJ>99999999000353</CNPJ>
+      <xNome>DEPOSITO DE TESTE</xNome>
+      <xLgr>RUA DO DEPOSITO</xLgr>
+      <nro>300</nro>
+      <xBairro>INDUSTRIAL</xBairro>
+      <cMun>3550308</cMun>
+      <xMun>SAO PAULO</xMun>
+      <UF>SP</UF>
+    </retirada>
+    <autXML>
+      <CNPJ>99999999000434</CNPJ>
+    </autXML>
+    <!-- Item 1: @nItem fora de ordem de proposito. O leitor do ACBr NAO le
+         esse atributo: numera pelo contador. -->
+    <det nItem="99">
+      <prod>
+        <cProd>P001</cProd>
+        <cEAN>SEM GTIN</cEAN>
+        <xProd>PRODUTO DE TESTE</xProd>
+        <NCM>84713012</NCM>
+        <CEST>2100100</CEST>
+        <indEscala>N</indEscala>
+        <CNPJFab>99999999000515</CNPJFab>
+        <cBenef>SP000001</cBenef>
+        <gCred>
+          <cCredPresumido>01</cCredPresumido>
+          <pCredPresumido>1.5000</pCredPresumido>
+          <vCredPresumido>15.00</vCredPresumido>
+        </gCred>
+        <CFOP>6102</CFOP>
+        <uCom>UN</uCom>
+        <qCom>3.0000</qCom>
+        <vUnCom>333.3333333333</vUnCom>
+        <vProd>1000.00</vProd>
+        <cEANTrib>SEM GTIN</cEANTrib>
+        <uTrib>UN</uTrib>
+        <qTrib>3.0000</qTrib>
+        <vUnTrib>333.3333333333</vUnTrib>
+        <indTot>1</indTot>
+        <DI>
+          <nDI>12/3456789-0</nDI>
+          <dDI>2026-01-02</dDI>
+          <xLocDesemb>SANTOS</xLocDesemb>
+          <UFDesemb>SP</UFDesemb>
+          <dDesemb>2026-01-03</dDesemb>
+          <tpViaTransp>01</tpViaTransp>
+          <tpIntermedio>1</tpIntermedio>
+          <cExportador>EXP001</cExportador>
+          <adi>
+            <nAdicao>1</nAdicao>
+            <nSeqAdic>1</nSeqAdic>
+            <cFabricante>FAB001</cFabricante>
+          </adi>
+        </DI>
+        <rastro>
+          <nLote>LOTE001</nLote>
+          <qLote>3.000</qLote>
+          <dFab>2026-01-01</dFab>
+          <dVal>2027-01-01</dVal>
+        </rastro>
+      </prod>
+      <imposto>
+        <vTotTrib>120.00</vTotTrib>
+        <ICMS>
+          <ICMS00>
+            <orig>0</orig>
+            <CST>00</CST>
+            <modBC>3</modBC>
+            <vBC>1000.00</vBC>
+            <pICMS>18.00</pICMS>
+            <vICMS>180.00</vICMS>
+          </ICMS00>
+        </ICMS>
+        <IPI>
+          <cEnq>999</cEnq>
+          <IPITrib>
+            <CST>50</CST>
+            <vBC>1000.00</vBC>
+            <pIPI>5.00</pIPI>
+            <vIPI>50.00</vIPI>
+          </IPITrib>
+        </IPI>
+        <PIS>
+          <PISAliq>
+            <CST>01</CST>
+            <vBC>1000.00</vBC>
+            <pPIS>1.65</pPIS>
+            <vPIS>16.50</vPIS>
+          </PISAliq>
+        </PIS>
+        <COFINS>
+          <COFINSAliq>
+            <CST>01</CST>
+            <vBC>1000.00</vBC>
+            <pCOFINS>7.60</pCOFINS>
+            <vCOFINS>76.00</vCOFINS>
+          </COFINSAliq>
+        </COFINS>
+      </imposto>
+      <obsItem>
+        <obsCont xCampo="Origem">
+          <xTexto>IMPORTADO</xTexto>
+        </obsCont>
+      </obsItem>
+    </det>
+    <!-- Item 2: combustivel, para exercitar pMixGN lido de qMixGN e a dupla
+         leitura de UFcons/UFCons -->
+    <det nItem="2">
+      <prod>
+        <cProd>P002</cProd>
+        <cEAN>SEM GTIN</cEAN>
+        <xProd>GASOLINA COMUM</xProd>
+        <NCM>27101259</NCM>
+        <CFOP>5656</CFOP>
+        <uCom>LT</uCom>
+        <qCom>100.0000</qCom>
+        <vUnCom>5.5000000000</vUnCom>
+        <vProd>550.00</vProd>
+        <cEANTrib>SEM GTIN</cEANTrib>
+        <uTrib>LT</uTrib>
+        <qTrib>100.0000</qTrib>
+        <vUnTrib>5.5000000000</vUnTrib>
+        <indTot>1</indTot>
+        <comb>
+          <cProdANP>320102001</cProdANP>
+          <descANP>GASOLINA C COMUM</descANP>
+          <qMixGN>27.0000</qMixGN>
+          <pGLP>0.0000</pGLP>
+          <UFCons>SP</UFCons>
+          <!-- grafia MINUSCULA: alimenta ICMSCons.UFCons no nivel do comb -->
+          <UFcons>MG</UFcons>
+          <CIDE>
+            <qBCProd>100.0000</qBCProd>
+            <vAliqProd>0.1000</vAliqProd>
+            <vCIDE>10.00</vCIDE>
+          </CIDE>
+          <encerrante>
+            <nBico>1</nBico>
+            <nBomba>2</nBomba>
+            <nTanque>3</nTanque>
+            <vEncIni>1000.000</vEncIni>
+            <vEncFin>1100.000</vEncFin>
+          </encerrante>
+          <origComb>
+            <indImport>0</indImport>
+            <cUFOrig>35</cUFOrig>
+            <pOrig>100.0000</pOrig>
+          </origComb>
+          <!-- o UFCons daqui SOBRESCREVE o <UFcons> minusculo lido acima -->
+          <ICMSCons>
+            <vBCICMSSTCons>50.00</vBCICMSSTCons>
+            <vICMSSTCons>9.00</vICMSSTCons>
+            <UFCons>RJ</UFCons>
+          </ICMSCons>
+        </comb>
+      </prod>
+      <imposto>
+        <ICMS>
+          <ICMS61>
+            <orig>0</orig>
+            <CST>61</CST>
+            <qBCMonoRet>100.00</qBCMonoRet>
+            <adRemICMSRet>1.2200</adRemICMSRet>
+            <vICMSMonoRet>122.00</vICMSMonoRet>
+            <!-- motRedAdRem presente mas SEM pRedAdRem: o guard do .pas
+                 (pRedAdRem <> 0) tem de impedir a leitura -->
+            <motRedAdRem>9</motRedAdRem>
+            <indDeduzDeson>0</indDeduzDeson>
+          </ICMS61>
+        </ICMS>
+        <PIS>
+          <PISNT>
+            <CST>07</CST>
+          </PISNT>
+        </PIS>
+        <COFINS>
+          <COFINSNT>
+            <CST>07</CST>
+          </COFINSNT>
+        </COFINS>
+      </imposto>
+    </det>
+    <!-- Item 3: ICMSPart. O leitor le o CST "10" do XML e depois REMAPEIA
+         para cstPart10, porque a partilha nao tem CST proprio no leiaute. -->
+    <det nItem="3">
+      <prod>
+        <cProd>P003</cProd>
+        <cEAN>SEM GTIN</cEAN>
+        <xProd>PRODUTO COM PARTILHA</xProd>
+        <NCM>84713012</NCM>
+        <CFOP>6102</CFOP>
+        <uCom>UN</uCom>
+        <qCom>1.0000</qCom>
+        <vUnCom>10.0000000000</vUnCom>
+        <vProd>10.00</vProd>
+        <cEANTrib>SEM GTIN</cEANTrib>
+        <uTrib>UN</uTrib>
+        <qTrib>1.0000</qTrib>
+        <vUnTrib>10.0000000000</vUnTrib>
+        <indTot>1</indTot>
+        <veicProd>
+          <tpOp>1</tpOp>
+          <chassi>9BWZZZ377VT004251</chassi>
+          <cCor>01</cCor>
+          <xCor>BRANCA</xCor>
+          <pot>085</pot>
+          <cilin>1600</cilin>
+          <pesoL>0950</pesoL>
+          <pesoB>1200</pesoB>
+          <nSerie>123456</nSerie>
+          <tpComb>02</tpComb>
+          <nMotor>MT123456</nMotor>
+          <CMT>1500</CMT>
+          <dist>2600</dist>
+          <anoMod>2026</anoMod>
+          <anoFab>2025</anoFab>
+          <tpPint>S</tpPint>
+          <tpVeic>06</tpVeic>
+          <espVeic>1</espVeic>
+          <VIN>R</VIN>
+          <condVeic>1</condVeic>
+          <cMod>123456</cMod>
+          <cCorDENATRAN>04</cCorDENATRAN>
+          <lota>5</lota>
+          <tpRest>0</tpRest>
+        </veicProd>
+      </prod>
+      <imposto>
+        <ICMS>
+          <ICMSPart>
+            <orig>0</orig>
+            <CST>10</CST>
+            <modBC>3</modBC>
+            <vBC>10.00</vBC>
+            <pICMS>18.00</pICMS>
+            <vICMS>1.80</vICMS>
+            <pBCOp>50.00</pBCOp>
+            <UFST>RJ</UFST>
+          </ICMSPart>
+        </ICMS>
+      </imposto>
+    </det>
+    <!-- Item 4: ICMSST. O CST "60" do XML vira cstRep60 no remapeamento. -->
+    <det nItem="4">
+      <prod>
+        <cProd>P004</cProd>
+        <cEAN>SEM GTIN</cEAN>
+        <xProd>PRODUTO COM ST REPASSE</xProd>
+        <NCM>84713012</NCM>
+        <CFOP>6404</CFOP>
+        <uCom>UN</uCom>
+        <qCom>1.0000</qCom>
+        <vUnCom>20.0000000000</vUnCom>
+        <vProd>20.00</vProd>
+        <cEANTrib>SEM GTIN</cEANTrib>
+        <uTrib>UN</uTrib>
+        <qTrib>1.0000</qTrib>
+        <vUnTrib>20.0000000000</vUnTrib>
+        <indTot>1</indTot>
+      </prod>
+      <imposto>
+        <ICMS>
+          <ICMSST>
+            <orig>0</orig>
+            <CST>60</CST>
+            <vBCSTRet>20.00</vBCSTRet>
+            <vICMSSTRet>3.60</vICMSSTRet>
+          </ICMSST>
+        </ICMS>
+        <COFINSST>
+          <vBC>20.00</vBC>
+          <pCOFINS>7.60</pCOFINS>
+          <vCOFINS>1.52</vCOFINS>
+        </COFINSST>
+      </imposto>
+    </det>
+    <total>
+      <ICMSTot>
+        <vBC>1000.00</vBC>
+        <vICMS>180.00</vICMS>
+        <vICMSDeson>0.00</vICMSDeson>
+        <vFCP>0.00</vFCP>
+        <vBCST>0.00</vBCST>
+        <vST>0.00</vST>
+        <vFCPST>0.00</vFCPST>
+        <vFCPSTRet>0.00</vFCPSTRet>
+        <vProd>1550.00</vProd>
+        <vFrete>0.00</vFrete>
+        <vSeg>0.00</vSeg>
+        <vDesc>0.00</vDesc>
+        <vII>0.00</vII>
+        <vIPI>50.00</vIPI>
+        <vIPIDevol>0.00</vIPIDevol>
+        <vPIS>16.50</vPIS>
+        <vCOFINS>76.00</vCOFINS>
+        <vOutro>0.00</vOutro>
+        <vNF>1600.00</vNF>
+        <vTotTrib>120.00</vTotTrib>
+      </ICMSTot>
+      <ISSQNtot>
+        <vServ>0.00</vServ>
+        <dCompet>2026-01-15</dCompet>
+      </ISSQNtot>
+    </total>
+    <transp>
+      <modFrete>1</modFrete>
+      <transporta>
+        <CNPJ>99999999000696</CNPJ>
+        <xNome>TRANSPORTADORA DE TESTE</xNome>
+        <IE>333333333</IE>
+        <xEnder>RUA DO FRETE 400</xEnder>
+        <xMun>SAO PAULO</xMun>
+        <UF>SP</UF>
+      </transporta>
+      <veicTransp>
+        <placa>ABC1D23</placa>
+        <UF>SP</UF>
+        <RNTC>12345</RNTC>
+      </veicTransp>
+      <reboque>
+        <placa>XYZ9W87</placa>
+        <UF>SP</UF>
+      </reboque>
+      <vol>
+        <qVol>2</qVol>
+        <esp>CAIXA</esp>
+        <marca>TESTE</marca>
+        <pesoL>10.000</pesoL>
+        <pesoB>12.000</pesoB>
+        <lacres>
+          <nLacre>LACRE001</nLacre>
+        </lacres>
+        <lacres>
+          <nLacre>LACRE002</nLacre>
+        </lacres>
+      </vol>
+    </transp>
+    <cobr>
+      <fat>
+        <nFat>FAT001</nFat>
+        <vOrig>1600.00</vOrig>
+        <vDesc>0.00</vDesc>
+        <vLiq>1600.00</vLiq>
+      </fat>
+      <dup>
+        <nDup>001</nDup>
+        <dVenc>2026-02-15</dVenc>
+        <vDup>800.00</vDup>
+      </dup>
+      <dup>
+        <nDup>002</nDup>
+        <dVenc>2026-03-15</dVenc>
+        <vDup>800.00</vDup>
+      </dup>
+    </cobr>
+    <pag>
+      <detPag>
+        <indPag>1</indPag>
+        <tPag>03</tPag>
+        <vPag>1600.00</vPag>
+        <card>
+          <tpIntegra>1</tpIntegra>
+          <CNPJ>99999999000777</CNPJ>
+          <tBand>01</tBand>
+          <cAut>123456</cAut>
+        </card>
+      </detPag>
+      <vTroco>0.00</vTroco>
+    </pag>
+    <infAdic>
+      <infCpl>INFORMACAO COMPLEMENTAR DE TESTE</infCpl>
+      <obsCont xCampo="Pedido">
+        <xTexto>PED-2026-001</xTexto>
+      </obsCont>
+      <procRef>
+        <nProc>PROC-001</nProc>
+        <indProc>1</indProc>
+      </procRef>
+    </infAdic>
+    <exporta>
+      <UFEmbarq>SP</UFEmbarq>
+      <xLocEmbarq>SANTOS</xLocEmbarq>
+      <UFSaidaPais>SP</UFSaidaPais>
+      <xLocExporta>SANTOS</xLocExporta>
+    </exporta>
+    <compra>
+      <xNEmp>EMP001</xNEmp>
+      <xPed>PED001</xPed>
+    </compra>
+    <cana>
+      <safra>2025/2026</safra>
+      <ref>01/2026</ref>
+      <forDia dia="1">
+        <qtde>100.0000000000</qtde>
+      </forDia>
+      <!-- forDia SEM o atributo dia: o ACBr faz StrToInt direto e quebra;
+           aqui vale zero -->
+      <forDia>
+        <qtde>50.0000000000</qtde>
+      </forDia>
+      <qTotMes>150.0000000000</qTotMes>
+      <deduc>
+        <xDed>TAXA</xDed>
+        <vDed>10.00</vDed>
+      </deduc>
+    </cana>
+    <infRespTec>
+      <CNPJ>99999999000858</CNPJ>
+      <xContato>RESPONSAVEL DE TESTE</xContato>
+      <email>ti@exemplo.invalid</email>
+      <fone>1199998888</fone>
+    </infRespTec>
+    <agropecuario>
+      <defensivo>
+        <nReceituario>REC001</nReceituario>
+        <CPFRespTec>22222222222</CPFRespTec>
+      </defensivo>
+      <guiaTransito>
+        <UFGuia>SP</UFGuia>
+        <tpGuia>1</tpGuia>
+        <serieGuia>A</serieGuia>
+        <nGuia>GTA001</nGuia>
+      </guiaTransito>
+    </agropecuario>
+  </infNFe>
+</NFe>
