@@ -34,6 +34,10 @@ var (
 	// ErrConteudoMisto indica elemento com texto e filhos misturados, que a
 	// canonicalizacao deste package nao suporta (nao ocorre em DFe).
 	ErrConteudoMisto = errors.New("dfe: conteudo misto nao suportado na canonicalizacao")
+	// ErrSemTagResultado indica Requisicao sem nenhum nome de elemento de
+	// resultado. E erro de uso, nao de transmissao.
+	ErrSemTagResultado = errors.New("dfe: nenhuma tag de resultado informada")
+
 	// ErrSOAPFault indica resposta soap:Fault do servidor.
 	ErrSOAPFault = errors.New("dfe: o servidor devolveu um SOAP Fault")
 	// ErrRespostaSemDados indica envelope de resposta sem o elemento de

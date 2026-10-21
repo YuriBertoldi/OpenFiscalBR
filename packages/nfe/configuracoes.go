@@ -11,13 +11,19 @@
 
 package nfe
 
-import "github.com/openfiscalbr/openfiscalbr/packages/pcn"
+import (
+	"time"
+
+	"github.com/openfiscalbr/openfiscalbr/packages/dfe"
+	"github.com/openfiscalbr/openfiscalbr/packages/pcn"
+)
 
 // Configuracoes reune o que o COMPONENTE sabe e o documento nao.
 //
-// Porte parcial de TConfiguracoesNFe.Geral e .WebServices: por ora so os
-// campos que o QR-Code e as regras de negocio consomem. Os de transmissao
-// (certificado, timeout, proxy) entram com os web services.
+// Porte parcial de TConfiguracoesNFe.Geral e .WebServices: por ora os
+// campos que o QR-Code, as regras de negocio e os web services consomem.
+// Os de arquivo (caminhos, salvar XML) nao entram: gravar em disco e papel
+// do consumidor da biblioteca, nao dela.
 //
 // A distincao importa: tudo que esta aqui e configuracao do EMISSOR, nao do
 // documento. O ACBr compara os dois em varias regras -- o ambiente da nota
@@ -61,4 +67,22 @@ type Configuracoes struct {
 	// na versao 1, sem padding na 2.
 	CSC   string
 	IDCSC string
+
+	// FormaEmissao e a contingencia configurada. Ela decide SOB QUAL
+	// UNIDADE o endereco do web service e procurado: em SVC o documento
+	// passa a ser autorizado pelo ambiente virtual, nao pela SEFAZ de
+	// origem (ACBrNFe.pas:517-523).
+	//
+	// Nao se confunde com o Ide.TpEmis do documento, embora os dois devam
+	// concordar -- e as regras 570 e 713 existem justamente para conferir
+	// isso.
+	FormaEmissao pcn.TipoEmissao
+
+	// Certificado assina e autentica a conexao TLS com a SEFAZ. Nulo
+	// impede qualquer transmissao: os web services da NF-e exigem
+	// autenticacao mutua.
+	Certificado *dfe.Certificado
+
+	// Timeout limita cada chamada. Zero usa o padrao do cliente SOAP.
+	Timeout time.Duration
 }

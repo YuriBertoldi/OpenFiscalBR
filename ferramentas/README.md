@@ -315,3 +315,44 @@ o script acusa antes de a simplificação virar defeito.
 3. **Acusa entrada REDUNDANTE** numa tabela de divergências — UF declarada que
    repete o valor da tabela base. É ruído que esconde o fato de a divergência
    existir em poucos lugares.
+
+## `conferir-endpoints-dfe.py`
+
+Confere a tabela de **endereços de transmissão** contra o `Servicos.ini`.
+Complementa o `conferir-urls-dfe.py`, que cuida das URLs públicas.
+
+```bash
+py ferramentas/conferir-endpoints-dfe.py <servicos.ini> <tabela.go>
+
+py ferramentas/conferir-endpoints-dfe.py \
+   "$ACBR_FONTES/ACBrDFe/ACBrNFe/ACBrNFeServicos.ini" \
+   packages/nfe/urls_servicos_tabela.go
+```
+
+Os endpoints têm forma diferente das URLs públicas, e a diferença é
+**estrutural**: nem toda UF opera o próprio ambiente de autorização. A maioria
+delega — dezesseis para o SVRS no modelo 55, dezenove no 65 — e o `.ini`
+expressa isso com `Usar=` de seção para seção. Quem decide o endereço não é a
+UF do emitente, é o **autorizador** que atende aquela UF naquele modelo.
+
+O porte guarda as duas coisas separadas (mapa UF→autorizador e endereços por
+autorizador), e o script confere **três** coisas:
+
+1. o mapa UF→autorizador contra o destino real do `Usar=`;
+2. os endereços, combinação a combinação, com a resolução completa do `.ini`;
+3. a **premissa** que permite a separação: a de que o redirecionamento é
+   sempre de seção inteira.
+
+A terceira é a que protege o modelo. Se alguma UF passar a definir um serviço
+localmente e delegar outro, a tabela por autorizador deixa de servir — e é
+melhor descobrir isso no script do que em produção.
+
+### Limites
+
+1. **Só conhece os serviços declarados em `SERVICOS`.** Acrescente a entrada
+   quando a etapa que transmite o serviço novo entrar.
+2. **Não valida o endereço.** Confere que o Go e o `.ini` dizem a mesma coisa;
+   se o `.ini` do ACBr estiver desatualizado, os dois estarão errados juntos.
+3. **Não confere a queda de versão.** A tabela Go guarda o valor já resolvido
+   para cada versão; a lógica de "maior versão `<=` a pedida" é exercitada na
+   geração, não na conferência.

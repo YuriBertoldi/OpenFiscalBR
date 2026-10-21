@@ -55,4 +55,9 @@ var (
 	// offline sem funcao de assinatura. A versao 3 fecha com assinatura RSA,
 	// nao com hash, e sem o certificado nao ha o que gerar.
 	ErrCertificadoObrigatorio = errors.New("nfe: QR-Code versao 3 offline exige o certificado")
+
+	// ErrCertificadoNaoConfigurado indica tentativa de transmitir sem
+	// certificado. Os web services da NF-e exigem autenticacao mutua: sem
+	// ele nao ha conexao, nem para consultar.
+	ErrCertificadoNaoConfigurado = errors.New("nfe: certificado nao configurado")
 )

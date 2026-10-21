@@ -4,9 +4,10 @@ Nota Fiscal Eletrônica (modelo 55) e Nota Fiscal de Consumidor Eletrônica
 (modelo 65) — porte do componente **ACBrNFe** do [Projeto ACBr](http://projetoacbr.com.br).
 
 > **Estado:** em construção. Estão prontos os **tipos/enums**, o **modelo de
-> dados completo**, o **leitor de XML** e o **gerador do cabeçalho**. O gerador
-> do item, os web services, os eventos e o `.ini` chegam nas etapas seguintes —
-> veja [Roteiro](#roteiro).
+> dados completo**, o **leitor** e o **gerador de XML**, as **regras de
+> negócio**, o **QR-Code** e os web services de **status** e **consulta**.
+> Autorização, inutilização, eventos, distribuição DF-e e o `.ini` chegam nas
+> etapas seguintes — veja [Roteiro](#roteiro).
 
 ## Origem dos fontes
 
@@ -487,6 +488,64 @@ Ele é verificado pelos **71 vetores da própria suíte de testes do ACBr** (37 
 inválidos), não por exemplos inventados. Fica o registro para CTe e MDFe: o ACBr **tem**
 suíte de testes, em `Testes/FPCUnit/`, e ela é fonte melhor do que exemplo construído à mão.
 
+
+## Transmissão: status e consulta
+
+`web_services.go` porta `TNFeStatusServico` e `TNFeConsulta`. Cada serviço resolve três
+coisas antes de transmitir, e as três dependem de dados que **não** estão no documento:
+
+| O quê | De onde vem |
+|---|---|
+| endereço | tabela por autorizador (`urls_servicos_tabela.go`) |
+| nome do serviço e SoapAction | versão do leiaute e, numa UF, a própria UF |
+| `versaoDados` do cabeçalho | versão do **serviço**, não a do documento |
+
+```go
+c := nfe.NovoComponente(cfg)
+status, err := c.StatusServico(ctx, time.Now())
+if status.EmOperacao() { ... }
+
+ret, err := c.Consultar(ctx, chave)
+if ret.Autorizada() { arquivar(ret.XMLProtNFe) }
+```
+
+### Endereços por AUTORIZADOR, não por UF
+
+Nem toda UF opera o próprio ambiente de autorização. A maioria delega — dezesseis para o
+SVRS no modelo 55, dezenove no 65 — e o `.ini` do ACBr expressa isso com um
+redirecionamento `Usar=` de seção para seção. Quem decide o endereço, portanto, não é a UF
+do emitente: é o **autorizador** que atende aquela UF naquele modelo.
+
+O porte guarda as duas coisas separadas, e as cinquenta e oito combinações de UF e ambiente
+colapsam em quinze autorizadores no modelo 55 e doze no 65.
+
+A separação depende de uma premissa: a de que o redirecionamento é sempre de **seção
+inteira** — não existe UF que defina um serviço localmente e delegue outro.
+`ferramentas/conferir-endpoints-dfe.py` reconfere essa premissa a cada execução, porque é
+ela que sustenta o modelo.
+
+### Três sutilezas que o porte preserva
+
+1. **O cabeçalho SOAP só existe abaixo da 4.00.** Da 4.00 em diante a NF-e manda o envelope
+   **sem** `<soap12:Header>` (`ACBrNFeWebServices.pas:692`). Abaixo dela vai um
+   `<nfeCabecMsg>` com `cUF` e `versaoDados`.
+2. **Na consulta, a UF, o modelo e o `cUF` do cabeçalho vêm da CHAVE**, não da configuração
+   (`:2082-2100` e `:2169`) — consulta-se onde a nota foi autorizada. A exceção é a
+   contingência SVC, que desvia para o ambiente virtual.
+3. **O nome do elemento de retorno varia** por versão e por UF, e os candidatos são tentados
+   sobre a **mesma** resposta (`SeparaDadosArray`). Reenviar o documento a cada tentativa
+   seria errado na consulta e, na autorização, registraria duplicidade.
+
+### O que ficou de fora
+
+O `TratarResposta` da consulta no ACBr também grava eventos em disco, atualiza as notas
+carregadas no componente e ajusta `AguardarConsultaRet`. Nada disso é leiaute: gravar
+arquivo é papel de quem consome a biblioteca.
+
+O que é leiaute e **ficou**: o XML cru do `protNFe` (`XMLProtNFe`), de onde sai o `nfeProc`,
+e os eventos como XML cru em `ProcEventos` — a leitura estruturada deles depende do leitor
+de eventos, que entra na etapa própria.
+
 ## Roteiro
 
 | # | Etapa | Estado |
@@ -497,8 +556,8 @@ suíte de testes, em `Testes/FPCUnit/`, e ela é fonte melhor do que exemplo con
 | 3 | `xml_reader.go` | concluída |
 | 4a | `xml_writer.go` — cabeçalho, totais, transporte, cobrança | concluída |
 | 4b | `xml_writer_det.go` — `det` (produto e impostos) | concluída |
-| 5 | regras de negócio, QR-Code e URLs públicas | **nesta entrega** |
-| 6a | status e consulta + endpoints dos web services | pendente |
+| 5 | regras de negócio, QR-Code e URLs públicas | concluída |
+| 6a | status e consulta + endpoints dos web services | **nesta entrega** |
 | 6b | autorização, inutilização, consulta cadastro, CSC | pendente |
 | 7 | eventos (cancelamento, CC-e, manifestação) + `StrToTpEventoNFe` | pendente |
 | 8 | Distribuição DF-e | pendente |
