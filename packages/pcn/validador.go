@@ -19,8 +19,14 @@ import (
 // Porte das validacoes de documento de ACBrValidador.pas.
 
 // OnlyCPFCNPJAlphaNum devolve apenas os caracteres validos de um CPF/CNPJ,
-// preservando letras maiusculas -- necessario desde o CNPJ alfanumerico.
-// Porte de OnlyCPFCNPJAlphaNum (ACBrValidador).
+// MAIUSCULIZANDO as letras -- necessario desde o CNPJ alfanumerico.
+// Porte de OnlyCPFCNPJAlphaNum (ACBrUtil.Strings.pas:1211), que e literalmente
+// AnsiUpperCase(OnlyAlphaNum(...)).
+//
+// A diferenca para OnlyAlphaNum (conversao.go) e so a caixa, e o ACBr escolhe
+// entre as duas de proposito: AddNodeCNPJCPF limpa com OnlyAlphaNum
+// (ACBrXmlWriter.pas:161) e AddNodeCNPJ com esta (:203). Com o CNPJ
+// alfanumerico de 2026 as duas deixam de dar o mesmo resultado.
 func OnlyCPFCNPJAlphaNum(s string) string {
 	var b strings.Builder
 	b.Grow(len(s))
