@@ -14,6 +14,7 @@ package dfe
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -79,41 +80,12 @@ func MontarEnvelope(tagDadosMsg, servico, dadosMsg string) string {
 // soapAction e a action completa do metodo (vai no Content-Type, como o
 // SOAP 1.2 pede, e tambem no header SOAPAction por compatibilidade).
 func (c *ClienteSOAP) Chamar(ctx context.Context, url, servico, soapAction, tagDadosMsg, tagResultMsg, dadosMsg string) (string, error) {
-	envelope := MontarEnvelope(tagDadosMsg, servico, dadosMsg)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, strings.NewReader(envelope))
-	if err != nil {
-		return "", &ErroTransmissao{URL: url, SoapAction: soapAction, Err: err}
-	}
-	req.Header.Set("Content-Type", `application/soap+xml; charset=utf-8; action="`+soapAction+`"`)
-	req.Header.Set("SOAPAction", soapAction)
-
-	cliente := c.HTTPClient
-	if cliente == nil {
-		cliente = &http.Client{Timeout: TimeoutPadrao}
-	}
-	resp, err := cliente.Do(req)
-	if err != nil {
-		return "", &ErroTransmissao{URL: url, SoapAction: soapAction, Err: err}
-	}
-	defer resp.Body.Close()
-
-	corpo, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", &ErroTransmissao{URL: url, SoapAction: soapAction, StatusHTTP: resp.StatusCode, Err: err}
-	}
-
-	resultado, err := ExtrairResultadoSOAP(string(corpo), tagResultMsg)
-	if err != nil {
-		// mesmo com Fault o servidor costuma responder 500 -- devolve o
-		// contexto HTTP junto
-		return "", &ErroTransmissao{URL: url, SoapAction: soapAction, StatusHTTP: resp.StatusCode, Err: err}
-	}
-	if resp.StatusCode != http.StatusOK {
-		return "", &ErroTransmissao{URL: url, SoapAction: soapAction, StatusHTTP: resp.StatusCode,
-			Err: fmt.Errorf("status HTTP inesperado")}
-	}
-	return resultado, nil
+	return c.Executar(ctx, Requisicao{
+		URL: url, Servico: servico, SoapAction: soapAction,
+		TagDadosMsg:   tagDadosMsg,
+		DadosMsg:      dadosMsg,
+		TagsResultado: []string{tagResultMsg},
+	})
 }
 
 // ExtrairResultadoSOAP localiza o elemento de resultado no envelope de
@@ -176,4 +148,128 @@ func innerXML(n *pcn.Node) string {
 		b.WriteString(f.OuterXML())
 	}
 	return b.String()
+}
+
+// Chamada de web service com CABECALHO SOAP e com varios nomes possiveis
+// para o elemento de resultado.
+//
+// O Chamar (soap.go) cobre o caso simples, que e o da NFGas: sem header e
+// com um nome de resultado so. A NF-e precisa dos dois eixos a mais:
+//
+//   - abaixo da versao 4.00 ela manda um <soap12:Header> com o cUF e o
+//     versaoDados; da 4.00 em diante, NENHUM header
+//     (ACBrNFeWebServices.pas:692);
+//   - o elemento de retorno muda de nome por versao de servico e por UF, e
+//     o ACBr tenta os nomes em ordem (SeparaDadosArray).
+
+// Requisicao descreve uma chamada a um web service da SEFAZ.
+//
+// Existe como struct, e nao como lista de parametros, porque sao sete
+// eixos e a maioria das chamadas deixa dois deles vazios -- uma assinatura
+// posicional de sete argumentos seria ilegivel no ponto de uso.
+type Requisicao struct {
+	URL        string
+	Servico    string // namespace do servico, usado no envelope
+	SoapAction string
+
+	// TagDadosMsg e o elemento que envolve a mensagem no Body
+	// ("nfeDadosMsg", "nfgasDadosMsg").
+	TagDadosMsg string
+	DadosMsg    string
+
+	// TagCabecalho e Cabecalho montam o <soap12:Header>. Vazios produzem
+	// envelope SEM header nenhum -- nao um header vazio.
+	TagCabecalho string
+	Cabecalho    string
+
+	// TagsResultado sao os nomes possiveis do elemento de retorno, tentados
+	// em ordem sobre a MESMA resposta.
+	TagsResultado []string
+}
+
+// Executar transmite a requisicao e devolve o conteudo do elemento de
+// resultado.
+//
+// Os nomes de TagsResultado sao tentados sobre a resposta JA RECEBIDA.
+// Reenviar o documento a cada tentativa seria errado e, nos servicos de
+// autorizacao, perigoso: a SEFAZ registraria duplicidade.
+func (c *ClienteSOAP) Executar(ctx context.Context, req Requisicao) (string, error) {
+	if len(req.TagsResultado) == 0 {
+		return "", ErrSemTagResultado
+	}
+
+	envelope := MontarEnvelopeComCabecalho(req.TagDadosMsg, req.Servico,
+		req.DadosMsg, req.TagCabecalho, req.Cabecalho)
+
+	corpo, status, err := c.transmitir(ctx, req.URL, req.SoapAction, envelope)
+	if err != nil {
+		return "", err
+	}
+
+	var ultimoErro error
+	for _, tag := range req.TagsResultado {
+		resultado, err := ExtrairResultadoSOAP(corpo, tag)
+		if err == nil {
+			if status != http.StatusOK {
+				return "", &ErroTransmissao{URL: req.URL, SoapAction: req.SoapAction,
+					StatusHTTP: status, Err: fmt.Errorf("status HTTP inesperado")}
+			}
+			return resultado, nil
+		}
+		// Um soap:Fault nao melhora com outro nome de tag: para na hora.
+		if errors.Is(err, ErrSOAPFault) {
+			return "", &ErroTransmissao{URL: req.URL, SoapAction: req.SoapAction,
+				StatusHTTP: status, Err: err}
+		}
+		ultimoErro = err
+	}
+	return "", &ErroTransmissao{URL: req.URL, SoapAction: req.SoapAction,
+		StatusHTTP: status, Err: ultimoErro}
+}
+
+// MontarEnvelopeComCabecalho e o MontarEnvelope com um <soap12:Header>
+// opcional. Porte de TDFeWebService.DefinirEnvelopeSoap
+// (ACBrDFeWebService.pas:320-345).
+func MontarEnvelopeComCabecalho(tagDadosMsg, servico, dadosMsg, tagCabecalho, cabecalho string) string {
+	if tagCabecalho == "" || cabecalho == "" {
+		return MontarEnvelope(tagDadosMsg, servico, dadosMsg)
+	}
+
+	return `<soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"` +
+		` xmlns:xsd="http://www.w3.org/2001/XMLSchema"` +
+		` xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">` +
+		`<soap12:Header><` + tagCabecalho + ` xmlns="` + servico + `">` +
+		cabecalho +
+		`</` + tagCabecalho + `></soap12:Header>` +
+		`<soap12:Body><` + tagDadosMsg + ` xmlns="` + servico + `">` +
+		dadosMsg +
+		`</` + tagDadosMsg + `></soap12:Body></soap12:Envelope>`
+}
+
+// transmitir envia o envelope ja montado e devolve o corpo bruto da
+// resposta, junto do status HTTP.
+func (c *ClienteSOAP) transmitir(ctx context.Context, url, soapAction, envelope string) (string, int, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, strings.NewReader(envelope))
+	if err != nil {
+		return "", 0, &ErroTransmissao{URL: url, SoapAction: soapAction, Err: err}
+	}
+	req.Header.Set("Content-Type", `application/soap+xml; charset=utf-8; action="`+soapAction+`"`)
+	req.Header.Set("SOAPAction", soapAction)
+
+	cliente := c.HTTPClient
+	if cliente == nil {
+		cliente = &http.Client{Timeout: TimeoutPadrao}
+	}
+	resp, err := cliente.Do(req)
+	if err != nil {
+		return "", 0, &ErroTransmissao{URL: url, SoapAction: soapAction, Err: err}
+	}
+	defer resp.Body.Close()
+
+	corpo, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", resp.StatusCode, &ErroTransmissao{URL: url, SoapAction: soapAction,
+			StatusHTTP: resp.StatusCode, Err: err}
+	}
+	return string(corpo), resp.StatusCode, nil
 }

@@ -458,3 +458,45 @@ Replicado mesmo parecendo errado (**não** "corrigir"):
 > a fixture da NFe não tem frete nem desconto, e o teste da tolerância dupla da 610 pulava
 > **sempre** porque ela também não tem ICMS desonerado. Teste que depende de fixture precisa
 > **falhar** quando o campo vem zerado, não passar em silêncio.
+
+### Divergências dos WEB SERVICES da NFe — status e consulta (2026-10-21)
+
+Porte de `TNFeStatusServico` e `TNFeConsulta` (`ACBrNFeWebServices.pas`), mais a tabela de
+endpoints do `ACBrNFeServicos.ini`.
+
+| # | Onde | O ACBr faz | O porte faz |
+|---|---|---|---|
+| 1 | tabela de endpoints | guarda por SEÇÃO do `.ini`, com redirecionamento `Usar=` em tempo de execução | guarda **por autorizador**, com o redirecionamento já resolvido. As 58 combinações de UF e ambiente colapsam em 15 autorizadores no modelo 55 e 12 no 65 |
+| 2 | versão "achada" na busca | quando a versão pedida não existe, cai para a inferior **e devolve a versão achada**, que vira o `versaoDados` (`ACBrDFe.pas:505`) | a queda está materializada na **URL**; o `versaoDados` usa sempre a versão configurada. Dispensar a dimensão é deliberado: o `AchaArquivoSchema` (`:581-590`) desfaz a queda quando o `.xsd` da versão pedida existe, e ele existe na instalação padrão |
+| 3 | `TratarResposta` da consulta | grava eventos em disco, atualiza as notas carregadas e ajusta `AguardarConsultaRet` | só lê a resposta. Gravar arquivo é papel de quem consome a biblioteca |
+| 4 | `MinutesBetween > 50` no ajuste do SVRS | trunca para minutos inteiros, logo ajusta a partir de **51** minutos cheios | idem, com `Truncate(time.Minute)` |
+
+Replicado mesmo parecendo errado (**não** "corrigir"):
+
+- **A SoapAction da Bahia na 4.00 vem do `.ini`, não do código.** `[NFe_BA_P]` declara
+  `SoapAction=SOAP_V4_BA`, e naquela seção a action da consulta de protocolo é
+  `.../NFeConsulta4/nfeConsultaNF` — **não** o `NFeConsultaProtocolo4` que o
+  `DefinirServicoEAction` montaria. O `FPServico` (namespace do envelope) continua o
+  montado, porque nenhuma seção usa a chave `WSDL=`; só a action muda. É o efeito do
+  `EstaVazio(FPServico)` de `:2123`, e sem ele a consulta da Bahia não funciona.
+- **O ajuste de horário do SVRS** (`:885-893`) subtrai uma hora do `dhRecbto` quando a URL é
+  do SVRS e a diferença passa de 50 minutos. A terceira condição do original
+  (`not IsHorarioDeVerao`) é hoje **sempre verdadeira**: o horário de verão foi extinto pelo
+  Decreto 9.772/2019.
+- **A leitura do `protNFe` e do `retCancNFe` é condicionada ao `cStat` da CONSULTA**
+  (`RetConsSit.pas:196` e `:226`), com listas **diferentes**: `[100,101,104,150,151,155]`
+  para o protocolo e `[101,151,155]` para o cancelamento. Uma rejeição que venha acompanhada
+  de `protNFe` — caso que a SEFAZ-PR já produziu — tem o bloco descartado.
+- **Os conjuntos de `cStat` são do ACBr, não inventados**: `CstatProcessado` é
+  `[100, 120, 150]` e `CstatCancelada` é `[101, 135, 151, 155]` (`ACBrNFe.pas:295-311`). O
+  120 é autorização por DPEC e é o que mais escapa.
+- **`Processada()` olha o `cStat` externo; `Autorizada()` olha o do `protNFe`.** O ACBr usa
+  os dois em momentos diferentes (`:2397` e `:2419`), porque uma nota cancelada volta com
+  `cStat` externo de cancelamento e ainda traz o protocolo da autorização original.
+
+> **Como o bloqueante foi achado — e por que a auditoria não pegou.** O
+> `conferir-endpoints-dfe.py` comparava só as URLs; as chaves `WSDL=` e `SoapAction=` do
+> `.ini` ficavam fora. Uma delas existe e muda o comportamento numa UF em produção. Fica o
+> aviso para CTe e MDFe: o `.ini` do ACBr tem **três** eixos de configuração por seção, não
+> um — endereço, namespace do serviço e SoapAction — e os dois últimos são declarados por
+> redirecionamento para outra seção.
