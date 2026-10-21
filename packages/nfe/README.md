@@ -5,10 +5,10 @@ Nota Fiscal Eletrônica (modelo 55) e Nota Fiscal de Consumidor Eletrônica
 
 > **Estado:** em construção. Estão prontos os **tipos/enums**, o **modelo de
 > dados completo**, o **leitor** e o **gerador de XML**, as **regras de
-> negócio**, o **QR-Code** e os web services de **status**, **consulta**,
-> **autorização**, **inutilização**, **consulta de cadastro** e **CSC**.
-> Eventos, distribuição DF-e e o `.ini` chegam nas etapas seguintes — veja
-> [Roteiro](#roteiro).
+> negócio**, o **QR-Code**, os **eventos** (31 tipos) e os web services de
+> **status**, **consulta**, **autorização**, **inutilização**, **consulta de
+> cadastro** e **CSC**. Distribuição DF-e e o `.ini` chegam nas etapas
+> seguintes — veja [Roteiro](#roteiro).
 
 ## Origem dos fontes
 
@@ -606,10 +606,10 @@ emissor.
 regra base é a versão, mas há uma exceção por UF: a **NFC-e 3.10 no Amazonas** permaneceu no
 serviço antigo (`ACBrNFe.pas:313`).
 
-### Dois serviços têm versão PRÓPRIA
+### Quatro serviços têm versão PRÓPRIA
 
-`consCad` existe só em **2.00** e `admCscNFCe` em **1.00**, independentemente do leiaute da
-nota. No ACBr isso emerge de dois estágios — a chave do `.ini` e, depois, o schema instalado,
+`consCad` existe só em **2.00**; `admCscNFCe`, `envEvento` e `eventoEPEC`, em **1.00** —
+independentemente do leiaute da nota. No ACBr isso emerge de dois estágios — a chave do `.ini` e, depois, o schema instalado,
 que vence quando existe (`ACBrDFe.pas:580-590`). Para `consStatServ`, `consSitNFe` e `inutNFe`
 o schema da 4.00 existe e restaura a versão pedida; para esses dois não há resgate.
 
@@ -624,6 +624,91 @@ valida a mensagem contra o XSD do **serviço**.
   consumidor;
 - **gravação em disco** de todos os seis serviços.
 
+## Eventos
+
+`evento_writer.go`, `evento_writer_rtc.go`, `ret_env_evento*.go` e
+`web_services_evento.go` portam `TEventoNFe`, `TRetEventoNFe` e `TNFeEnvEvento` — **31 tipos
+de evento**, dos quais 17 clássicos e 14 da Reforma Tributária.
+
+```go
+ret, err := c.Cancelamento(ctx, chave, protocolo, justificativa, 1, time.Now())
+if r := ret.RetornoDaChave(chave); r.VinculadoANota() {
+    proc := nfe.GerarXMLProcEvento(evento.XMLAssinado, *r, "1.00")
+}
+
+ret, _ = c.EnviarCartaCorrecao(ctx, chave, "Correcao do endereco", 1, 2, time.Now())
+ret, _ = c.ManifestarDestinatario(ctx, chave, pcn.TeManifDestCiencia,
+    cnpjDoDestinatario, "", 3, time.Now())
+```
+
+### O catálogo de eventos vive no `pcn`
+
+`TipoEvento` tem **96 membros** e cobre NF-e, CTe e MDFe — é o `TACBrTipoEvento` do ACBr, que
+também é único. Ele vai no `pcn` porque vários eventos de MDFe chegam numa consulta de NF-e e o
+leitor precisa saber nomeá-los.
+
+A conversão tem um desequilíbrio que governa o desenho:
+
+| direção | |
+|---|---|
+| enum → código | total e sem ambiguidade (`Codigo()`) |
+| código → enum | **ambíguo** no catálogo inteiro |
+
+Sete códigos se repetem entre documentos — o `110112` é "Encerramento" no MDFe e "Cancelamento
+por substituição" na NF-e. Por isso **não existe** um `ParseTipoEvento` global: cada documento
+tem a sua tabela, como o `StrToTpEventoNFe` do ACBr.
+
+### Roteamento: eventos do mesmo documento vão para SEFAZ diferentes
+
+É a condicional mais rica de todo o port, e errar o endereço não dá erro de rede — dá
+rejeição, com uma mensagem que não menciona o endereço.
+
+| evento | destino |
+|---|---|
+| CC-e, cancelamento, cancelamento por substituição, prorrogação | SEFAZ da UF da **chave** (ou SVC em contingência) |
+| manifestação do destinatário e demais "não locais" | Ambiente Nacional (`AN`) |
+| insucesso na entrega e seu cancelamento | `SVRS`, sempre |
+| conciliação financeira | `SVRS` na NF-e; UF da chave na NFC-e |
+| os 15 da Reforma Tributária | `SVRS`, sempre |
+| EPEC de NFC-e em SP | serviço próprio (`EventoEPEC`) |
+
+Os três últimos são desvios **posteriores** ao do AN, e por isso vencem. A contingência SVC é
+escolhida **antes** de tudo: ela alcança o cancelamento, mas não a manifestação.
+
+### A armadilha central: sete `gControleEstoque`
+
+Todos saem com o **mesmo nome de elemento**, cada um com um par de tags próprio — `qConsumo`,
+`qtde`, `qPerecimento`, `qImobilizado`, `qComb`, `qNaoFornecida`, e o do fornecedor, que ainda
+traz `vIBS` e `vCBS` repetindo os nomes do grupo pai. No Delphi a distinção é por **sobrecarga
+de tipo**; em Go, por função própria.
+
+Um gerador genérico emitiria `qConsumo` nos sete casos, e **nenhum round-trip pegaria**: o
+elemento pai tem o mesmo nome nos dois lados da troca. O mesmo vale para `<gConsumo>` (consumo
+pessoal × ALC/ZFM) e `<gPerecimento>` (adquirente × fornecedor).
+
+`ferramentas/conferir-eventos-dfe.py` confere isso mecanicamente: 31 eventos, 5 literais fixos
+e as 7 formas do `gControleEstoque`, comparando conjunto **e ordem** das tags contra o `.pas`.
+
+### O `descEvento` de dezesseis eventos leva ACENTO
+
+O filtro padrão do `TACBrXmlWriter` — e o do `pcn.NodeStr` — translitera acentos para ASCII. O
+ACBr o **desliga** para dezesseis tipos antes de gerar o `detEvento` (`:947-957`), com o
+comentário "Não funciona sem acentos".
+
+A lista não é derivável: o cancelamento genérico é da Reforma e está **fora**; o ator
+interessado não é e está **dentro** — e a descrição dele é ASCII puro. Só uma implicação vale:
+toda descrição acentuada precisa estar na lista.
+
+No ACBr a flag é **global e não é restaurada**, então o primeiro evento acentuado de um lote
+contamina os seguintes. Aqui a decisão é **por evento** — o `CLAUDE.md` manda não replicar
+comportamento que depende da ordem de iteração.
+
+### A versão do evento é 1.00, sempre
+
+Inclusive num componente 4.00 e inclusive nos eventos da Reforma — a SEFAZ publica um único
+`envEvento_v1.00.xsd`. Ver [Dois serviços têm versão PRÓPRIA](#dois-serviços-têm-versão-própria),
+que agora são quatro.
+
 ## Roteiro
 
 | # | Etapa | Estado |
@@ -636,8 +721,8 @@ valida a mensagem contra o XSD do **serviço**.
 | 4b | `xml_writer_det.go` — `det` (produto e impostos) | concluída |
 | 5 | regras de negócio, QR-Code e URLs públicas | concluída |
 | 6a | status e consulta + endpoints dos web services | concluída |
-| 6b | autorização, inutilização, consulta cadastro, CSC | **nesta entrega** |
-| 7 | eventos (cancelamento, CC-e, manifestação) + `StrToTpEventoNFe` | pendente |
+| 6b | autorização, inutilização, consulta cadastro, CSC | concluída |
+| 7 | eventos (31 tipos) + catálogo `TipoEvento` no `pcn` | **nesta entrega** |
 | 8 | Distribuição DF-e | pendente |
 | 9 | `ini_reader.go` + `ini_writer.go` | pendente |
 | 10 | demo em `demos/nfe` | pendente |

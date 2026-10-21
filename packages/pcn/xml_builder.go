@@ -327,6 +327,49 @@ func NodeStr(nome, valor string, obrigatorio bool) *Elem {
 	return NovoElem(nome).Texto(FiltrarTextoXML(valor))
 }
 
+// FiltrarTextoXMLComAcentos e o FiltrarTextoXML com RetirarAcentos=False.
+//
+// Porte do mesmo FiltrarTextoXML, com a opcao que o ACBr desliga em
+// situacoes especificas -- a mais visivel e o descEvento dos eventos da
+// Reforma Tributaria, onde o proprio codigo comenta "Nao funciona sem
+// acentos" (ACBrNFe.EnvEvento.pas:947).
+//
+// As demais transformacoes CONTINUAM: espacos duplicados colapsam e quebras
+// de linha viram ";". Desligar o filtro inteiro -- usar o
+// NodeStrSemFiltro -- deixaria passar uma quebra de linha que a SEFAZ
+// recusa.
+func FiltrarTextoXMLComAcentos(s string) string {
+	for strings.Contains(s, "  ") {
+		s = strings.ReplaceAll(s, "  ", " ")
+	}
+	s = strings.ReplaceAll(s, "\r\n", ";")
+	s = strings.ReplaceAll(s, "\r", ";")
+	s = strings.ReplaceAll(s, "\n", ";")
+	return strings.TrimSpace(s)
+}
+
+// NodeStrComAcentos e o NodeStr com RetirarAcentos=False.
+func NodeStrComAcentos(nome, valor string, obrigatorio bool) *Elem {
+	valor = strings.TrimSpace(valor)
+	if valor == "" {
+		if obrigatorio {
+			return NovoElem(nome)
+		}
+		return nil
+	}
+	return NovoElem(nome).Texto(FiltrarTextoXMLComAcentos(valor))
+}
+
+// NodeInt64 e o AddNode tcInt64. Existe separado do NodeInt porque campos
+// como o idLote tem quinze digitos, e `int` nao os comporta em build de 32
+// bits.
+func NodeInt64(nome string, valor int64, minimo int, obrigatorio bool) *Elem {
+	if valor == 0 && !obrigatorio {
+		return nil
+	}
+	return NovoElem(nome).Texto(PadLeftZeros(strconv.FormatInt(valor, 10), minimo))
+}
+
 // NodeStrSemFiltro e o AddNode tcStr com ParseTextoXML=False: o conteudo vai
 // como esta (apenas escapado na serializacao). Usado para campos que nao
 // podem sofrer o filtro, como chaves e URLs.

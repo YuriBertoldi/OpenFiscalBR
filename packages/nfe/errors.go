@@ -94,3 +94,10 @@ var (
 	// aqui o caso vira erro, porque a chamada nunca pode dar certo.
 	ErrDocumentoConsultaAusente = errors.New("nfe: informe IE, CNPJ ou CPF na consulta de cadastro")
 )
+
+// ErrEventoNaoSuportado indica tipo de evento sem gerador de detEvento.
+//
+// O ACBr deixa o `case` sem ramo e emite um infEvento SEM detEvento
+// (ACBrNFe.EnvEvento.pas:1021); a SEFAZ rejeita. Falhar aqui diz ao
+// consumidor o que faltou, em vez de devolver um XML que so a SEFAZ recusa.
+var ErrEventoNaoSuportado = errors.New("nfe: tipo de evento sem gerador")

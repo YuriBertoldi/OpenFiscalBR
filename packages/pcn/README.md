@@ -180,3 +180,51 @@ Além deles, há três guardas que os vetores sozinhos não dariam:
   a célula;
 - a tabela de prefixos GTIN é conferida quanto a faixa invertida e sobreposição.
 
+
+## Catálogo de eventos de DFe (`conversao_evento.go`)
+
+`TipoEvento` porta `TACBrTipoEvento` (`ACBrDFe.Conversao.pas:93`) — **96 membros** cobrindo
+NF-e, CTe e MDFe. Ele vive aqui, e não em `packages/nfe`, porque o ACBr também o mantém único:
+vários eventos de MDFe chegam amarrados à chave de uma NF-e, e o leitor precisa nomeá-los.
+
+A conversão tem um desequilíbrio que governa o desenho:
+
+| direção | |
+|---|---|
+| enum → código | total e sem ambiguidade (`Codigo()`) |
+| código → enum | **ambíguo** no catálogo inteiro |
+
+Sete códigos se repetem entre documentos diferentes:
+
+| código | significados |
+|---|---|
+| `110112` | Encerramento (MDFe) / Cancelamento por substituição (NF-e) |
+| `110115` | Não embarque / Inclusão de DF-e |
+| `110116` | Alteração de poltrona / Pagamento de operação |
+| `110117` | Excesso de bagagem / Confirmação de serviço do MDFe |
+| `240140` | CT-e de substituição / Autorizado substituição |
+| `240150` | CT-e de anulação / Autorizado ajuste |
+| `240170` | Liberação de prazo de cancelamento (×2) |
+
+Por isso **não existe** um `ParseTipoEvento` global. Cada documento tem a sua tabela —
+`ParseTipoEventoNFe` é o porte do `StrToTpEventoNFe`, e CTe e MDFe ganharão as suas.
+
+### `Codigo()` e `String()` não são a mesma coisa
+
+Os dois devolvem `string`, e trocar um pelo outro **compila**:
+
+```go
+TeCancelamento.Codigo()  // "110111" -- vai no XML
+TeCancelamento.String()  // "Cancelamento" -- nome curto, para log e arquivo
+```
+
+Um gerador que emitisse `<tpEvento>Cancelamento</tpEvento>` passaria em qualquer teste de
+estrutura. O `descEvento` do XML é um terceiro texto ("Carta de Correcao"), que vive em
+`packages/nfe/evento_descricao.go` porque é específico da NF-e.
+
+### A tabela da NF-e lê mais do que gera
+
+São **50 códigos** na leitura contra 31 na geração: a NF-e precisa nomear registro de
+passagem, averbação de exportação e eventos de MDFe e CTe que chegam amarrados à chave da
+nota. Estreitar a tabela para "o que a NF-e gera" é o atalho que faz a consulta devolver evento
+sem nome.

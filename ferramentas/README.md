@@ -336,16 +336,32 @@ expressa isso com `Usar=` de seção para seção. Quem decide o endereço não 
 UF do emitente, é o **autorizador** que atende aquela UF naquele modelo.
 
 O porte guarda as duas coisas separadas (mapa UF→autorizador e endereços por
-autorizador), e o script confere **três** coisas:
+autorizador), e o script confere **cinco** coisas:
 
 1. o mapa UF→autorizador contra o destino real do `Usar=`;
 2. os endereços, combinação a combinação, com a resolução completa do `.ini`;
-3. a **premissa** que permite a separação: a de que o redirecionamento é
-   sempre de seção inteira.
+3. UF que **mistura** definição local com delegação;
+4. os overrides de `SoapAction` declarados pela chave `SoapAction=`;
+5. a **versão da mensagem**, quando ela não acompanha a do leiaute da nota.
 
-A terceira é a que protege o modelo. Se alguma UF passar a definir um serviço
-localmente e delegar outro, a tabela por autorizador deixa de servir — e é
-melhor descobrir isso no script do que em produção.
+A terceira mudou de significado na etapa 6b. A premissa original — "o
+redirecionamento é sempre de seção inteira" — estava **errada**: o ACBr resolve
+serviço a serviço (`ACBrDFe.pas:550-571`), e o MA delega ao SVAN mantendo o
+próprio `NfeConsultaCadastro_2.00`. A tabela continua válida porque o MA é a
+única UF do grupo SVAN, e o script passou a emitir **AVISO** nesse caso e a
+**falhar** se o grupo crescer.
+
+A quinta é o terceiro eixo do `.ini`, e foi ela que achou sozinha que o
+`consCad` sai em 2.00, o `admCscNFCe` em 1.00 e os dois serviços de evento
+também em 1.00 — mesmo num componente 4.00. Ela precisa da pasta de schemas
+para decidir:
+
+```bash
+py ferramentas/conferir-endpoints-dfe.py    "$ACBR_FONTES/ACBrDFe/ACBrNFe/ACBrNFeServicos.ini"    packages/nfe/urls_servicos_tabela.go    "$ACBR/Exemplos/ACBrDFe/Schemas/NFe"
+```
+
+Sem a pasta ela apenas lista os casos em que a chave do `.ini` ficou abaixo da
+versão pedida, como AVISO.
 
 ### Limites
 
@@ -353,6 +369,53 @@ melhor descobrir isso no script do que em produção.
    quando a etapa que transmite o serviço novo entrar.
 2. **Não valida o endereço.** Confere que o Go e o `.ini` dizem a mesma coisa;
    se o `.ini` do ACBr estiver desatualizado, os dois estarão errados juntos.
-3. **Não confere a queda de versão.** A tabela Go guarda o valor já resolvido
-   para cada versão; a lógica de "maior versão `<=` a pedida" é exercitada na
-   geração, não na conferência.
+3. **A queda de versão da URL não é conferida.** A tabela Go guarda o valor já
+   resolvido para cada versão; a lógica de "maior versão `<=` a pedida" é
+   exercitada na geração. A queda da *mensagem*, essa sim, é a verificação 5.
+
+## `conferir-eventos-dfe.py`
+
+Confere os **geradores de evento** contra o `ACBrNFe.EnvEvento.pas`.
+
+```bash
+py ferramentas/conferir-eventos-dfe.py <EnvEvento.pas> <dir Go>
+
+py ferramentas/conferir-eventos-dfe.py    "$ACBR_FONTES/ACBrDFe/ACBrNFe/Base/Servicos/ACBrNFe.EnvEvento.pas"    packages/nfe
+```
+
+Os eventos são o lugar do porte onde **mais nome se repete**. Três elementos
+distintos saem com a mesma tag — `<gConsumo>` vem do consumo pessoal e da
+ALC/ZFM, `<gPerecimento>` do transporte do adquirente e do fornecedor — e o
+`<gControleEstoque>` tem **sete formas**, cada uma com um par de tags próprio.
+
+Nada disso aparece num round-trip: o leitor acha a tag pelo nome, e o nome do
+elemento **pai** é o mesmo nos dois lados da troca.
+
+O script confere três coisas, por evento:
+
+1. o **conjunto** de tags emitidas — faltando ou sobrando;
+2. a **ordem** delas, que é `xs:sequence` no XSD;
+3. o **literal fixo**, quando o Delphi passa uma constante no lugar do campo
+   (o `tpAutor := '1'` de seis eventos e o `indQuitacao := '1'`).
+
+E uma quarta, separada: as **sete formas do `gControleEstoque`**, resolvidas
+pelo tipo do parâmetro no Delphi e comparadas com o Go.
+
+Ele **segue os helpers dos dois lados** — os `Gerar_gXxx` do Delphi e as
+funções locais do Go. Um script que parasse no corpo do evento acusaria "sobra"
+em metade dos casos e não conferiria nada do que importa.
+
+### Limites
+
+1. **Lê os dois lados por expressão regular, não por parser.** Uma tag montada
+   por concatenação, de qualquer lado, escapa.
+2. **Não sabe nada sobre obrigatoriedade nem sobre tipo de campo.** Um `tcDe2`
+   portado como `tcDe4` passa aqui — quem cuida disso é o
+   `conferir-gerador-dfe.py`.
+3. **A correspondência evento↔`gControleEstoque` é afirmada à mão**, na tabela
+   `CONTROLE_ESTOQUE`. É o único lugar do script onde a ligação entre os dois
+   lados não é descoberta sozinha, e é deliberado: as sete sobrecargas do
+   Delphi diferem **só** pelo tipo do parâmetro, e nenhuma regex resolve isso.
+4. **A comparação de ordem só olha as tags que os dois lados têm.** Uma tag
+   faltando já foi acusada antes; compará-la de novo na ordem só produziria
+   ruído.

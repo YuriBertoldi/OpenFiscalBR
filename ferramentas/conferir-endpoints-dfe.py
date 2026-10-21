@@ -48,6 +48,8 @@ SERVICOS = {
     "ServicoInutilizacao": "NfeInutilizacao",
     "ServicoConsultaCadastro": "NfeConsultaCadastro",
     "ServicoAdministrarCSC": "AdministrarCSCNFCe",
+    "ServicoRecepcaoEvento": "RecepcaoEvento",
+    "ServicoEventoEPEC": "EventoEPEC",
 }
 
 # Campo Go -> versao de leiaute que ele atende.
@@ -66,6 +68,8 @@ SCHEMA_DO_SERVICO = {
     "NfeInutilizacao": "inutNFe",
     "NfeConsultaCadastro": "consCad",
     "AdministrarCSCNFCe": "admCscNFCe",
+    "RecepcaoEvento": "envEvento",
+    "EventoEPEC": "eventoEPEC",
 }
 
 
