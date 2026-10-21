@@ -472,3 +472,221 @@ func ParseTpPagAnt(s string) (TpPagAnt, error) {
 	}
 	return TpaNenhum, erroEnum("TpPagAnt", s)
 }
+
+// ===========================================================================
+// TipoNFe (TTipoNFe) -- tag tpNF
+// ===========================================================================
+
+// TipoNFe indica se a operacao e de entrada ou de saida.
+//
+// Atencao ao valor zero: TnEntrada e o primeiro membro, entao um ide recem
+// criado grava "0" (entrada). A property do ACBr declara `default tnSaida`,
+// mas o `default` do Delphi e metadado de streaming e NAO inicializa nada --
+// TIde.Create nao atribui tpNF.
+type TipoNFe int
+
+const (
+	TnEntrada TipoNFe = iota // 0
+	TnSaida                  // 1
+)
+
+var tipoNFeCodigos = [...]string{"0", "1"}
+
+// String retorna o codigo do leiaute ("0" ou "1").
+func (v TipoNFe) String() string {
+	if int(v) < 0 || int(v) >= len(tipoNFeCodigos) {
+		return ""
+	}
+	return tipoNFeCodigos[v]
+}
+
+// ParseTipoNFe converte o codigo do leiaute no enum.
+func ParseTipoNFe(s string) (TipoNFe, error) {
+	for i, c := range tipoNFeCodigos {
+		if c == s {
+			return TipoNFe(i), nil
+		}
+	}
+	return TnEntrada, erroEnum("TipoNFe", s)
+}
+
+// ===========================================================================
+// TipoImpressao (TACBrTipoImpressao) -- tag tpImp
+// ===========================================================================
+
+// TipoImpressao e o formato de impressao do DANFE.
+type TipoImpressao int
+
+const (
+	TiSemGeracao        TipoImpressao = iota // 0
+	TiRetrato                                // 1
+	TiPaisagem                               // 2
+	TiSimplificado                           // 3
+	TiNFCe                                   // 4
+	TiMsgEletronica                          // 5
+	TiSimplificadoTipo2                      // 6
+)
+
+var tipoImpressaoCodigos = [...]string{"0", "1", "2", "3", "4", "5", "6"}
+
+// String retorna o codigo do leiaute ("0".."6").
+func (v TipoImpressao) String() string {
+	if int(v) < 0 || int(v) >= len(tipoImpressaoCodigos) {
+		return ""
+	}
+	return tipoImpressaoCodigos[v]
+}
+
+// ParseTipoImpressao converte o codigo do leiaute no enum.
+func ParseTipoImpressao(s string) (TipoImpressao, error) {
+	for i, c := range tipoImpressaoCodigos {
+		if c == s {
+			return TipoImpressao(i), nil
+		}
+	}
+	return TiSemGeracao, erroEnum("TipoImpressao", s)
+}
+
+// ===========================================================================
+// ProcessoEmissao (TACBrProcessoEmissao) -- tag procEmi
+// ===========================================================================
+
+// ProcessoEmissao identifica o processo que emitiu o documento.
+type ProcessoEmissao int
+
+const (
+	PeAplicativoContribuinte        ProcessoEmissao = iota // 0
+	PeAvulsaFisco                                          // 1
+	PeAvulsaContribuinte                                   // 2
+	PeContribuinteAplicativoFisco                          // 3
+	PeProvedorAssinaturaAutorizacao                        // 4
+)
+
+var processoEmissaoCodigos = [...]string{"0", "1", "2", "3", "4"}
+
+// String retorna o codigo do leiaute ("0".."4").
+func (v ProcessoEmissao) String() string {
+	if int(v) < 0 || int(v) >= len(processoEmissaoCodigos) {
+		return ""
+	}
+	return processoEmissaoCodigos[v]
+}
+
+// ParseProcessoEmissao converte o codigo do leiaute no enum.
+func ParseProcessoEmissao(s string) (ProcessoEmissao, error) {
+	for i, c := range processoEmissaoCodigos {
+		if c == s {
+			return ProcessoEmissao(i), nil
+		}
+	}
+	return PeAplicativoContribuinte, erroEnum("ProcessoEmissao", s)
+}
+
+// ===========================================================================
+// IndIEDest (TindIEDest) -- tag indIEDest
+// ===========================================================================
+
+// IndIEDest indica a contribuicao do destinatario para o ICMS.
+//
+// Os codigos nao sao sequenciais: o terceiro membro vale "9", nao "3".
+type IndIEDest int
+
+const (
+	InContribuinte    IndIEDest = iota // 1
+	InIsento                           // 2
+	InNaoContribuinte                  // 9
+)
+
+var indIEDestCodigos = [...]string{"1", "2", "9"}
+
+// String retorna o codigo do leiaute.
+func (v IndIEDest) String() string {
+	if int(v) < 0 || int(v) >= len(indIEDestCodigos) {
+		return ""
+	}
+	return indIEDestCodigos[v]
+}
+
+// ParseIndIEDest converte o codigo do leiaute no enum.
+func ParseIndIEDest(s string) (IndIEDest, error) {
+	for i, c := range indIEDestCodigos {
+		if c == s {
+			return IndIEDest(i), nil
+		}
+	}
+	return InContribuinte, erroEnum("IndIEDest", s)
+}
+
+// ===========================================================================
+// RegTribISSQN (TRegTribISSQN) -- tag cRegTrib do ISSQNtot
+// ===========================================================================
+
+// RegTribISSQN e o regime especial de tributacao do ISSQN.
+//
+// Atencao: RTISSNenhum e o ULTIMO membro e vale "0", nao vazio. O valor zero
+// do tipo e RTISSMicroempresaMunicipal ("1").
+type RegTribISSQN int
+
+const (
+	RTISSMicroempresaMunicipal  RegTribISSQN = iota // 1
+	RTISSEstimativa                                 // 2
+	RTISSSociedadeProfissionais                     // 3
+	RTISSCooperativa                                // 4
+	RTISSMEI                                        // 5
+	RTISSMEEPP                                      // 6
+	RTISSNenhum                                     // 0
+)
+
+var regTribISSQNCodigos = [...]string{"1", "2", "3", "4", "5", "6", "0"}
+
+// String retorna o codigo do leiaute.
+func (v RegTribISSQN) String() string {
+	if int(v) < 0 || int(v) >= len(regTribISSQNCodigos) {
+		return ""
+	}
+	return regTribISSQNCodigos[v]
+}
+
+// ParseRegTribISSQN converte o codigo do leiaute no enum.
+func ParseRegTribISSQN(s string) (RegTribISSQN, error) {
+	for i, c := range regTribISSQNCodigos {
+		if c == s {
+			return RegTribISSQN(i), nil
+		}
+	}
+	return RTISSMicroempresaMunicipal, erroEnum("RegTribISSQN", s)
+}
+
+// ===========================================================================
+// TpIntegra (TtpIntegra) -- tag tpIntegra do grupo card
+// ===========================================================================
+
+// TpIntegra indica se o processo de pagamento e integrado ao sistema de
+// automacao do contribuinte.
+type TpIntegra int
+
+const (
+	TiNaoInformado    TpIntegra = iota // vazio
+	TiPagIntegrado                     // 1
+	TiPagNaoIntegrado                  // 2
+)
+
+var tpIntegraCodigos = [...]string{"", "1", "2"}
+
+// String retorna o codigo do leiaute.
+func (v TpIntegra) String() string {
+	if int(v) < 0 || int(v) >= len(tpIntegraCodigos) {
+		return ""
+	}
+	return tpIntegraCodigos[v]
+}
+
+// ParseTpIntegra converte o codigo do leiaute no enum. String vazia e valida.
+func ParseTpIntegra(s string) (TpIntegra, error) {
+	for i, c := range tpIntegraCodigos {
+		if c == s {
+			return TpIntegra(i), nil
+		}
+	}
+	return TiNaoInformado, erroEnum("TpIntegra", s)
+}

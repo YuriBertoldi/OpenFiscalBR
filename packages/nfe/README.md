@@ -3,15 +3,17 @@
 Nota Fiscal Eletrônica (modelo 55) e Nota Fiscal de Consumidor Eletrônica
 (modelo 65) — porte do componente **ACBrNFe** do [Projeto ACBr](http://projetoacbr.com.br).
 
-> **Estado:** em construção. Esta etapa entrega apenas os **tipos e a conversão
-> de enums**. O modelo de dados, o leitor, o gerador, os web services, os
-> eventos e o `.ini` chegam nas etapas seguintes — veja [Roteiro](#roteiro).
+> **Estado:** em construção. Estão prontos os **tipos/enums** e o **modelo de
+> dados exceto o subgrupo `det`** (item da nota). O leitor, o gerador, os web
+> services, os eventos e o `.ini` chegam nas etapas seguintes — veja
+> [Roteiro](#roteiro).
 
 ## Origem dos fontes
 
 | Unit Delphi | Arquivo Go |
 |---|---|
 | `PCNNFe/pcnConversaoNFe.pas` | `types.go` + `conversao.go` |
+| `Base/ACBrNFe.Classes.pas` | `classes.go` |
 
 ### Por que `pcnConversaoNFe.pas`, e não `ACBrNFe.Conversao.pas`
 
@@ -94,9 +96,86 @@ Cada um expõe `String()` com o código exato do leiaute e `ParseXxx(string) (T,
 
 ### Enums compartilhados — **não** redeclarados aqui
 
+Vivem em [`packages/pcn`](../pcn), que é o porte de `ACBrDFe.Conversao.pas`:
 `TipoAmbiente`, `TipoEmissao`, `Indicador`, `IndicadorEx`, `OrigemMercadoria`,
-`CSTIcms`, `CSTPis`, `CSTCofins` e `TpPagAnt` vivem em
-[`packages/pcn`](../pcn) (porte de `ACBrDFe.Conversao.pas`).
+`CSTIcms`, `CSTPis`, `CSTCofins`, `TpPagAnt` e — acrescentados pela etapa 2a —
+`TipoNFe`, `TipoImpressao`, `ProcessoEmissao`, `IndIEDest`, `RegTribISSQN` e
+`TpIntegra`.
+
+Os seis novos foram para o `pcn` em vez de serem declarados aqui porque são
+enums de **todo DFe**, não da NF-e: CT-e e MDF-e usam os mesmos. Declará-los no
+`nfe` garantiria a triplicação, que é exatamente o problema já registrado em
+[`TpNFDebito`](#duplicação-de-tpnfdebito-com-packagesrtc).
+
+## Modelo de dados (`classes.go`)
+
+Porte de `Base/ACBrNFe.Classes.pas`. **46 classes / 330 campos**, conferidos
+nome a nome e tipo a tipo contra o `.pas`.
+
+Fora desta etapa: o subgrupo `det` (produto, impostos, e os grupos por tipo de
+mercadoria — linhas 478–1484 do `.pas`) e o campo `NFe.Det`, que entram na
+etapa 2b.
+
+### Coleções
+
+Todo `TXxxCollection`/`TXxxCollectionItem` virou slice simples. **Exceção
+única:** `TpagCollection` carrega `vTroco` na própria coleção
+(`Classes.pas:1933`) — o troco é um só para a nota inteira, não por forma de
+pagamento. Virou `type Pag struct { Itens []PagItem; VTroco float64 }`.
+
+### O `default` da property NÃO inicializa nada
+
+É a armadilha central desta etapa. No Delphi, `property X: T ... default valor`
+é metadado de streaming de design-time; quem inicializa é o `constructor
+Create`. Na NF-e os dois **divergem**:
+
+| property | declara | `TIde.Create` faz | valor efetivo |
+|---|---|---|---|
+| `Ide.indPag` | `ipPrazo` | nada | `ipVista` → `"0"` |
+| `Ide.tpNF` | `tnSaida` | nada | `tnEntrada` → `"0"` |
+| `Ide.tpImp` | `tiPaisagem` | nada | `tiSemGeracao` → `"0"` |
+| `Ide.tpAmb` | `taHomologacao` | nada | `taProducao` → `"1"` |
+
+Ou seja: **um `TIde` recém-criado no ACBr está em produção, não em
+homologação.** O zero value do Go reproduz isso sem esforço, e é por isso que
+`Ide` **não tem construtor** aqui. `TestIde_ZeroValueReproduzOACBr` trava essa
+ausência.
+
+### Construtores que existem porque o zero value divergiria
+
+| Construtor | Origem | O que atribui | Por que importa |
+|---|---|---|---|
+| `NovoPagItem` | `Classes.pas:4441` | `IndPag = IpNenhum`, `TBand = BcNenhum` | o zero do Go grava `"0"` e `"01"` — declararia pagamento à vista com cartão Visa |
+| `NovoEmit` | `Classes.pas:2702` | `CRT = CrtRegimeNormal` | o zero do Go grava `"1"` (Simples Nacional) |
+| `NovaNFe` | `Classes.pas:2406` | `xPais`/`cPais` = `BRASIL`/`1058` no emitente e no destinatário, mais o `CRT` herdado | sem isso o país sai vazio nos dois endereços |
+
+`NovoPagItem` é o mesmo defeito que o porte da NFGas encontrou em `tiSim`: o
+membro que significa "ausente" não está no ordinal zero.
+
+Os três devolvem **valor**, e não ponteiro como o `NovoXxx` dos packages
+irmãos: produzem structs de dados que a `NFe` embute por valor, sem estado nem
+identidade a preservar, e devolver ponteiro obrigaria a desreferenciar em toda
+atribuição.
+
+### Valores especiais de endereço no exterior
+
+`CMunExterior` (`9999999`), `XMunExterior` (`"EXTERIOR"`) e `UFExterior`
+(`"EX"`), porte de `Classes.pas:2366-2369`. `AjustarMunicipioUF`
+(`XmlWriter.pas:255-257`) substitui `cMun`/`xMun`/`xUF` por eles sempre que
+`cPais` não for o Brasil. Emitir o código real do município no lugar deles
+produz documento rejeitado, e nada no build acusa.
+
+### Contrato de zero-padding — para a etapa do gerador
+
+Três campos são numéricos no modelo mas exigem zero à esquerda no XML. O
+`AddNode` do ACBr faz o preenchimento; quem gerar **não pode** usar
+`strconv.Itoa` direto:
+
+| Campo | XSD exige | Como o ACBr grava |
+|---|---|---|
+| `CEP` | `[0-9]{8}` | `tcInt, 08, 08` (`XmlWriter.pas:787`, `929`, `974`, `1024`) |
+| `RefNF.Modelo` e `RefNFP.Modelo` | `"01"`/`"02"` | `tcInt, 02, 02` (`XmlWriter.pas:663` e `:692`) |
+| `InfNFe.Versao` | `"4.00"` | `FloatToString '#0.00'` (`XmlWriter.pas:330`, `392`) |
 
 ## Fidelidade
 
@@ -208,6 +287,11 @@ Sem rede, sem certificado e sem dependência externa.
 | `TestParse_SensibilidadeACaixaSegueAFuncaoDeOrigem` | uniformizar a comparação de caixa entre os dois conversores |
 | `TestSchemaNFe_NomeVemDaRTTIENaoDoArrayMorto` | trocar a RTTI pelo array morto e procurar o XSD errado |
 | `TestLayOut_*` | preencher os três serviços de URL que o ACBr deixa vazios |
+| `TestNovoPagItem_IndPagETBandNaoComecamNoZero` | perder o construtor e gravar `tPag`/`tBand` falsos em toda forma de pagamento |
+| `TestNovoEmit_CRTComecaEmRegimeNormal` | emitente nascer no Simples Nacional |
+| `TestNovaNFe_AplicaOsDefaultsDoConstrutorDelphi` | país do emitente/destinatário sair vazio |
+| `TestIde_ZeroValueReproduzOACBr` | "corrigir" o `Ide` com os defaults que a property declara e trocar produção por homologação |
+| `TestGuiaTransito_ZeroValueNaoDeclaraGuia` | reordenar `TpGuia` e fazer toda nota nascer declarando uma guia de trânsito |
 | `TestParseVersaoDFFloat_ResolvePorFaixaENaoPorIgualdade` | trocar faixa por igualdade e recusar `3.01`/`4.01` |
 | `TestAjustarVersaoQrCode_NaoExisteQRCodeAteALeiaute310` | gerar QR-Code em leiaute que não o admite |
 
@@ -219,9 +303,9 @@ do `EnumeradoToStr`.
 
 | # | Etapa | Estado |
 |---|---|---|
-| 1 | `types.go` + `conversao.go` | **nesta entrega** |
-| 2a | `classes.go` — cabeçalho, totais, transporte, cobrança | pendente |
-| 2b | `classes.go` — `det` (produto e impostos) | pendente |
+| 1 | `types.go` + `conversao.go` | concluída |
+| 2a | `classes.go` — cabeçalho, totais, transporte, cobrança | **nesta entrega** |
+| 2b | `classes.go` — `det` (produto e impostos) + `NFe.Det` | pendente |
 | 3 | `xml_reader.go` | pendente |
 | 4a/4b | `xml_writer.go` | pendente |
 | 5 | regras de negócio, chave de acesso, QR-Code | pendente |

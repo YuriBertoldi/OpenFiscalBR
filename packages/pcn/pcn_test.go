@@ -1125,3 +1125,108 @@ func TestErroLeitura_CarregaCaminhoEDesembrulha(t *testing.T) {
 		t.Errorf("Caminho = %q", alvo.Caminho)
 	}
 }
+
+// TestEnumsDFe_CodigosForaDeOrdemNumerica cobre os seis enums acrescentados
+// com a etapa 2a do packages/nfe.
+//
+// Tres deles tem o codigo fora da ordem natural e sao os que uma "arrumacao"
+// do bloco const quebraria em silencio:
+//
+//   - RegTribISSQN: RTISSNenhum e o ULTIMO membro e vale "0", nao vazio.
+//     Mover o "nenhum" para o ordinal zero, como e habito nos outros enums,
+//     trocaria o cRegTrib de toda nota de servico.
+//   - IndIEDest: o terceiro membro vale "9", nao "3".
+//   - TpIntegra: o "nao informado" vale vazio E esta no ordinal zero.
+func TestEnumsDFe_CodigosForaDeOrdemNumerica(t *testing.T) {
+	casos := []struct {
+		nome     string
+		obtido   string
+		esperado string
+	}{
+		{"RTISSMicroempresaMunicipal", RTISSMicroempresaMunicipal.String(), "1"},
+		{"RTISSMEEPP", RTISSMEEPP.String(), "6"},
+		{"RTISSNenhum", RTISSNenhum.String(), "0"},
+
+		{"InContribuinte", InContribuinte.String(), "1"},
+		{"InIsento", InIsento.String(), "2"},
+		{"InNaoContribuinte", InNaoContribuinte.String(), "9"},
+
+		{"TiNaoInformado", TiNaoInformado.String(), ""},
+		{"TiPagNaoIntegrado", TiPagNaoIntegrado.String(), "2"},
+
+		{"TnEntrada", TnEntrada.String(), "0"},
+		{"TnSaida", TnSaida.String(), "1"},
+
+		{"TiSemGeracao", TiSemGeracao.String(), "0"},
+		{"TiSimplificadoTipo2", TiSimplificadoTipo2.String(), "6"},
+
+		{"PeAplicativoContribuinte", PeAplicativoContribuinte.String(), "0"},
+		{"PeProvedorAssinaturaAutorizacao", PeProvedorAssinaturaAutorizacao.String(), "4"},
+	}
+	for _, c := range casos {
+		if c.obtido != c.esperado {
+			t.Errorf("%s grava %q, esperado %q", c.nome, c.obtido, c.esperado)
+		}
+	}
+}
+
+// TestEnumsDFe_ParseIdaEVolta confere a invariante codigo<->ordinal nos seis
+// enums novos: nenhum codigo repetido e nenhum desalinhamento entre String() e
+// Parse.
+func TestEnumsDFe_ParseIdaEVolta(t *testing.T) {
+	for i := TnEntrada; i <= TnSaida; i++ {
+		if v, err := ParseTipoNFe(i.String()); err != nil || v != i {
+			t.Errorf("TipoNFe %d nao sobreviveu ao round-trip: %v %v", i, v, err)
+		}
+	}
+	for i := TiSemGeracao; i <= TiSimplificadoTipo2; i++ {
+		if v, err := ParseTipoImpressao(i.String()); err != nil || v != i {
+			t.Errorf("TipoImpressao %d nao sobreviveu ao round-trip: %v %v", i, v, err)
+		}
+	}
+	for i := PeAplicativoContribuinte; i <= PeProvedorAssinaturaAutorizacao; i++ {
+		if v, err := ParseProcessoEmissao(i.String()); err != nil || v != i {
+			t.Errorf("ProcessoEmissao %d nao sobreviveu ao round-trip: %v %v", i, v, err)
+		}
+	}
+	for i := InContribuinte; i <= InNaoContribuinte; i++ {
+		if v, err := ParseIndIEDest(i.String()); err != nil || v != i {
+			t.Errorf("IndIEDest %d nao sobreviveu ao round-trip: %v %v", i, v, err)
+		}
+	}
+	for i := RTISSMicroempresaMunicipal; i <= RTISSNenhum; i++ {
+		if v, err := ParseRegTribISSQN(i.String()); err != nil || v != i {
+			t.Errorf("RegTribISSQN %d nao sobreviveu ao round-trip: %v %v", i, v, err)
+		}
+	}
+	for i := TiNaoInformado; i <= TiPagNaoIntegrado; i++ {
+		if v, err := ParseTpIntegra(i.String()); err != nil || v != i {
+			t.Errorf("TpIntegra %d nao sobreviveu ao round-trip: %v %v", i, v, err)
+		}
+	}
+}
+
+// TestEnumsDFe_ParseInvalidoDevolveErro confirma que os seis novos devolvem
+// erro reconhecivel por errors.Is, como o resto do package.
+func TestEnumsDFe_ParseInvalidoDevolveErro(t *testing.T) {
+	casos := []struct {
+		nome string
+		err  error
+	}{
+		{"TipoNFe", segundoRetorno(ParseTipoNFe("7"))},
+		{"TipoImpressao", segundoRetorno(ParseTipoImpressao("9"))},
+		{"ProcessoEmissao", segundoRetorno(ParseProcessoEmissao("9"))},
+		{"IndIEDest", segundoRetorno(ParseIndIEDest("3"))}, // "3" NAO e codigo valido
+		{"RegTribISSQN", segundoRetorno(ParseRegTribISSQN("7"))},
+		{"TpIntegra", segundoRetorno(ParseTpIntegra("3"))},
+	}
+	for _, c := range casos {
+		if !errors.Is(c.err, ErrEnumInvalido) {
+			t.Errorf("%s: erro = %v, esperado ErrEnumInvalido", c.nome, c.err)
+		}
+	}
+}
+
+// segundoRetorno descarta o valor e devolve so o erro, para a tabela acima
+// caber numa linha por enum.
+func segundoRetorno[T any](_ T, err error) error { return err }
