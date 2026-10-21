@@ -370,3 +370,91 @@ Replicado mesmo parecendo errado (**não** "corrigir"):
 > `vICMSDeson` existe no item *e* no `ICMSTot`, e o do total sai a partir da 3.10 — um
 > `strings.Contains` no XML completo faz o teste passar mesmo com o item mudo. Os testes de
 > corte por versão recortam o grupo `imposto` antes de procurar.
+
+### Divergências das REGRAS DE NEGÓCIO, QR-Code e URLs da NFe (2026-10-21)
+
+Porte de `ACBrNFe.ValidarRegrasdeNegocio.pas` (155 rejeições ativas), do QR-Code em três
+versões (`ACBrNFe.pas:535-790`), da tabela de URLs do `ACBrNFeServicos.ini` e dos validadores
+que faltavam em `packages/pcn` (IE, município, GTIN, ISUF).
+
+| # | Onde | O ACBr faz | O porte faz |
+|---|---|---|---|
+| 1 | `ValidarISUF` | confere o tamanho sobre `OnlyNumber(ISUF)` mas **indexa a string crua** (`ACBrDFeUtil.pas:957-965`); uma inscrição com máscara somaria pontos e levantaria exceção | as duas coisas usam o valor limpo |
+| 2 | resultado das validações | devolve `string` vazia (ok) ou mensagem de erro | `error` com sentinela (`pcn.ErrIEInvalida`) ou `bool`, conforme o consumidor |
+| 3 | URL não encontrada | devolve string vazia **em silêncio**, e o QR-Code sai sem o endereço da SEFAZ | `nfe.ErrSemURL` |
+| 4 | QR-Code v3 sem certificado | o `SSL.CalcHash` falharia internamente | `nfe.ErrCertificadoObrigatorio`, e só no caso offline — fora dele a v3 não assina |
+| 5 | erros das regras | acumula numa **string** e devolve um booleano | `[]*ErroRegraNegocio`, com código, mensagem e `nItem` separados |
+| 6 | `destinatarioDoQRCode` com `idEstrangeiro` só de espaços | testa `<> ''` **sem trim** e só trima o resultado: o estrangeiro vence o CNPJ e o `cDest` sai vazio (`ACBrNFe.pas:662`) | idem |
+| 7 | regra 515 (município do local de entrega) | compara `Entrega.UF = 'EX'` **literal**, enquanto a 513 usa `SameText` na retirada (`:608` × `:585`) | idem — a assimetria é do original e está replicada |
+
+Replicado mesmo parecendo errado (**não** "corrigir"):
+
+- **O `ValidarIE` soma o próprio dígito verificador** no ISUF: o laço vai de 1 a **9** com peso
+  `10-i`, então o nono termo tem peso 1. Parece engano de leitura e é o que faz o resto fechar.
+- **CSC vazio vira um código DERIVADO da chave** (`ACBrNFe.pas:680`): `Copy(chave,7,8) + '20' +
+  Copy(chave,3,2) + Copy(cIdCSC,3,4)`. Não valida na SEFAZ; o ACBr faz para o DANFE de teste
+  não quebrar. Determinístico, logo replicado.
+- **Abaixo da 4.00 o `AjustarVersaoQrCode` devolve `veqr000`** ("sem QR-Code"), mas o `case` do
+  ACBr cai no `else` e **gera a versão 1** (`:642-648`). Ele não deixa de gerar, rebaixa.
+- **O `TipoDest` da v3 tem precedência invertida** (`:760-769`): marca 3 para estrangeiro e
+  **depois** sobrescreve com 2 ou 1 se houver CNPJ/CPF. Um documento com os dois sai com tipo
+  de CPF e **documento do estrangeiro** — os dois campos discordam entre si.
+- **A regra 785 (entrega a domicílio proibida pela UF) tem a lista VAZIA**: o ACBr compara
+  contra o literal `'XX'` e o próprio comentário pergunta "Qual estado não permite entrega a
+  domicílio?" (`:368`). Nunca dispara. Replicada com a lista vazia.
+- **A regra 707 é a única sem o prefixo "Rejeição:"** na mensagem (`:338`).
+- **O `cUFsValidas` inclui `EX`**, que passa na validação de UF e reprova na de IE por não ter
+  regra de tamanho (`ACBrValidador.pas:45`).
+- **A regra 851 compara duas vezes com "menor que", em OU** (`:311`): soma de parcelas MAIOR
+  que a fatura **não** é rejeitada, apesar da mensagem dizer "difere".
+- **A regra 610 tem tolerância DUPLA** (`:1125`): falhando o milésimo, aceita 0.009 contra o
+  total com **ou sem** a desoneração do ICMS — é como o ACBr convive com as duas leituras que
+  as UFs deram ao `vICMSDeson`.
+- **A regra 321 varre os itens com `repeat..until`** e por isso lê `Det[0]` mesmo com a lista
+  vazia (`:1237`); o porte usa um `for` comum, que nesse caso não entra.
+- **A tabela de prefixos GTIN não está ordenada**: 490-499 vem antes de 460-469. A busca é
+  varredura linear, então não importa — mas um teste que exigisse ordem reprovaria à toa.
+- **GO é a única UF com regra de PREFIXO** além do vetor de posições: o prefixo de dois
+  dígitos tem de ser 10, 11 ou 20 a 29 (`ACBrValidador.pas:1261-1264`). No original a
+  verificação apenas **grava a mensagem e segue** — o dígito é calculado do mesmo jeito e o
+  documento reprova no fim. O efeito observável é o mesmo de reprovar na hora.
+- **A regra 725 (CFOP da NFC-e) é testada por SUBSTRING** no ACBr (`pos(CFOP, 'XXXX,5101,…')`),
+  não por pertinência ao conjunto (`:719`). Para CFOP de 4 dígitos os dois são equivalentes —
+  nenhum trecho de 4 dígitos da lista cruza vírgula. **Divergem** para CFOP de outro tamanho:
+  `"510"` o ACBr aceitaria e o porte rejeita. Portado como conjunto, que é o que o teste
+  pretendia.
+
+> **Três auditorias mecânicas novas**, todas pela mesma razão: o dado é grande demais para
+> conferência a olho e nenhum teste Go consegue provar que uma transcrição está certa.
+>
+> - `ferramentas/conferir-regras-dfe.py` — 155/155 regras ativas com contraparte, e lista as
+>   14 que o ACBr mantém **comentadas** (502, 508, 529, 571, 600, 629, 630, 719, 720, 806,
+>   856, 858, 883, 888). O risco que ele cobre não é errar uma regra, é **esquecer** uma:
+>   regra que some não quebra build, teste nem round-trip.
+> - `ferramentas/conferir-urls-dfe.py` — 135 entradas idênticas à resolução do `.ini`, mais
+>   três invariantes que o porte assume (a URL do QR-Code não varia por versão; a consulta da
+>   NF-e também não; a da NFC-e é igual nas versões 2 e 3).
+> - O `ValidarIE` é conferido pelos **71 vetores da própria suíte de testes do ACBr**
+>   (`Testes/FPCUnit/ACBrDiversos/acbrvalidadortest.pas`), 37 válidos e 34 inválidos. Vale
+>   lembrar para CTe e MDFe: o ACBr **tem** suíte de testes, e ela é fonte melhor do que
+>   exemplo inventado — os meus estavam errados em 12 das 27 UFs.
+>
+> **Dois defeitos reais que só a revisão pegou**, e que nenhum dos 71 vetores do ACBr alcança:
+>
+> - a **regra de prefixo da IE de GO** tinha sumido do porte. O vetor negativo de GO do ACBr
+>   (`"12.312.312-3"`) reprova pelo **dígito verificador**, então a ausência da regra ficava
+>   invisível; prefixos 12 a 19 com dígito válido passavam.
+> - o `ComparaValor` do ACBr **arredonda a diferença a nove casas** antes de compará-la com a
+>   tolerância (`SimpleRoundTo(..., -9)`, `ACBrUtil.Math.pas:236`). Sem isso, uma diferença
+>   que vale exatamente a tolerância pode sair do ponto flutuante como `0.0010000000000331966`
+>   e reprovar documento válido — e essa função é o motor dos dezessete confrontos de total,
+>   da 610, da 851 e da aritmética do troco.
+>
+> **Armadilha de teste encontrada três vezes nesta etapa:** asserção por `strings.Contains`
+> num formato de campos separados. No QR-Code v3 o separador da versão é literalmente `|3|` e
+> o ambiente de produção é `|1|`, então procurar o `TipoDest` por `Contains` casa com o campo
+> errado e passa sempre. Confira por POSIÇÃO. O mesmo vale para o confronto de totais quando
+> a fixture não exercita o campo: zero comparado com zero passa com a acumulação quebrada —
+> a fixture da NFe não tem frete nem desconto, e o teste da tolerância dupla da 610 pulava
+> **sempre** porque ela também não tem ICMS desonerado. Teste que depende de fixture precisa
+> **falhar** quando o campo vem zerado, não passar em silêncio.
