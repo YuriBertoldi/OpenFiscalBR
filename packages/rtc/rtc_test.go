@@ -1122,6 +1122,41 @@ func TestINI_GpBioDiferencaCBSUsaAChaveDoProprioTRIBUTO(t *testing.T) {
 	}
 }
 
+// TestTpNFDebito_NoveMembrosDoLeiaute trava a contagem deste lado da
+// duplicacao.
+//
+// O ACBr declara TtpNFDebito TRES vezes -- em ACBrDFe.Conversao.pas (que
+// vira este), em ACBrNFe.Conversao.pas e em pcnConversaoNFe.pas --, com os
+// mesmos membros na mesma ordem. O porte espelha a duplicacao de proposito:
+// unifica-la afastaria o codigo do original e criaria uma dependencia de
+// packages/nfe para ca que o Delphi nao tem.
+//
+// O preco dessa fidelidade e a conversao por ORDINAL entre os dois tipos, e
+// e por teste que ela se paga. Sao dois, um de cada lado:
+//
+//   - este, que fixa a contagem AQUI;
+//   - TestTpNFDebito_OrdinaisAlinhadosComRTC, no packages/nfe, que fixa a
+//     contagem LA e compara membro a membro.
+//
+// Sem este, um membro acrescentado so neste package passaria: o teste de la
+// confere o tamanho da lista dele contra a propria sentinela dele, nao
+// contra a daqui -- e a sentinela daqui nao e exportada.
+func TestTpNFDebito_NoveMembrosDoLeiaute(t *testing.T) {
+	// Vazio mais os codigos 01 a 08.
+	const doLeiaute = 9
+
+	if int(_fimTpNFDebito) != doLeiaute {
+		t.Errorf("TpNFDebito tem %d membros, o leiaute tem %d",
+			int(_fimTpNFDebito), doLeiaute)
+	}
+	// O ultimo membro declarado precisa ser o 08: um membro acrescentado no
+	// MEIO manteria a contagem e deslocaria todos os seguintes.
+	if int(TdDesenquadramentodoSN) != doLeiaute-1 {
+		t.Errorf("TdDesenquadramentodoSN e o ultimo membro (ordinal %d), veio %d",
+			doLeiaute-1, int(TdDesenquadramentodoSN))
+	}
+}
+
 func TestINI_ISTotSoSaiComValorPOSITIVO(t *testing.T) {
 	ini := pcn.NovoINI()
 	GravarINIISTot(ini, ISTot{VIS: 0})
