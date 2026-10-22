@@ -11,9 +11,9 @@ Licenciado sob **LGPL 2.1+** (obra derivada do Projeto ACBr).
 | `packages/comum` | Base: TXTClass, utils, erros, FormatFloatBR | Completo |
 | `packages/sped` | SPED Fiscal (EFD-ICMS/IPI): tipos, registros, blocos, geracao TXT | Completo (270 registros com writer) |
 | `packages/pcn` | Base de XML de DFe: mini-DOM, tipos de campo, enums DFe, validador CNPJ/CPF, chave de acesso, ini, construtor de XML (AddNode) | Completo (leitura e geracao) |
-| `packages/rtc` | Reforma Tributaria (IBS/CBS/IS) compartilhada pelos DFe | Classes + leitor + gerador XML completos; ini parcial (sem monofasia) |
+| `packages/rtc` | Reforma Tributaria (IBS/CBS/IS) compartilhada pelos DFe | Completo: classes, leitor e gerador de XML, e ini com monofasia, Imposto Seletivo e a tabela modelo x CST compartilhada |
 | `packages/dfe` | DFe base: certificado A1 (PFX/PEM), assinatura XMLDSig (C14N 1.0), cliente SOAP 1.2 com TLS mutuo | Completo |
-| `packages/nfe` | NFe (Nota Fiscal Eletronica) | Pendente |
+| `packages/nfe` | NFe e NFC-e (modelos 55 e 65, leiaute 4.00) | Completo: leitura e geracao de XML, 155 regras de negocio, QR-Code, assinatura, transmissao a SEFAZ (autorizacao, consulta, status, inutilizacao, cadastro, CSC), 31 eventos, Distribuicao DF-e e o formato .ini do ACBr |
 | `packages/cte` | CTe (Conhecimento de Transporte Eletronico) | Pendente |
 | `packages/mdfe` | MDFe (Manifesto Eletronico de Documentos Fiscais) | Pendente |
 | `packages/boleto` | Boleto bancario | Pendente |
@@ -30,6 +30,7 @@ Licenciado sob **LGPL 2.1+** (obra derivada do Projeto ACBr).
 | `demos/sped` | API REST + Frontend para geracao de arquivo SPED Fiscal | Completo |
 | `demos/nfgas` | API REST + Frontend para NFGas: leitura, importacao em lote, geracao, assinatura, transmissao (certificado via env) e catalogo de XMLs de exemplo | Completo |
 | `demos/nfag` | API REST + Frontend para NFAg: mesmas rotas da demo NFGas | Completo |
+| `demos/nfe` | API REST + Frontend para NF-e/NFC-e: leitura, validacao de regras, conversao entre XML e .ini, emissao e transmissao (certificado via env) | Completo |
 
 ## Inicio Rapido
 
@@ -101,6 +102,87 @@ func main() {
     }
 }
 ```
+
+### Emitindo uma NF-e programaticamente
+
+O `.ini` do ACBr e a entrada que a maioria dos ERP ja sabe gerar; daqui sai o XML assinado,
+pronto para transmitir. Nenhuma linha abaixo sobe servidor.
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "log"
+    "time"
+
+    "github.com/openfiscalbr/openfiscalbr/packages/dfe"
+    "github.com/openfiscalbr/openfiscalbr/packages/nfe"
+    "github.com/openfiscalbr/openfiscalbr/packages/pcn"
+)
+
+func main() {
+    cfg := nfe.Configuracoes{
+        VersaoDF: nfe.Ve400,
+        ModeloDF: nfe.MoNFe,
+        Ambiente: pcn.TaHomologacao,
+        UF:       "SP",
+        CodigoUF: pcn.CodigoUF("SP"),
+    }
+
+    // Le do .ini do ACBr -- aceita o caminho do arquivo ou o conteudo.
+    nota, err := nfe.LerINIArquivo(`C:\notas\venda.ini`, cfg)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // As regras de negocio rodam ANTES de gastar uma viagem a SEFAZ.
+    for _, rejeicao := range nfe.ValidarRegrasNegocio(nota, cfg, time.Now()) {
+        fmt.Printf("rejeicao %d: %s\n", rejeicao.Codigo, rejeicao.Mensagem)
+    }
+
+    cert, err := dfe.CarregarPFXArquivo("certificado.pfx", "senha")
+    if err != nil {
+        log.Fatal(err)
+    }
+    cfg.Certificado = cert
+
+    componente := nfe.NovoComponente(cfg)
+    resultado, err := componente.Enviar(context.Background(),
+        []*nfe.NotaFiscal{{NFe: nota}}, nfe.OpcoesEnvio{Sincrono: true})
+    if err != nil {
+        log.Fatal(err)
+    }
+    // No modo sincrono o protocolo ja vem na propria resposta.
+    if p := resultado.Processamento; p != nil {
+        fmt.Println(p.CStat, p.XMotivo)
+        if p.ProtNFe != nil {
+            fmt.Println("protocolo:", p.ProtNFe.NProt)
+        }
+    }
+}
+```
+
+Lendo uma NF-e ja autorizada e gravando de volta como `.ini`:
+
+```go
+nota, err := nfe.LerXMLString(xml)
+if err != nil {
+    log.Fatal(err)
+}
+texto, err := nfe.GravarINI(nota)
+```
+
+### Rodando a demo NF-e
+
+```bash
+go run ./demos/nfe
+# Acesse http://localhost:8080
+```
+
+Sem certificado configurado, tudo que nao fala com a SEFAZ funciona: ler, validar, converter
+entre XML e `.ini` e gerar XML. A pagina traz exemplos com dados ficticios.
 
 ### Rodando a demo SPED
 

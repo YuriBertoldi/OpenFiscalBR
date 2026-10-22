@@ -1,0 +1,26 @@
+services:
+  openfiscalbr-nfe:
+    build:
+      context: ../..
+      dockerfile: demos/nfe/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      # UF do emitente e modelo do documento (55 = NF-e, 65 = NFC-e).
+      - UF=SP
+      - MODELO=55
+      # O default e homologacao. Mude para "producao" CONSCIENTEMENTE: as
+      # rotas de transmissao enviam documento de verdade a SEFAZ.
+      - AMBIENTE=homologacao
+      # Certificado A1. Sem ele, so as rotas que nao falam com a SEFAZ
+      # funcionam -- leitura, validacao e conversao entre XML e .ini.
+      - CERT_PATH=/certs/certificado.pfx
+      - CERT_PASS=${CERT_PASS:-}
+      # CSC e IDCSC so sao usados no QR-Code da NFC-e.
+      - CSC=${CSC:-}
+      - IDCSC=${IDCSC:-}
+    volumes:
+      # Monte a pasta do certificado como SOMENTE LEITURA: o container nao
+      # tem nada a escrever ali, e o .pfx e material de chave privada.
+      - ./certs:/certs:ro

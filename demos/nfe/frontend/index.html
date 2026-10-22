@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenFiscalBR — Demo NF-e / NFC-e</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>OpenFiscalBR — NF-e</h1>
+    <p>Nota Fiscal Eletrônica · modelos 55 e 65 · leiaute 4.00</p>
+    <p class="aviso">
+      Leitura, validação, conversão entre XML e <code>.ini</code>, e emissão.
+      Não tem um documento à mão? Escolha um exemplo e clique em
+      <strong>Carregar exemplo</strong> — os dados são fictícios.
+    </p>
+  </header>
+
+  <main>
+    <section class="entrada">
+      <h2>Entrada</h2>
+
+      <div class="abas" role="tablist">
+        <button class="aba ativa" data-acao="ler">Ler documento</button>
+        <button class="aba" data-acao="ler-lote">Importar lote</button>
+        <button class="aba" data-acao="validar">Validar</button>
+        <button class="aba" data-acao="ini-para-xml">.ini → XML</button>
+        <button class="aba" data-acao="xml-para-ini">XML → .ini</button>
+        <button class="aba" data-acao="ler-evento">Retorno de evento</button>
+        <button class="aba" data-acao="ler-distribuicao">Distribuição DF-e</button>
+        <button class="aba" data-acao="gerar">Gerar XML</button>
+        <button class="aba" data-acao="assinar">Assinar</button>
+        <button class="aba" data-acao="transmitir">Transmitir</button>
+      </div>
+
+      <div class="exemplos">
+        <label for="exemplo">Exemplo:</label>
+        <select id="exemplo"><option value="">Carregando…</option></select>
+        <button id="carregarExemplo" class="botao" disabled>Carregar exemplo</button>
+      </div>
+      <p id="exemploDescricao" class="descricao" hidden></p>
+
+      <textarea id="conteudo" rows="16" spellcheck="false"
+        placeholder="Cole aqui o XML da NF-e, o retorno da SEFAZ ou o arquivo .ini do ACBr."></textarea>
+
+      <div class="acoes">
+        <button id="enviar" class="botao primario">Executar</button>
+        <button id="limpar" class="botao secundario">Limpar</button>
+        <span id="acaoAtual" class="pill">POST /api/ler</span>
+      </div>
+    </section>
+
+    <section class="transmissao">
+      <h2>Transmissão</h2>
+      <p class="descricao">
+        Estas rotas falam com a SEFAZ e precisam de certificado A1 configurado no
+        servidor (<code>CERT_PATH</code> e <code>CERT_PASS</code>). O ambiente
+        padrão é <strong>homologação</strong>.
+      </p>
+      <div class="acoes">
+        <button class="botao secundario" data-direto="GET /api/status">Status da API</button>
+        <button class="botao secundario" data-direto="GET /api/status-sefaz">Status da SEFAZ</button>
+      </div>
+      <div class="campos">
+        <label>Consultar por chave
+          <input type="text" id="chaveConsulta" maxlength="44" placeholder="44 dígitos">
+        </label>
+        <button id="consultar" class="botao secundario">Consultar</button>
+      </div>
+    </section>
+
+    <section class="saida">
+      <h2>Resposta</h2>
+      <div class="barra">
+        <span id="statusHttp" class="pill"></span>
+        <span id="tempo" class="pill"></span>
+      </div>
+      <pre id="resposta">Nenhuma requisição ainda.</pre>
+    </section>
+  </main>
+
+  <footer>
+    <p>
+      OpenFiscalBR — derivado do <a href="http://projetoacbr.com.br">Projeto ACBr</a>,
+      LGPL 2.1+. Esta demo existe para demonstrar o <code>packages/nfe</code>;
+      o transporte HTTP vive aqui, nunca no package.
+    </p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
