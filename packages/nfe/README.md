@@ -304,21 +304,37 @@ o valor já vem com ponto decimal. `ConteudoDe2` e `ConteudoDe10` devolvem o
 mesmo resultado, e a precisão é **contrato declarativo**, herdado do mesmo
 mecanismo do ACBr. Só se verifica contra o `.pas`.
 
-### Duplicação de `TpNFDebito` com `packages/rtc`
+### Duplicação de `TpNFDebito` com `packages/rtc` — decisão fechada: **manter**
 
-O ACBr declara `TtpNFDebito` **duas vezes** — em `ACBrDFe.Conversao.pas` (origem
-de `rtc.TpNFDebito`) e em `pcnConversaoNFe.pas` (origem do daqui) — com os
-mesmos 9 membros. Em Go são dois tipos distintos, e cada um faz uma coisa:
+O ACBr declara `TtpNFDebito` **três vezes**, com os mesmos nove membros na mesma
+ordem:
+
+| unidade Delphi | vira |
+|---|---|
+| `ACBrDFe.Conversao.pas` | `rtc.TpNFDebito` |
+| `ACBrNFe.Conversao.pas` | `nfe.TpNFDebito` |
+| `pcnConversaoNFe.pas` | — (a mesma do anterior; o PCN é a unidade legada) |
+
+**A duplicação é do original, não do porte.** Unificar os dois tipos em Go
+afastaria o código do ACBr em vez de aproximá-lo, e criaria uma dependência de
+`packages/nfe` → `packages/rtc` que o Delphi não tem no sentido inverso: lá quem
+usa o enum compartilhado é o writer da Reforma, não o da nota.
+
+Em Go cada um faz uma coisa:
 
 - `rtc.TpNFDebito` é a chave que decide a emissão do grupo RTC
-  (`rtc/xml_writer.go:170`) e **não tem** `String()`/`Parse`.
-- `nfe.TpNFDebito` carrega o código do leiaute.
+  (`rtc/xml_writer.go`) e **não tem** `String()`/`Parse` — o writer só compara;
+- `nfe.TpNFDebito` carrega o código do leiaute e tem a conversão completa.
 
-Mantidos separados para não editar package de outro território, e **travados por
-`TestTpNFDebito_OrdinaisAlinhadosComRTC`**: a conversão entre os dois, que a
-etapa do gerador vai precisar, é por ordinal, e um membro inserido no meio de
-qualquer das duas listas mapearia o valor errado sem erro de compilação.
-Revisável na etapa 4, se valer a pena unificar.
+A conversão entre os dois é **por ordinal**, e está travada por
+`TestTpNFDebito_OrdinaisAlinhadosComRTC`: um membro inserido no meio de qualquer
+das duas listas mapearia o valor errado sem erro de compilação. É esse teste —
+e não a unificação — que paga a segurança aqui.
+
+> **Para o CT-e e o MDF-e:** a mesma decisão vale. Onde o ACBr duplicar um enum
+> entre a unidade compartilhada e a do documento, o porte duplica também, e
+> trava o alinhamento por teste de ordinal. Unificar é tentador e é o caminho
+> que afasta do original.
 
 ### Omissões
 

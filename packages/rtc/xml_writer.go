@@ -64,6 +64,15 @@ const (
 	TdPagamentoAntecipado                               // 06
 	TdPerdaEmEstoque                                    // 07
 	TdDesenquadramentodoSN                              // 08
+	// _fimTpNFDebito conta os membros declarados; nao e valor do leiaute.
+	//
+	// Existe para que o teste de alinhamento com nfe.TpNFDebito possa
+	// conferir a CONTAGEM dos dois lados. O ACBr declara este enum tres
+	// vezes -- aqui, em ACBrNFe.Conversao.pas e em pcnConversaoNFe.pas --,
+	// e o porte espelha a duplicacao; sem a sentinela, um membro
+	// acrescentado so de um lado passaria despercebido e a conversao por
+	// ordinal mapearia o valor errado.
+	_fimTpNFDebito
 )
 
 // GrupoIBSCBS nomeia o subgrupo que sai DENTRO do IBSCBS do item.
