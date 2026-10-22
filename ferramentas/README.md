@@ -157,6 +157,25 @@ falsa confiança, que é pior do que não ter teste.
    continuam sendo conferência manual contra o `.pas`.
 4. **Linha comentada no Delphi é descartada** (`//`), para não contar campo
    desativado — `RENAVAM` do `veicProd` é o caso na NFe.
+5. **Nome de tag MONTADO no Delphi some da conta.** O leitor da Distribuição
+   DF-e é o caso extremo: ele é genérico e monta as tags a partir do tipo de
+   documento (`'ch' + FptpDFe`, `'inf' + FptpDFe`, `'prot' + FptpDFe`). O
+   porte as escreve literalmente — `chNFe`, `infNFe`, `protNFe` — e elas
+   aparecem como "só no .go".
+
+### A lista de "sem contraparte" precisa ser lida, não ignorada
+
+Rodando contra o `ACBrDFeComum.RetDistDFeInt.pas` o script dá **40 tags
+conferidas, nenhuma divergência** — e 22 diferenças de cobertura, todas
+explicáveis:
+
+| lado | quantas | o quê |
+|---|---|---|
+| só no `.pas` | 16 | `CNPJ`/`CPF` (lidos por helper) e catorze do **CT-e**: grupo `CTe` do `detEvento`, `vPrest`/`vTPrest`, `itensAverbados` |
+| só no `.go` | 6 | nomes que o Delphi **monta** a partir de `FptpDFe` |
+
+Nenhuma delas é campo perdido — mas isso só se sabe depois de conferir uma a
+uma. É exatamente para isso que o relatório lista os dois conjuntos.
 
 ## `conferir-gerador-dfe.py`
 

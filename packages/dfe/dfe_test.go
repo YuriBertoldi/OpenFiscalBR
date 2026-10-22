@@ -269,6 +269,44 @@ func TestGzipBase64RoundTrip(t *testing.T) {
 	}
 }
 
+// O base64 do ACBr (Decode4to3Ex, synacode.pas:609-613) testa `y in [33..127]`
+// e por isso ignora espaco, CR e LF em qualquer posicao. O do Go recusa.
+//
+// A diferenca nao e teorica: base64 quebrado em colunas e o formato que sai de
+// pretty-printer e de arquivo gravado por outra ferramenta -- exatamente o que
+// chega no LerXMLFromFile. Sem a limpeza, o docZip vira erro de leitura e o
+// consumidor segue achando que varreu aquele NSU.
+func TestBase64Gunzip_IgnoraQuebraDeLinha(t *testing.T) {
+	original := xmlParaAssinar
+	comprimido, err := GzipBase64(original)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var emColunas strings.Builder
+	for i := 0; i < len(comprimido); i += 76 {
+		fim := i + 76
+		if fim > len(comprimido) {
+			fim = len(comprimido)
+		}
+		emColunas.WriteString(comprimido[i:fim])
+		emColunas.WriteString("\r\n")
+	}
+	quebrado := "  " + emColunas.String() + "\t"
+
+	if quebrado == comprimido {
+		t.Fatal("o base64 de teste ficou sem quebra nenhuma; o caso nao esta sendo exercitado")
+	}
+
+	volta, err := Base64Gunzip(quebrado)
+	if err != nil {
+		t.Fatalf("base64 quebrado em colunas deveria ser aceito: %v", err)
+	}
+	if volta != original {
+		t.Fatalf("round-trip perdeu dados: %q", volta)
+	}
+}
+
 // ---------------------------------------------------------------------------
 // SOAP
 // ---------------------------------------------------------------------------

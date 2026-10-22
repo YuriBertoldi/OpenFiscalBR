@@ -50,6 +50,7 @@ SERVICOS = {
     "ServicoAdministrarCSC": "AdministrarCSCNFCe",
     "ServicoRecepcaoEvento": "RecepcaoEvento",
     "ServicoEventoEPEC": "EventoEPEC",
+    "ServicoDistribuicaoDFe": "NFeDistribuicaoDFe",
 }
 
 # Campo Go -> versao de leiaute que ele atende.
@@ -70,6 +71,7 @@ SCHEMA_DO_SERVICO = {
     "AdministrarCSCNFCe": "admCscNFCe",
     "RecepcaoEvento": "envEvento",
     "EventoEPEC": "eventoEPEC",
+    "NFeDistribuicaoDFe": "distDFeInt",
 }
 
 

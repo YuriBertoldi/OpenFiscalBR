@@ -790,3 +790,112 @@ Mais três divergências que faltavam no registro:
 > a **ordem** das tags do `detEvento`, os literais fixos e as sete formas do `gControleEstoque`
 > — seguindo os helpers dos dois lados. Na entrega: 31 eventos, 5 literais e 7 formas,
 > idênticos ao Delphi.
+
+### Divergências da DISTRIBUIÇÃO DF-e da NFe (2026-10-21)
+
+Porte de `TDistribuicaoDFe` (`ACBrNFeWebServices.pas:3953`), `TDistDFeInt`
+(`ACBrDFeComum.DistDFeInt.pas`) e `TRetDistDFeInt` (`ACBrDFeComum.RetDistDFeInt.pas`), mais o
+enum `TSchemaDFe`, que foi para o `pcn` por ser compartilhado — o mesmo lote mistura documentos
+de NF-e, CT-e, MDF-e, BP-e e GTV-e.
+
+É o serviço pelo qual o contribuinte descobre os documentos emitidos **contra** ele. Nenhum
+outro serviço da NF-e faz isso: todos os demais partem de um documento que o próprio emissor
+já tem.
+
+| # | Onde | O ACBr faz | O porte faz |
+|---|---|---|---|
+| 1 | `StrToSchemaDFe` (`ACBrDFe.Conversao.pas:1156`) | **levanta exceção** quando o nome não está no enum. Num lote de cinquenta documentos isso derruba a leitura inteira porque um deles trouxe schema novo — e a RFB acrescenta schema sem avisar | `ParseSchemaDFe` devolve `SchemaDesconhecido` **e** um erro, mas o `lerDocZip` **descarta o erro** de propósito: o atributo `schema` não decide nada (quem decide é a raiz), então um valor novo não é problema. O item fica com `SchemaDesconhecido` no campo — é ali que se diagnostica — e os outros quarenta e nove seguem |
+| 2 | `docZip` corrompido | o `LerXml` tem um `except` que devolve `False` e **descarta o lote inteiro** | o item ganha `ErroLeitura` e os vizinhos continuam lidos |
+| 3 | varredura | não existe. O ACBr expõe só a chamada única | `VarrerDistribuicaoDFe` percorre até o fim. A RFB devolve no máximo cinquenta `docZip` por chamada, então a chamada única quase nunca traz tudo |
+| 4 | `cOrgao` do `procEventoNFe` | o campo existe no struct e **não é lido** (`:781-812`) | lido. A omissão parece descuido, não decisão |
+| 5 | gravação em disco, `GerarPathDistribuicao`, `GerarNomeArquivo` | monta caminho e grava | fora do escopo — gravar é do consumidor |
+| 6 | nível do `detEvento` no evento processado | procura o grupo como filho **direto** da raiz `procEventoNFe` (`:850`), e o `FindAnyNs` só percorre filhos diretos. O caminho real do leiaute é `procEventoNFe/evento/infEvento/detEvento` — ou seja, o grupo **nunca** é preenchido para a NF-e | lido do nível certo, com a busca na raiz mantida como retrocesso |
+| 7 | `XML` do item com raiz desconhecida | só é atribuído **dentro** de cada `Ler*` (`:513, :537, :634, :791`), então raiz desconhecida fica com `XML` vazio e o `TratarResposta` pula o item (`:4072`) | guardado sempre. É o que permite arquivar um documento de tipo que o porte ainda não sabe ler |
+| 8 | base64 do `docZip` com quebra de linha | o `Decode4to3Ex` (`synacode.pas:609-613`) testa `y in [33..127]` e por isso **ignora** espaço, CR e LF em qualquer posição | o `base64` do Go recusa qualquer byte fora do alfabeto. O `dfe.Base64Gunzip` descarta brancos antes de decodificar, replicando o original. Sem isso, base64 quebrado em colunas — o que sai de pretty-printer e de arquivo gravado por outra ferramenta, que é o caso do `LerXMLFromFile` — perderia o documento em silêncio |
+| 9 | chave no `<consChNFe>` | emite a chave **crua**, como veio do consumidor | passa por `pcn.RemoverLiteralChave`. Uma chave copiada do atributo `Id` vem com o prefixo `NFe`, e a RFB rejeita o pedido inteiro. Nenhum caso em que o literal deva ir para a SEFAZ |
+
+Replicado mesmo parecendo errado (**não** "corrigir"):
+
+- **A precedência das três formas de consulta está em dois `if` aninhados** (`:154-171`):
+  o **NSU** vence tudo; faltando ele, a **Chave** vence o **ultNSU**. Perdê-la faz um pedido
+  com NSU e ultNSU preenchidos varrer o lote inteiro no lugar de buscar o documento pedido.
+- **A escolha entre `<CNPJ>` e `<CPF>` é pelo TAMANHO depois do preenchimento**, e o
+  preenchimento tem dois alvos (`:133-152`): até 11 dígitos completa até 11 e sai como CPF;
+  12, 13 ou qualquer outro completa até 14 e sai como CNPJ. Documento **vazio** cai no ramo do
+  CPF e sai `<CPF></CPF>`, porque o tamanho continua zero e nenhum dos dois `if` dispara.
+- **O NSU passa por `StrToIntDef(x, 0)` antes de ser preenchido com quinze zeros.** Um NSU não
+  numérico vira **zero** em vez de ser recusado — numa varredura, isso faz o lote recomeçar do
+  início. Determinístico, e o consumidor controla a entrada.
+- **O tipo de cada item é decidido pelo NOME DA RAIZ do documento descomprimido** (`:817-855`),
+  e **não** pelo atributo `schema` do `docZip`. Os dois concordam na prática, mas é a raiz que
+  manda — e o atributo continua sendo lido e guardado.
+- **O `resNFe` e o `procNFe` preenchem o MESMO struct por caminhos diferentes.** No resumo os
+  campos vêm prontos; no documento completo saem de quatro grupos aninhados (`ide`, `emit`,
+  `total/ICMSTot`, `protNFe/infProt`), e a chave sai do **atributo `Id`** pelas 44 posições
+  finais — `RightStr(Id, 44)`, não remoção do prefixo "NFe".
+- **A situação do documento não vem pronta no `procNFe`**: sai de um `case` sobre o `cStat` do
+  protocolo (`:620`), e o `case` **não tem `else`** — código fora de `[100, 101, 110, 132]`
+  deixa o campo no valor anterior.
+- **O `dhEmi` cai para `dEmi` quando vazio** (`:563`): na versão 2.00 a data de emissão ainda
+  não tinha hora. Sem o retrocesso, toda nota antiga vem com data zerada.
+- **O 137 CONTA como sucesso** (`:4120`). "Nenhum documento localizado" é a resposta mais
+  comum de uma varredura diária; tratá-la como falha faz o laço nunca terminar.
+
+> **A mensagem tem DUAS camadas, e só uma vem do gerador.** O elemento do Body é
+> `nfeDistDFeInteresse` (`:3983`); dentro dele vem um `nfeDadosMsg` que o próprio
+> `TDistDFeInt` emite, porque o `tagGrupoMsg` do construtor é esse (`:4029`). Nenhum outro
+> serviço da NF-e tem as duas. E não há `<soap12:Header>` em versão nenhuma — o `Clear` zera o
+> `FPHeaderElement` (`:3984`).
+
+> **O endereço não varia por UF.** A primeira linha do `DefinirURL` é `UF := 'AN'` e a
+> configuração nem é consultada (`:4001`): o serviço é tratado diretamente pela RFB. É o único
+> serviço da NF-e em que a contingência SVC não muda nada. O **modelo**, esse sim, sai da chave
+> quando ela é informada.
+
+> **A versão da mensagem é 1.01**, mesmo num componente 4.00 — quinto serviço a entrar em
+> `versaoFixaPorServico`, e o `conferir-endpoints-dfe.py` o achou sozinho.
+
+**Acréscimos sem equivalente no ACBr.** Nenhum deles muda o XML gerado nem o que se lê do
+retorno; todos existem porque, sem eles, o consumidor reescreveria a mesma regra:
+
+| o que | por quê |
+|---|---|
+| `RetDistDFeInt.Atendida()` | o critério de sucesso é `cStat ∈ {137, 138}` e está embutido no `TratarResposta` (`:4120`). O **137** — "nenhum documento localizado" — conta como sucesso, e quem o tratar como falha faz o laço nunca terminar |
+| `RetDistDFeInt.VarreduraConcluida()` | o fim é `ultNSU == maxNSU`, **não** "o lote veio vazio". A comparação é numérica, pelo mesmo motivo do laço |
+| `ChaveDoDocZip(d)` | os três grupos guardam a chave em campos diferentes, e qual está preenchido depende do schema |
+| `SchemaDFe.EDocumento()` | distingue resumo de documento completo. O ACBr faz essa pergunta com `in [schprocNFe, schprocCTe, ...]` espalhado, não com uma função |
+
+`VarrerDistribuicaoDFe` bater no limite de chamadas **não é erro** e não tem sentinela: o
+retorno é o mesmo de uma varredura completa. Quem precisa distinguir olha o `RetDistDFeInt`
+devolvido — `VarreduraConcluida()` falso com `err == nil` significa que ainda há documentos, e
+o `UltNSU` desse retorno é de onde a próxima varredura recomeça.
+
+**Conferência mecânica do leitor.** O `conferir-leitor-dfe.py` rodou contra o
+`ACBrDFeComum.RetDistDFeInt.pas`: **40 tags conferidas, nenhuma divergência** de precisão nem
+de `Find`/`FindAnyNs`. As 22 diferenças de cobertura que ele lista são todas explicáveis, e
+foram conferidas uma a uma:
+
+- **16 só no `.pas`** — `CNPJ` e `CPF`, que o porte lê pelo helper
+  `pcn.ConteudoCNPJCPFAnyNs` (limite 2 do script), e catorze do **CT-e**: o grupo `CTe` do
+  `detEvento`, o `vPrest`/`vTPrest` (valor total da prestação, equivalente do `vNF` lá) e os
+  `itensAverbados` da averbação de exportação. O `LerGrupo_detEvento_CTe`,
+  `LerGrupo_detEvento_emit` e `LerGrupo_detEvento_itensAverbados` **não foram portados** —
+  pertencem ao CT-e e entram com ele.
+
+  > O `LerGrupo_detEvento_emit` é **código morto no próprio ACBr**: o chamador já resolve o nó
+  > com `ANode.Childrens.FindAnyNs('emit')` (`:748`) e a procedure procura `'emit'` **de novo**
+  > lá dentro (`:701`). Só preencheria com um `detEvento/emit/emit`, que não existe em leiaute
+  > nenhum. Quando o CT-e entrar, o grupo deve ser lido do nível certo — e isso é correção, não
+  > replicação de defeito, porque o defeito é determinístico mas o campo é dado fiscal perdido;
+- **6 só no `.go`** — `NFe`, `chNFe`, `infNFe`, `protNFe`, `eventoNFe` e `retEventoNFe`. No
+  Delphi esses nomes são **montados** a partir do parâmetro `FptpDFe` (`'ch' + FptpDFe`,
+  `'inf' + FptpDFe`, `'prot' + FptpDFe`), e o script só enxerga literal. O porte os escreve
+  literalmente porque é o leitor da NF-e; o do CT-e escreverá `chCTe`, `infCte` e `protCTe`.
+
+**Achado do próprio teste:** a guarda contra laço infinito comparava o NSU como **texto**, e
+`"7"` ≠ `"000000000000007"`. A RFB devolve o NSU preenchido com quinze zeros e o consumidor
+costuma guardar o número cru, então toda varredura que começasse de um NSU não preenchido
+gastava uma chamada à toa. Corrigido para comparação numérica, nos dois lugares que comparam
+NSU (`VarreduraConcluida` e o laço). O teste pegou porque o helper duplicava o laço — e a
+duplicação virou achado também: o laço foi extraído para `varrer`, que recebe quem faz a
+chamada, justamente para que o teste exercite o laço REAL e não uma cópia dele.

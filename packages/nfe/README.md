@@ -5,10 +5,10 @@ Nota Fiscal Eletrônica (modelo 55) e Nota Fiscal de Consumidor Eletrônica
 
 > **Estado:** em construção. Estão prontos os **tipos/enums**, o **modelo de
 > dados completo**, o **leitor** e o **gerador de XML**, as **regras de
-> negócio**, o **QR-Code**, os **eventos** (31 tipos) e os web services de
-> **status**, **consulta**, **autorização**, **inutilização**, **consulta de
-> cadastro** e **CSC**. Distribuição DF-e e o `.ini` chegam nas etapas
-> seguintes — veja [Roteiro](#roteiro).
+> negócio**, o **QR-Code**, os **eventos** (31 tipos) e TODOS os web
+> services: status, consulta, autorização, inutilização, consulta de
+> cadastro, CSC, recepção de eventos e **Distribuição DF-e**. Falta o
+> `.ini` e a demo — veja [Roteiro](#roteiro).
 
 ## Origem dos fontes
 
@@ -606,12 +606,13 @@ emissor.
 regra base é a versão, mas há uma exceção por UF: a **NFC-e 3.10 no Amazonas** permaneceu no
 serviço antigo (`ACBrNFe.pas:313`).
 
-### Quatro serviços têm versão PRÓPRIA
+### Cinco serviços têm versão PRÓPRIA
 
-`consCad` existe só em **2.00**; `admCscNFCe`, `envEvento` e `eventoEPEC`, em **1.00** —
-independentemente do leiaute da nota. No ACBr isso emerge de dois estágios — a chave do `.ini` e, depois, o schema instalado,
-que vence quando existe (`ACBrDFe.pas:580-590`). Para `consStatServ`, `consSitNFe` e `inutNFe`
-o schema da 4.00 existe e restaura a versão pedida; para esses dois não há resgate.
+`consCad` existe só em **2.00**; `admCscNFCe`, `envEvento` e `eventoEPEC`, em **1.00**;
+`distDFeInt`, em **1.01** — independentemente do leiaute da nota. No ACBr isso emerge de dois
+estágios — a chave do `.ini` e, depois, o schema instalado, que vence quando existe
+(`ACBrDFe.pas:580-590`). Para `consStatServ`, `consSitNFe` e `inutNFe` o schema da 4.00 existe
+e restaura a versão pedida; para esses cinco não há resgate.
 
 `VersaoDaMensagem` materializa a exceção. Emitir `versao="4.00"` ali é rejeição certa: a SEFAZ
 valida a mensagem contra o XSD do **serviço**.
@@ -706,8 +707,68 @@ comportamento que depende da ordem de iteração.
 ### A versão do evento é 1.00, sempre
 
 Inclusive num componente 4.00 e inclusive nos eventos da Reforma — a SEFAZ publica um único
-`envEvento_v1.00.xsd`. Ver [Dois serviços têm versão PRÓPRIA](#dois-serviços-têm-versão-própria),
-que agora são quatro.
+`envEvento_v1.00.xsd`. Ver [Cinco serviços têm versão PRÓPRIA](#cinco-serviços-têm-versão-própria).
+
+## Distribuição DF-e
+
+`dist_dfe.go`, `ret_dist_dfe.go` e `web_services_dist_dfe.go` portam `TDistribuicaoDFe`,
+`TDistDFeInt` e `TRetDistDFeInt`.
+
+É o serviço pelo qual o contribuinte descobre os documentos emitidos **contra** ele — notas em
+que figura como destinatário, e eventos dessas notas. Nenhum outro serviço da NF-e faz isso:
+todos os demais partem de um documento que o próprio emissor já tem.
+
+```go
+// Varredura: a forma normal de usar o serviço.
+docs, ret, err := c.VarrerDistribuicaoDFe(ctx, nfe.PedidoDistribuicao{
+    CUFAutor: 31,
+    CNPJCPF:  cnpjDoInteressado,
+    UltNSU:   ultimoNSUProcessado,
+}, 0)
+for _, d := range docs {
+    arquivar(nfe.ChaveDoDocZip(d), d.XML)
+}
+ultimoNSUProcessado = ret.UltNSU // guarde para a próxima varredura
+```
+
+### Três formas de consulta, com precedência
+
+| forma | o que faz |
+|---|---|
+| `NSU` | busca UM documento pelo número sequencial. **Vence as outras** |
+| `Chave` | busca UM documento pela chave. Vence o `UltNSU` |
+| `UltNSU` | varre a partir do último NSU conhecido. É o caso comum |
+
+A precedência está em dois `if` aninhados no Delphi. Perdê-la faz um pedido com `NSU` e
+`UltNSU` preenchidos varrer o lote inteiro no lugar de buscar o documento pedido.
+
+A `Chave` passa por `RemoverLiteralChave` antes de ir para o XML — o ACBr a emite crua. Uma
+chave copiada do atributo `Id` vem com o prefixo `NFe`, e a RFB rejeita o pedido inteiro.
+
+### A varredura não termina quando o lote vem vazio
+
+A RFB devolve no máximo **cinquenta** `docZip` por chamada. O critério de parada é
+`ultNSU == maxNSU` — um lote cheio com `ultNSU` abaixo do `maxNSU` significa que falta mais, e
+o `cStat` 137 ("nenhum documento localizado") **conta como sucesso**.
+
+`VarrerDistribuicaoDFe` não tem equivalente no ACBr, que expõe só a chamada única.
+
+### Cada item vem comprimido, e o tipo sai da RAIZ
+
+O conteúdo do `<docZip>` é **gzip em base64**, e dentro dele há um documento XML inteiro. O
+tipo é decidido pelo **nome da raiz** do documento descomprimido, não pelo atributo `schema` —
+os dois concordam na prática, mas é a raiz que manda.
+
+O leitor é **tolerante**: item com raiz desconhecida fica com o XML cru e os campos vazios; item
+corrompido ganha `ErroLeitura`. Nos dois casos os vizinhos seguem lidos. No ACBr qualquer um
+dos dois derruba o lote inteiro — e a RFB acrescenta tipo de documento sem avisar.
+
+### O mesmo struct, por dois caminhos
+
+`resNFe` e `procNFe` preenchem o **mesmo** `ResDFe`: no resumo os campos vêm prontos; no
+documento completo saem de quatro grupos aninhados, e a chave sai do atributo `Id` pelas 44
+posições finais. O resultado tem de ser indistinguível — senão o consumidor precisa saber de
+onde o item veio para saber onde olhar.
 
 ## Roteiro
 
@@ -722,7 +783,7 @@ que agora são quatro.
 | 5 | regras de negócio, QR-Code e URLs públicas | concluída |
 | 6a | status e consulta + endpoints dos web services | concluída |
 | 6b | autorização, inutilização, consulta cadastro, CSC | concluída |
-| 7 | eventos (31 tipos) + catálogo `TipoEvento` no `pcn` | **nesta entrega** |
-| 8 | Distribuição DF-e | pendente |
+| 7 | eventos (31 tipos) + catálogo `TipoEvento` no `pcn` | concluída |
+| 8 | Distribuição DF-e | **nesta entrega** |
 | 9 | `ini_reader.go` + `ini_writer.go` | pendente |
 | 10 | demo em `demos/nfe` | pendente |

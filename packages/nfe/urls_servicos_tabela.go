@@ -70,6 +70,12 @@ const (
 	// a unica UF que o oferece -- as demais usam a contingencia off-line
 	// (ACBrNFeWebServices.pas:3101).
 	ServicoEventoEPEC Servico = "EventoEPEC"
+
+	// ServicoDistribuicaoDFe e a Distribuicao DF-e, tratada DIRETAMENTE
+	// pela RFB: o DefinirURL forca a UF "AN" e nem olha a configuracao
+	// (ACBrNFeWebServices.pas:4001). E o unico servico da NF-e sem
+	// variacao por UF.
+	ServicoDistribuicaoDFe Servico = "NFeDistribuicaoDFe"
 )
 
 // endpointPorVersao guarda as URLs de um servico por versao de leiaute.
@@ -234,6 +240,11 @@ var endpointsPorAutorizador = map[string]map[Servico]endpointPorVersao{
 			V200: urlPorAmbiente{"https://www.nfe.fazenda.gov.br/RecepcaoEvento/RecepcaoEvento.asmx", "https://hom.nfe.fazenda.gov.br/RecepcaoEvento/RecepcaoEvento.asmx"},
 			V310: urlPorAmbiente{"https://www.nfe.fazenda.gov.br/RecepcaoEvento/RecepcaoEvento.asmx", "https://hom.nfe.fazenda.gov.br/RecepcaoEvento/RecepcaoEvento.asmx"},
 			V400: urlPorAmbiente{"https://www.nfe.fazenda.gov.br/NFeRecepcaoEvento4/NFeRecepcaoEvento4.asmx", "https://hom1.nfe.fazenda.gov.br/NFeRecepcaoEvento4/NFeRecepcaoEvento4.asmx"},
+		},
+		ServicoDistribuicaoDFe: {
+			V200: urlPorAmbiente{"https://www1.nfe.fazenda.gov.br/NFeDistribuicaoDFe/NFeDistribuicaoDFe.asmx", "https://hom1.nfe.fazenda.gov.br/NFeDistribuicaoDFe/NFeDistribuicaoDFe.asmx"},
+			V310: urlPorAmbiente{"https://www1.nfe.fazenda.gov.br/NFeDistribuicaoDFe/NFeDistribuicaoDFe.asmx", "https://hom1.nfe.fazenda.gov.br/NFeDistribuicaoDFe/NFeDistribuicaoDFe.asmx"},
+			V400: urlPorAmbiente{"https://www1.nfe.fazenda.gov.br/NFeDistribuicaoDFe/NFeDistribuicaoDFe.asmx", "https://hom1.nfe.fazenda.gov.br/NFeDistribuicaoDFe/NFeDistribuicaoDFe.asmx"},
 		},
 	},
 	"NFe/BA": {
@@ -1109,6 +1120,10 @@ var soapActionPorAutorizador = map[string]map[Servico]endpointPorVersao{
 //	               4.00 -- os eventos tem leiaute PROPRIO, que nao acompanha
 //	               o da NF-e. Vale tambem para os da Reforma Tributaria
 //	eventoEPEC     idem, 1.00
+//	distDFeInt     1.01. Aqui existem os dois schemas (1.00 e 1.01), e o
+//	               AchaArquivoSchema pegaria o maior <= a versao pedida --
+//	               que para 4.00 e o 1.01. O `.ini` tambem so publica a
+//	               chave `_1.01`, entao os dois caminhos concordam
 //
 // Para esses dois, emitir a versao do leiaute da nota e rejeicao certa: a
 // SEFAZ valida a mensagem contra o XSD do servico, nao contra o da NF-e.
@@ -1120,6 +1135,7 @@ var versaoFixaPorServico = map[Servico]string{
 	ServicoAdministrarCSC:   "1.00",
 	ServicoRecepcaoEvento:   "1.00",
 	ServicoEventoEPEC:       "1.00",
+	ServicoDistribuicaoDFe:  "1.01",
 }
 
 // VersaoDaMensagem devolve a versao que vai no atributo `versao` da
