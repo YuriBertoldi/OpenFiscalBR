@@ -13,6 +13,7 @@ package rtc
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -730,12 +731,62 @@ func TestValorZero_JaEUtilizavel(t *testing.T) {
 // INI -- round-trip do IBSCBS completo
 // ---------------------------------------------------------------------------
 
-func TestINI_IBSCBSRoundTripCompleto(t *testing.T) {
-	// Exercita TODOS os grupos do IBSCBS que o .ini cobre, inclusive os de
-	// credito/ajuste (gTransfCred, gAjusteCompet, gCredPresOper,
-	// gCredPresIBSZFM) -- lacuna apontada na revisao de fidelidade.
-	original := IBSCBS{
-		CST:        CST200,
+// monofasiaCompleta preenche os QUATRO ramos da monofasia, campo a campo,
+// com valores distintos e nao nulos.
+//
+// Campo zerado nao exercita nome de chave nem de secao: os quatro ramos tem
+// a mesma forma e nomes quase iguais (`adRemIBSReten` x `adRemCBSReten`,
+// `gMonoRetIBSQtde` x `gMonoRetIBSAliq`), e e exatamente nisso que um
+// copia-e-cola erra. Com tudo preenchido e comparado, a troca falha no
+// round-trip.
+//
+// Os dois `gpBioDiferenca` de cada tributo levam valores DIFERENTES de
+// proposito -- eles compartilham UMA secao, e o teste trava qual dos dois
+// sobrevive.
+func monofasiaCompleta() GIBSCBSMono {
+	return GIBSCBSMono{
+		VTotIBSMonoItem: 11, VTotCBSMonoItem: 12,
+
+		GIBSMonoAdRem: GIBSMonoAdRem{
+			GMonoPadrao:    GMonoPadraoIBSQtde{QBCMono: 100, AdRemIBS: 0.5, VIBSMono: 50},
+			GMonoReten:     GMonoRetenIBSQtde{QBCMonoReten: 10, AdRemIBSReten: 0.25, VIBSMonoReten: 2.5},
+			GMonoRet:       GMonoRetIBS{VIBSMonoRet: 3},
+			GpBioDiferenca: GpBioDiferencaIBS{QBCBioComb: 20, VIBSDiferenca: 4},
+		},
+		GIBSMonoAdValorem: GIBSMonoAdValorem{
+			GMonoPadrao: GMonoPadraoIBSAliq{
+				VBCMono: 300, PAliqMonoUF: 2, VIBSMonoUF: 6,
+				PAliqMonoMun: 1.5, VIBSMonoMun: 4.5, VIBSMono: 10.5,
+			},
+			GMonoReten:     GMonoRetenIBSAliq{VBCMonoReten: 30, PAliqMonoReten: 1.25, VIBSMonoReten: 37.50},
+			GMonoRet:       GMonoRetIBS{VIBSMonoRet: 7},
+			GpBioDiferenca: GpBioDiferencaIBS{QBCBioComb: 99, VIBSDiferenca: 9},
+		},
+
+		GCBSMonoAdRem: GCBSMonoAdRem{
+			GMonoPadrao:    GMonoPadraoCBSQtde{QBCMono: 200, AdRemCBS: 0.75, VCBSMono: 150},
+			GMonoReten:     GMonoRetenCBSQtde{QBCMonoReten: 20, AdRemCBSReten: 0.35, VCBSMonoReten: 7},
+			GMonoRet:       GMonoRetCBS{VCBSMonoRet: 8},
+			GpBioDiferenca: GpBioDiferencaCBS{QBCBioComb: 40, VCBSDiferenca: 14},
+		},
+		GCBSMonoAdValorem: GCBSMonoAdValorem{
+			GMonoPadrao:    GMonoPadraoCBSAliq{VBCMono: 200, PAliqMonoCBS: 1.5, VCBSMono: 3},
+			GMonoReten:     GMonoRetenCBSAliq{VBCMonoReten: 25, PAliqMonoReten: 2.25, VCBSMonoReten: 56.25},
+			GMonoRet:       GMonoRetCBS{VCBSMonoRet: 6},
+			GpBioDiferenca: GpBioDiferencaCBS{QBCBioComb: 88, VCBSDiferenca: 18},
+		},
+	}
+}
+
+// ibscbsCompleto devolve um IBSCBS com TODOS os grupos preenchidos.
+//
+// Nenhum documento real tem todos ao mesmo tempo -- eles sao excludentes --,
+// e e exatamente por isso que ele serve aos testes de despacho: qualquer
+// grupo que apareca no .ini apareceu porque a regra mandou, nao porque era
+// o unico preenchido.
+func ibscbsCompleto(cst CSTIBSCBS) IBSCBS {
+	return IBSCBS{
+		CST:        cst,
 		CClassTrib: "000001",
 		IndDoacao:  pcn.TieSim,
 		GIBSCBS: GIBSCBS{
@@ -759,6 +810,7 @@ func TestINI_IBSCBSRoundTripCompleto(t *testing.T) {
 			GTribRegular:   GTribRegular{CSTReg: CST000, CClassTribReg: "000002", VTribRegCBS: 43},
 			GTribCompraGov: GTribCompraGov{PAliqCBS: 3.9999, VTribCBS: 53},
 		},
+		GIBSCBSMono:   monofasiaCompleta(),
 		GEstornoCred:  GEstornoCred{VIBSEstCred: 5, VCBSEstCred: 6},
 		GTransfCred:   GTransfCred{VIBS: 61, VCBS: 62},
 		GAjusteCompet: GAjusteCompet{CompetApur: time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC), VIBS: 71, VCBS: 72},
@@ -774,9 +826,145 @@ func TestINI_IBSCBSRoundTripCompleto(t *testing.T) {
 			VCredPresIBSZFM:  96,
 		},
 	}
+}
+
+// TestINI_IBSCBSSubgrupoDependeDoCSTeDoModelo trava a tabela de GrupoDoCST
+// no .ini.
+//
+// E a decisao mais facil de perder do grupo inteiro: os quatro subgrupos
+// sao EXCLUDENTES, e qual deles sai nao esta no grupo -- esta no CST e no
+// modelo do documento. Um gravador que simplesmente emita o que estiver
+// preenchido passa em qualquer round-trip e produz .ini que o validador da
+// SEFAZ recusa.
+func TestINI_IBSCBSSubgrupoDependeDoCSTeDoModelo(t *testing.T) {
+	casos := []struct {
+		modelo   ModeloDFe
+		cst      CSTIBSCBS
+		esperada string // secao que PRECISA aparecer
+		proibida string // secao que NAO pode aparecer
+	}{
+		{ModeloNFe, CST000, "gIBSCBS001", "gIBSCBSMono001"},
+		{ModeloNFe, CST510, "gIBSCBS001", "gIBSCBSMono001"},
+		{ModeloNFe, CST620, "gIBSCBSMono001", "gIBSCBS001"},
+		{ModeloNFe, CST800, "gTransfCred001", "gIBSCBS001"},
+		{ModeloNFe, CST811, "gAjusteCompet001", "gIBSCBS001"},
+
+		// A NFC-e aceita menos CSTs que a NF-e: o 510 nao esta na lista
+		// dela, e nada sai.
+		{ModeloNFCe, CST000, "gIBSCBS001", "gIBSCBSMono001"},
+		{ModeloNFCe, CST620, "gIBSCBSMono001", "gIBSCBS001"},
+		{ModeloNFCe, CST510, "", "gIBSCBS001"},
+
+		// A NFGas e a NFAg so emitem o grupo com CST 000. Sao os dois
+		// modelos mais restritos da tabela, e o efeito e o mesmo nos
+		// dois: CST fora da lista grava o cabecalho e descarta o
+		// subgrupo -- ver o round-trip do proprio package nfgas.
+		{ModeloNFGas, CST000, "gIBSCBS001", ""},
+		{ModeloNFGas, CST200, "", "gIBSCBS001"},
+		{ModeloNFAg, CST000, "gIBSCBS001", ""},
+		{ModeloNFAg, CST200, "", "gIBSCBS001"},
+
+		// O BPe de transporte metropolitano e o unico que NAO aceita o
+		// CST 000 -- so o 200.
+		{ModeloBPeTM, CST200, "gIBSCBS001", ""},
+		{ModeloBPeTM, CST000, "", "gIBSCBS001"},
+	}
+
+	for _, c := range casos {
+		t.Run(fmt.Sprintf("%d_%s", c.modelo, c.cst), func(t *testing.T) {
+			ini := pcn.NovoINI()
+			GravarINIIBSCBS(ini, ibscbsCompleto(c.cst), 1, SemIndice,
+				OpcoesIBSCBS{Modelo: c.modelo})
+
+			if c.esperada != "" && !ini.SecaoExiste(c.esperada) {
+				t.Errorf("a secao %q deveria ter sido gravada", c.esperada)
+			}
+			if c.proibida != "" && ini.SecaoExiste(c.proibida) {
+				t.Errorf("a secao %q NAO deveria sair com esse CST", c.proibida)
+			}
+
+			// O cabecalho sai sempre que ha CST, inclusive quando nenhum
+			// subgrupo sai -- e o que o Delphi faz.
+			if !ini.SecaoExiste("IBSCBS001") {
+				t.Error("o cabecalho IBSCBS001 sai com qualquer CST")
+			}
+		})
+	}
+}
+
+// TestINI_IBSCBSCreditoPresumidoSoNaNFeEExcludente trava as duas condicoes
+// que o ACBr poe em volta dos grupos de credito presumido.
+func TestINI_IBSCBSCreditoPresumidoSoNaNFeEExcludente(t *testing.T) {
+	completo := ibscbsCompleto(CST000)
+
+	// Na NF-e, com os DOIS preenchidos, so o gCredPresOper sai: o Delphi
+	// usa `else if`.
+	ini := pcn.NovoINI()
+	GravarINIIBSCBS(ini, completo, 1, SemIndice, OpcoesIBSCBS{Modelo: ModeloNFe})
+	if !ini.SecaoExiste("gCredPresOper001") {
+		t.Error("gCredPresOper deveria sair na NF-e")
+	}
+	if ini.SecaoExiste("gCredPresIBSZFM001") {
+		t.Error("os dois creditos presumidos sao EXCLUDENTES; so o primeiro sai")
+	}
+
+	// Sem o gCredPresOper, o da Zona Franca assume.
+	semOper := completo
+	semOper.GCredPresOper = GCredPresOper{}
+	ini = pcn.NovoINI()
+	GravarINIIBSCBS(ini, semOper, 1, SemIndice, OpcoesIBSCBS{Modelo: ModeloNFe})
+	if !ini.SecaoExiste("gCredPresIBSZFM001") {
+		t.Error("sem o gCredPresOper, o gCredPresIBSZFM sai")
+	}
+
+	// Fora da NF-e nenhum dos dois existe.
+	ini = pcn.NovoINI()
+	GravarINIIBSCBS(ini, completo, 1, SemIndice, OpcoesIBSCBS{Modelo: ModeloNFGas})
+	if ini.SecaoExiste("gCredPresOper001") || ini.SecaoExiste("gCredPresIBSZFM001") {
+		t.Error("credito presumido so existe na NF-e")
+	}
+}
+
+// TestINI_IBSCBSEstornoCredSaiZeradoNaPerdaEmEstoque trava a condicao que
+// NAO depende de valor.
+//
+// Numa NF-e com tpNFDebito "perda em estoque" o gEstornoCred sai mesmo
+// zerado -- e o unico grupo do .ini que sai por causa de um campo de OUTRO
+// grupo, e some de qualquer outro modelo.
+func TestINI_IBSCBSEstornoCredSaiZeradoNaPerdaEmEstoque(t *testing.T) {
+	zerado := IBSCBS{CST: CST000, CClassTrib: "000001"}
 
 	ini := pcn.NovoINI()
-	GravarINIIBSCBS(ini, original, 1, SemIndice)
+	GravarINIIBSCBS(ini, zerado, 1, SemIndice,
+		OpcoesIBSCBS{Modelo: ModeloNFe, TpNFDebito: TdPerdaEmEstoque})
+	if !ini.SecaoExiste("gEstornoCred001") {
+		t.Error("perda em estoque grava o gEstornoCred mesmo zerado")
+	}
+
+	// Mesmo tpNFDebito, outro modelo: nao sai.
+	ini = pcn.NovoINI()
+	GravarINIIBSCBS(ini, zerado, 1, SemIndice,
+		OpcoesIBSCBS{Modelo: ModeloNFGas, TpNFDebito: TdPerdaEmEstoque})
+	if ini.SecaoExiste("gEstornoCred001") {
+		t.Error("a excecao do tpNFDebito e so da NF-e")
+	}
+
+	// NF-e com outro tpNFDebito e tudo zerado: tambem nao sai.
+	ini = pcn.NovoINI()
+	GravarINIIBSCBS(ini, zerado, 1, SemIndice,
+		OpcoesIBSCBS{Modelo: ModeloNFe, TpNFDebito: TdAnulacao})
+	if ini.SecaoExiste("gEstornoCred001") {
+		t.Error("sem valor e sem perda em estoque, o grupo nao sai")
+	}
+}
+
+// TestINI_IBSCBSRoundTripDoCaminhoNormal faz a ida e volta do CST 000 numa
+// NF-e, que e o caminho com mais campos.
+func TestINI_IBSCBSRoundTripDoCaminhoNormal(t *testing.T) {
+	original := ibscbsCompleto(CST000)
+
+	ini := pcn.NovoINI()
+	GravarINIIBSCBS(ini, original, 1, SemIndice, OpcoesIBSCBS{Modelo: ModeloNFe})
 
 	var relido IBSCBS
 	LerINIIBSCBS(ini, &relido, 1, SemIndice)
@@ -790,25 +978,195 @@ func TestINI_IBSCBSRoundTripCompleto(t *testing.T) {
 	if relido.GIBSCBS.GCBS.GALCZFMCBS != original.GIBSCBS.GCBS.GALCZFMCBS {
 		t.Errorf("gALCZFMCBS: %+v", relido.GIBSCBS.GCBS.GALCZFMCBS)
 	}
+	if relido.GIBSCBS.GTribRegular != original.GIBSCBS.GTribRegular {
+		t.Errorf("gTribRegular: %+v", relido.GIBSCBS.GTribRegular)
+	}
 	if relido.GEstornoCred != original.GEstornoCred {
 		t.Errorf("gEstornoCred: %+v", relido.GEstornoCred)
-	}
-	if relido.GTransfCred != original.GTransfCred {
-		t.Errorf("gTransfCred: %+v", relido.GTransfCred)
-	}
-	if relido.GAjusteCompet.VIBS != original.GAjusteCompet.VIBS ||
-		!relido.GAjusteCompet.CompetApur.Equal(original.GAjusteCompet.CompetApur) {
-		t.Errorf("gAjusteCompet: %+v vs %+v", relido.GAjusteCompet, original.GAjusteCompet)
 	}
 	if relido.GCredPresOper.CCredPres != original.GCredPresOper.CCredPres ||
 		relido.GCredPresOper.GIBSCredPres != original.GCredPresOper.GIBSCredPres ||
 		relido.GCredPresOper.GCBSCredPres != original.GCredPresOper.GCBSCredPres {
 		t.Errorf("gCredPresOper: %+v", relido.GCredPresOper)
 	}
-	if relido.GCredPresIBSZFM.TpCredPresIBSZFM != original.GCredPresIBSZFM.TpCredPresIBSZFM ||
-		relido.GCredPresIBSZFM.VCredPresIBSZFM != original.GCredPresIBSZFM.VCredPresIBSZFM ||
-		!relido.GCredPresIBSZFM.CompetApur.Equal(original.GCredPresIBSZFM.CompetApur) {
-		t.Errorf("gCredPresIBSZFM: %+v", relido.GCredPresIBSZFM)
+
+	// gTransfCred e gAjusteCompet NAO saem com CST 000 -- o CST 800 e o
+	// 811 sao os donos deles.
+	if relido.GTransfCred != (GTransfCred{}) {
+		t.Errorf("gTransfCred nao pertence ao CST 000: %+v", relido.GTransfCred)
+	}
+	if relido.GAjusteCompet.VIBS != 0 {
+		t.Errorf("gAjusteCompet nao pertence ao CST 000: %+v", relido.GAjusteCompet)
+	}
+}
+
+// TestINI_IBSCBSMonoRoundTrip faz a ida e volta da arvore INTEIRA da
+// monofasia -- os quatro ramos, campo a campo.
+//
+// Os quatro tem a mesma forma e nomes quase iguais. Comparar so um deles, ou
+// deixar metade da fixture zerada, faz a troca de `adRemIBSReten` por
+// `adRemCBSReten` passar em teste e sair errada no arquivo que vai ao fisco.
+func TestINI_IBSCBSMonoRoundTrip(t *testing.T) {
+	original := ibscbsCompleto(CST620)
+
+	ini := pcn.NovoINI()
+	GravarINIIBSCBS(ini, original, 1, SemIndice, OpcoesIBSCBS{Modelo: ModeloNFe})
+
+	var relido IBSCBS
+	LerINIIBSCBS(ini, &relido, 1, SemIndice)
+
+	m, o := relido.GIBSCBSMono, original.GIBSCBSMono
+
+	if m.VTotIBSMonoItem != o.VTotIBSMonoItem || m.VTotCBSMonoItem != o.VTotCBSMonoItem {
+		t.Errorf("totais do item: %+v", m)
+	}
+
+	// Os tres primeiros subgrupos de cada ramo sao comparados INTEIROS --
+	// o gpBioDiferenca tem regra propria e vem depois.
+	if m.GIBSMonoAdRem.GMonoPadrao != o.GIBSMonoAdRem.GMonoPadrao {
+		t.Errorf("gMonoPadraoIBSQtde: %+v vs %+v",
+			m.GIBSMonoAdRem.GMonoPadrao, o.GIBSMonoAdRem.GMonoPadrao)
+	}
+	if m.GIBSMonoAdRem.GMonoReten != o.GIBSMonoAdRem.GMonoReten {
+		t.Errorf("gMonoRetenIBSQtde: %+v vs %+v",
+			m.GIBSMonoAdRem.GMonoReten, o.GIBSMonoAdRem.GMonoReten)
+	}
+	if m.GIBSMonoAdRem.GMonoRet != o.GIBSMonoAdRem.GMonoRet {
+		t.Errorf("gMonoRetIBSQtde: %+v", m.GIBSMonoAdRem.GMonoRet)
+	}
+
+	if m.GIBSMonoAdValorem.GMonoPadrao != o.GIBSMonoAdValorem.GMonoPadrao {
+		t.Errorf("gMonoPadraoIBSAliq: %+v vs %+v",
+			m.GIBSMonoAdValorem.GMonoPadrao, o.GIBSMonoAdValorem.GMonoPadrao)
+	}
+	if m.GIBSMonoAdValorem.GMonoReten != o.GIBSMonoAdValorem.GMonoReten {
+		t.Errorf("gMonoRetenIBSAliq: %+v vs %+v",
+			m.GIBSMonoAdValorem.GMonoReten, o.GIBSMonoAdValorem.GMonoReten)
+	}
+	if m.GIBSMonoAdValorem.GMonoRet != o.GIBSMonoAdValorem.GMonoRet {
+		t.Errorf("gMonoRetIBSAliq: %+v", m.GIBSMonoAdValorem.GMonoRet)
+	}
+
+	if m.GCBSMonoAdRem.GMonoPadrao != o.GCBSMonoAdRem.GMonoPadrao {
+		t.Errorf("gMonoPadraoCBSQtde: %+v vs %+v",
+			m.GCBSMonoAdRem.GMonoPadrao, o.GCBSMonoAdRem.GMonoPadrao)
+	}
+	if m.GCBSMonoAdRem.GMonoReten != o.GCBSMonoAdRem.GMonoReten {
+		t.Errorf("gMonoRetenCBSQtde: %+v vs %+v",
+			m.GCBSMonoAdRem.GMonoReten, o.GCBSMonoAdRem.GMonoReten)
+	}
+	if m.GCBSMonoAdRem.GMonoRet != o.GCBSMonoAdRem.GMonoRet {
+		t.Errorf("gMonoRetCBSQtde: %+v", m.GCBSMonoAdRem.GMonoRet)
+	}
+
+	if m.GCBSMonoAdValorem.GMonoPadrao != o.GCBSMonoAdValorem.GMonoPadrao {
+		t.Errorf("gMonoPadraoCBSAliq: %+v vs %+v",
+			m.GCBSMonoAdValorem.GMonoPadrao, o.GCBSMonoAdValorem.GMonoPadrao)
+	}
+	if m.GCBSMonoAdValorem.GMonoReten != o.GCBSMonoAdValorem.GMonoReten {
+		t.Errorf("gMonoRetenCBSAliq: %+v vs %+v",
+			m.GCBSMonoAdValorem.GMonoReten, o.GCBSMonoAdValorem.GMonoReten)
+	}
+	if m.GCBSMonoAdValorem.GMonoRet != o.GCBSMonoAdValorem.GMonoRet {
+		t.Errorf("gMonoRetCBSAliq: %+v", m.GCBSMonoAdValorem.GMonoRet)
+	}
+
+	// gpBioDiferenca: UMA secao por tributo, gravada pelos DOIS ramos. Quem
+	// grava por ultimo -- o ad valorem -- vence, e o ad rem volta com o
+	// conteudo dele. E defeito do ACBr, replicado porque e deterministico.
+	esperadoIBS := o.GIBSMonoAdValorem.GpBioDiferenca
+	if o.GIBSMonoAdRem.GpBioDiferenca == esperadoIBS {
+		t.Fatal("a fixture precisa ter valores DIFERENTES nos dois ramos do IBS")
+	}
+	if m.GIBSMonoAdValorem.GpBioDiferenca != esperadoIBS ||
+		m.GIBSMonoAdRem.GpBioDiferenca != esperadoIBS {
+		t.Errorf("gpBioDiferencaIBS: os dois ramos deveriam voltar com %+v; "+
+			"ad rem veio %+v e ad valorem veio %+v", esperadoIBS,
+			m.GIBSMonoAdRem.GpBioDiferenca, m.GIBSMonoAdValorem.GpBioDiferenca)
+	}
+
+	esperadoCBS := o.GCBSMonoAdValorem.GpBioDiferenca
+	if o.GCBSMonoAdRem.GpBioDiferenca == esperadoCBS {
+		t.Fatal("a fixture precisa ter valores DIFERENTES nos dois ramos da CBS")
+	}
+	if m.GCBSMonoAdValorem.GpBioDiferenca != esperadoCBS ||
+		m.GCBSMonoAdRem.GpBioDiferenca != esperadoCBS {
+		t.Errorf("gpBioDiferencaCBS: os dois ramos deveriam voltar com %+v; "+
+			"ad rem veio %+v e ad valorem veio %+v", esperadoCBS,
+			m.GCBSMonoAdRem.GpBioDiferenca, m.GCBSMonoAdValorem.GpBioDiferenca)
+	}
+}
+
+// TestINI_GpBioDiferencaCBSUsaAChaveDoProprioTRIBUTO trava uma correcao
+// deliberada ao ACBr.
+//
+// O Gerar_gpBioDiferencaCBS do original grava a chave `vIBSDiferenca` no
+// grupo da CBS (`RTC.IniWriter.pas:896`) -- copia-e-cola do grupo do IBS --
+// enquanto o leitor dele procura `vCBSDiferenca`. O ACBr perde o campo na
+// propria ida e volta.
+//
+// Este teste assegura a grafia escolhida. Sem ele a correcao e invisivel:
+// gravador e leitor do porte concordam, e qualquer round-trip passa com os
+// dois nomes.
+func TestINI_GpBioDiferencaCBSUsaAChaveDoProprioTRIBUTO(t *testing.T) {
+	ini := pcn.NovoINI()
+	gravarINIGpBioDiferencaCBS(ini, GpBioDiferencaCBS{QBCBioComb: 40, VCBSDiferenca: 14}, 1)
+
+	const secao = "gpBioDiferencaCBS001"
+	if ini.LerFloat(secao, "vCBSDiferenca", 0) != 14 {
+		t.Errorf("a chave do grupo da CBS e `vCBSDiferenca`; secao saiu como %q",
+			ini.String())
+	}
+	if ini.LerString(secao, "vIBSDiferenca", "AUSENTE") != "AUSENTE" {
+		t.Error("`vIBSDiferenca` e a chave do IBS; no grupo da CBS ela nao sai")
+	}
+}
+
+func TestINI_ISTotSoSaiComValorPOSITIVO(t *testing.T) {
+	ini := pcn.NovoINI()
+	GravarINIISTot(ini, ISTot{VIS: 0})
+	if ini.SecaoExiste("ISTot") {
+		t.Error("com vIS zerado a secao nao sai")
+	}
+
+	ini = pcn.NovoINI()
+	GravarINIISTot(ini, ISTot{VIS: 12.34})
+	if !ini.SecaoExiste("ISTot") {
+		t.Fatal("com vIS positivo a secao sai")
+	}
+
+	var relido ISTot
+	LerINIISTot(ini, &relido)
+	if relido.VIS != 12.34 {
+		t.Errorf("round-trip do ISTot = %v", relido.VIS)
+	}
+}
+
+// TestINI_GMonoTotEhGravadoAindaQueOACBrNaoGrave trava o acrescimo do
+// porte no total da monofasia.
+//
+// O Ler_IBSCBSTot do ACBr LE o grupo gMono e o Gerar_IBSCBSTot nao o
+// GRAVA: uma ida e volta pelo .ini perde o total da monofasia inteiro.
+// Aqui o grupo e gravado, e o leitor do proprio ACBr o recupera sem
+// alteracao nenhuma do lado dele.
+func TestINI_GMonoTotEhGravadoAindaQueOACBrNaoGrave(t *testing.T) {
+	original := IBSCBSTot{
+		VBCIBSCBS: 1000,
+		GMono: GMono{
+			VIBSMono: 10, VCBSMono: 20,
+			VIBSMonoReten: 1, VCBSMonoReten: 2,
+			VIBSMonoRet: 3, VCBSMonoRet: 4,
+		},
+	}
+
+	ini := pcn.NovoINI()
+	GravarINIIBSCBSTot(ini, original)
+
+	var relido IBSCBSTot
+	LerINIIBSCBSTot(ini, &relido)
+
+	if relido.GMono != original.GMono {
+		t.Errorf("gMono: %+v vs %+v", relido.GMono, original.GMono)
 	}
 }
 

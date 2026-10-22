@@ -225,7 +225,8 @@ func gravarINIDet(ini *pcn.INI, dets []Det) {
 		gravarINIGMedicao(ini, d.Prod.GMedicao, idx)
 		gravarINIGTarif(ini, d.GTarif, idx)
 		gravarINIGProcRef(ini, d.GProcRef, idx)
-		rtc.GravarINIIBSCBS(ini, d.Imposto.IBSCBS, idx, -1)
+		rtc.GravarINIIBSCBS(ini, d.Imposto.IBSCBS, idx, -1,
+			rtc.OpcoesIBSCBS{Modelo: rtc.ModeloNFAg})
 		gravarINIPIS(ini, d.Imposto.PIS, idx)
 		gravarINICOFINS(ini, d.Imposto.COFINS, idx)
 		gravarINIRetTrib(ini, d.Imposto.RetTrib, idx)

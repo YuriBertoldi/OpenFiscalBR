@@ -293,7 +293,8 @@ func gravarINIDet(ini *pcn.INI, lista []Det) {
 		gravarINIGProcRef(ini, d.GNormal.GProcRef, idx)
 
 		gravarINIICMS(ini, d.GNormal.Imposto.ICMS, idx)
-		rtc.GravarINIIBSCBS(ini, d.GNormal.Imposto.IBSCBS, idx, rtc.SemIndice)
+		rtc.GravarINIIBSCBS(ini, d.GNormal.Imposto.IBSCBS, idx, rtc.SemIndice,
+			rtc.OpcoesIBSCBS{Modelo: rtc.ModeloNFGas})
 		gravarINIPIS(ini, d.GNormal.Imposto.PIS, idx)
 		gravarINICOFINS(ini, d.GNormal.Imposto.COFINS, idx)
 		gravarINIRetTrib(ini, d.GNormal.Imposto.RetTrib, idx)
