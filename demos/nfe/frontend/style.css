@@ -1,0 +1,257 @@
+/* OpenFiscalBR - Demo NF-e - LGPL v2.1+
+ *
+ * CSS puro, sem framework. A paleta e a mesma das demais demos do
+ * repositorio, para que quem abrir duas reconheca a familia.
+ */
+
+:root {
+  --fundo: #10151c;
+  --painel: #1a222d;
+  --borda: #2b3a4d;
+  --texto: #dbe6f2;
+  --texto-suave: #8ba0b8;
+  --acento: #3fa8ff;
+  --ok: #43c98b;
+  --erro: #ff6b6b;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: var(--fundo);
+  color: var(--texto);
+  line-height: 1.5;
+}
+
+header {
+  padding: 1.5rem 2rem 1rem;
+  border-bottom: 1px solid var(--borda);
+  background: var(--painel);
+}
+
+header h1 {
+  margin: 0 0 .25rem;
+  font-size: 1.5rem;
+  color: var(--acento);
+}
+
+header p {
+  margin: .25rem 0;
+  color: var(--texto-suave);
+  font-size: .9rem;
+}
+
+header .aviso { max-width: 70ch; }
+
+main {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  grid-template-areas: "entrada saida" "transmissao saida";
+  gap: 1.25rem;
+  padding: 1.5rem 2rem;
+  align-items: start;
+}
+
+@media (max-width: 1000px) {
+  main {
+    grid-template-columns: 1fr;
+    grid-template-areas: "entrada" "transmissao" "saida";
+  }
+}
+
+section {
+  background: var(--painel);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.entrada { grid-area: entrada; }
+.transmissao { grid-area: transmissao; }
+.saida { grid-area: saida; }
+
+section h2 {
+  margin: 0 0 .75rem;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--texto-suave);
+}
+
+/* Abas ------------------------------------------------------------------ */
+
+.abas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  margin-bottom: .75rem;
+}
+
+.aba {
+  background: transparent;
+  color: var(--texto-suave);
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  padding: .35rem .7rem;
+  font-size: .85rem;
+  cursor: pointer;
+}
+
+.aba:hover { border-color: var(--acento); color: var(--texto); }
+
+.aba.ativa {
+  background: #21344a;
+  border-color: var(--acento);
+  color: var(--texto);
+}
+
+/* Exemplos -------------------------------------------------------------- */
+
+.exemplos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: .5rem;
+  font-size: .85rem;
+  color: var(--texto-suave);
+}
+
+select, input[type="text"] {
+  background: var(--fundo);
+  color: var(--texto);
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  padding: .35rem .5rem;
+  font-family: inherit;
+  font-size: .85rem;
+}
+
+.descricao {
+  margin: .25rem 0 .75rem;
+  color: var(--texto-suave);
+  font-size: .85rem;
+}
+
+/* Entrada --------------------------------------------------------------- */
+
+textarea {
+  width: 100%;
+  background: var(--fundo);
+  color: var(--texto);
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  padding: .6rem;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: .8rem;
+  resize: vertical;
+}
+
+textarea:focus, select:focus, input:focus {
+  outline: none;
+  border-color: var(--acento);
+}
+
+/* Acoes ----------------------------------------------------------------- */
+
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
+  margin-top: .75rem;
+}
+
+.campos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: .5rem;
+  margin-top: .75rem;
+  font-size: .85rem;
+  color: var(--texto-suave);
+}
+
+.campos label {
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+}
+
+.botao {
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  padding: .45rem .9rem;
+  font-size: .85rem;
+  font-family: inherit;
+  cursor: pointer;
+  background: transparent;
+  color: var(--texto);
+}
+
+.botao:hover:not(:disabled) { border-color: var(--acento); }
+
+.botao:disabled { opacity: .5; cursor: not-allowed; }
+
+.botao.primario {
+  background: var(--acento);
+  border-color: var(--acento);
+  color: #0b1017;
+  font-weight: 600;
+}
+
+.botao.secundario { color: var(--texto-suave); }
+
+/* Saida ----------------------------------------------------------------- */
+
+.barra {
+  display: flex;
+  gap: .5rem;
+  margin-bottom: .5rem;
+  min-height: 1.6rem;
+}
+
+.pill {
+  display: inline-block;
+  padding: .15rem .6rem;
+  border: 1px solid var(--borda);
+  border-radius: 999px;
+  font-size: .75rem;
+  color: var(--texto-suave);
+}
+
+.pill.ok { border-color: var(--ok); color: var(--ok); }
+.pill.erro { border-color: var(--erro); color: var(--erro); }
+
+pre {
+  margin: 0;
+  background: var(--fundo);
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  padding: .75rem;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: .78rem;
+  max-height: 70vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+code {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: .85em;
+  color: var(--acento);
+}
+
+/* Rodape ---------------------------------------------------------------- */
+
+footer {
+  padding: 1rem 2rem 2rem;
+  color: var(--texto-suave);
+  font-size: .8rem;
+  border-top: 1px solid var(--borda);
+}
+
+footer a { color: var(--acento); }
