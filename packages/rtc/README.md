@@ -100,3 +100,36 @@ entre chamadas, como o original — use um `Writer` novo por documento:
 Round-trip writer→reader coberto em `xml_writer_test.go`. Divergência defensiva: os
 `AppendChild` que o Delphi executa sobre `Result=nil` (access violation em potencial) aqui são
 no-ops.
+
+## Monofasia e Imposto Seletivo no `.ini`
+
+`ini_mono.go` cobre o `gIBSCBSMono`, o `gIS`/`ISTot`/`gMono` e o `DFeReferenciado` — grupos que
+ficaram de fora no porte inicial porque a NFGas não os emite. Entraram com a NF-e, cujo CST
+**620** é o caminho de combustíveis e o único em que o `gIBSCBS` não sai e esta árvore sai no
+lugar dele.
+
+A árvore tem quatro ramos com a MESMA forma — ad rem e ad valorem, para IBS e para CBS — e a
+diferença entre eles é o que se cobra:
+
+| ramo | cobra por | seção |
+|---|---|---|
+| ad rem | QUANTIDADE (`qBCMono` × `adRem`) | `gMonoPadraoIBSQtde` |
+| ad valorem | VALOR (`vBCMono` × `pAliq`) | `gMonoPadraoIBSAliq` |
+
+São seções distintas com campos distintos; misturá-las é o erro fácil aqui.
+
+Duas particularidades do original, preservadas: `gMonoRet` tem seção diferente por ramo
+(`gMonoRetIBSQtde` × `gMonoRetIBSAliq`) mas o mesmo tipo de um campo só; e `gpBioDiferenca` tem
+UMA seção por tributo, gravada e lida pelos DOIS ramos — quem grava por último vence.
+
+## `GrupoDoCST` — a tabela de modelo × CST
+
+Qual subgrupo sai dentro do `IBSCBS` — `gIBSCBS`, `gIBSCBSMono`, `gTransfCred` ou
+`gAjusteCompet` — depende de DUAS coisas: o modelo do documento e o CST. No ACBr a tabela está
+espalhada por sete procedures e **repetida idêntica** no gerador de XML e no de `.ini`.
+
+Aqui ela vive em `GrupoDoCST`, consultada pelos dois. Duas cópias divergem em silêncio: o build
+passa, o teste de cada lado passa, e o `.ini` deixa de casar com o XML do mesmo documento.
+
+Por isso `GravarINIIBSCBS` recebe `OpcoesIBSCBS` com o modelo e o `tpNFDebito` — o que o
+`Gerar_IBSCBS` do Delphi lê de propriedades do writer, e não do grupo que está gravando.

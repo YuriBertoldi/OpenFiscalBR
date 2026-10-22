@@ -899,3 +899,199 @@ gastava uma chamada à toa. Corrigido para comparação numérica, nos dois luga
 NSU (`VarreduraConcluida` e o laço). O teste pegou porque o helper duplicava o laço — e a
 duplicação virou achado também: o laço foi extraído para `varrer`, que recebe quem faz a
 chamada, justamente para que o teste exercite o laço REAL e não uma cópia dele.
+
+
+### Divergências do FORMATO .ini da NFe (2026-10-22)
+
+Porte de `TNFeIniReader` e `TNFeIniWriter` (`ACBrNFe.IniReader.pas`, 1782 linhas, e
+`ACBrNFe.IniWriter.pas`, 1543), mais a extensão de `packages/rtc/ini.go` com os grupos da
+Reforma que a NF-e usa e a NFGas não usava.
+
+O `.ini` é como a maioria dos ERP alimenta o ACBr. **Não tem schema publicado** — o contrato é
+o próprio código —, e é por isso que o porte dele é especialmente sujeito a erro silencioso:
+uma chave com nome trocado não quebra build, não quebra `vet`, e só aparece quando o cliente
+reclama que o campo sumiu.
+
+Três convenções do formato que escapam de quem o porta pela primeira vez:
+
+| convenção | o que é | o que acontece se for ignorada |
+|---|---|---|
+| **alias de seção** | `[Identificacao]` ou `[ide]`, `[Emitente]` ou `[emit]`, `[Produto]` ou `[det]`, escolhidos pela seção que EXISTE no arquivo | metade dos arquivos em circulação é recusada |
+| **alias de chave** | `cNF`/`Codigo`, `natOp`/`NaturezaOperacao`, `xLgr`/`Logradouro`, `cMun`/`CidadeCod` — cadeia aninhada, com ORDEM | o nome antigo vence o do leiaute, ou o campo some |
+| **sentinela de fim** | não há contador: o grupo repetido termina quando a chave sentinela daquele grupo falta | o laço não termina, ou termina cedo demais |
+
+A sentinela quase nunca é a primeira chave, e nem sempre é a mesma coisa:
+
+- `det` — `Codigo` ou `cProd`, e **só o literal "FIM" encerra**; vazio NÃO encerra;
+- `ICMS` — `CST`, caindo para `CSOSN` (o Simples Nacional não tem CST);
+- `PISST` e `COFINSST` — a **concatenação** de duas leituras com defaults `"F"` e `"IM"`,
+  comparada com `"FIM"`. É o teste "alguma destas duas chaves existe?" escrito de um jeito que
+  só faz sentido olhando os defaults;
+- `ISSQN` — a base de cálculo, e ainda tem de ser **positiva**;
+- `detExport` — `nRE`, caindo para `chNFe`, caindo para `nDraw`;
+- `volume` — **não tem sentinela**: o laço para quando os SEIS campos estão vazios. Um volume
+  que traga só o peso continua sendo volume.
+
+A largura do índice **varia por grupo** e errá-la não dá erro — a seção simplesmente não é
+encontrada e o grupo sai vazio:
+
+| forma | exemplo |
+|---|---|
+| 3 dígitos | `[det001]`, `[NFref001]`, `[ICMS001]` |
+| 3 + 3 | `[NVE001001]`, `[rastro001001]`, `[Lacre001001]` |
+| 3 + 1 | `[gCred0011]` — **um dígito só** |
+| 3 + 2 | `[origComb00101]` |
+| 2 | `[autXML01]`, `[defensivo01]`, `[gPagAntecipado01]` |
+| 3 + 3 + 3 | `[LADI001001001]` |
+
+`autXML` é o único grupo que aceita **duas larguras**: o leitor tenta três dígitos e, não
+achando, dois.
+
+| # | Onde | O ACBr faz | O porte faz |
+|---|---|---|---|
+| 1 | modelo do ECF na referenciada | o gravador escreve a chave `modelo` (`:308`), o leitor procura `mod` ou `ModECF` (`:293`). O modelo do cupom **se perde** numa ida e volta | grava `mod`, que os dois leitores encontram. `modelo` não é lido por ninguém |
+| 2 | `[Retirada]` | o gravador emite OITO campos e o leitor lê QUINZE (`:387-399`): xNome, CEP, cPais, xPais, Fone, Email e IE do local de retirada se perdem na ida e volta | grava os quinze. São campos do leiaute e o leitor do próprio ACBr os recupera |
+| 3 | `gMono` do `IBSCBSTot` | o `Ler_IBSCBSTot` LÊ o grupo e o `Gerar_IBSCBSTot` **não o grava** — o total da monofasia inteiro se perde | gravado. O leitor do ACBr o recupera sem alteração do lado dele |
+| 4 | `vTroco` do pagamento | gravado FORA do laço, na variável de seção que sobrou da última volta (`:1356`). Com a coleção VAZIA essa variável nunca foi atribuída e o Delphi grava numa seção de nome indefinido | vai na ÚLTIMA seção de pagamento — o que o original faz no caso definido — e não sai quando não há pagamento nenhum |
+| 5 | data e decimal | `DateTimeToStr` e `WriteFloat` dependem da configuração regional da máquina: o mesmo documento gera arquivo diferente em cada instalação | data em ISO, decimal com ponto. A leitura aceita as duas formas |
+| 6 | `Gerar_IBSCBS` do `.ini` | condiciona o bloco inteiro a `gIBSCBS.vBC > 0`. Um item monofásico (CST 620) tem esse vBC zerado — a base dele vive no `gIBSCBSMono` — e **nada** seria gravado: nem o CST, nem a monofasia | vale a condição do gerador de XML do próprio ACBr (CST e cClassTrib), para que o `.ini` e o XML do mesmo documento contenham o mesmo grupo |
+| 7 | `gpBioDiferencaIBS`/`CBS` | UMA seção por tributo, gravada e lida pelos DOIS ramos (ad rem e ad valorem). Quem grava por último vence, e o outro ramo volta com o conteúdo dele | replicado — é determinístico. A seção deveria carregar o sufixo do ramo, como `gMonoRetIBSQtde` × `gMonoRetIBSAliq` carregam |
+
+Replicado mesmo parecendo errado (**não** "corrigir"):
+
+- **O modelo padrão é 65 (NFC-e), não 55.** Faltando o `mod`, toda nota sai como NFC-e.
+- **`[Retirada]` e `[Entrega]` são condicionadas ao LOGRADOURO na leitura e ao CNPJCPF na
+  escrita.** O local de retirada pode ser um endereço sem documento: é lido e não é gravado de
+  volta.
+- **`[Compra]` é condicionada só ao `xNEmp` na escrita**, embora o leitor aceite qualquer um
+  dos três campos. Nota com pedido e sem empenho é lida e não é gravada de volta.
+- **`[detExport]` só é gravado com `nDraw`**, embora o leitor aceite `nRE` ou `chNFe`.
+- **O IPI depende do `cEnq`, não do CST.** Item com IPI tributado e sem código de
+  enquadramento não grava o grupo.
+- **`NVE` e `rastro` PARAM no primeiro item vazio** (`else Break`), em vez de pulá-lo: um
+  vazio no meio da lista descarta os seguintes. Leitor e gravador concordam nisso.
+- **O `nSeqAdi` cai para o PRÓPRIO índice do laço** quando ausente (`:709`) — único lugar do
+  formato em que um campo do documento assume o número de ordem da seção.
+- **Dois aliases do original têm erro de digitação** e estão preservados, porque arquivo
+  antigo os traz: `ValorCONFINSISS` (COFINS do ISSQN, com o N trocado de lugar) e
+  `ValorBaseFCPSTRes` (com RES no fim, não RET).
+- **`[ICMSUFDEST]` é gravado com DEST em maiúsculas** e lido como `ICMSUFDest`. A comparação
+  de seção ignora caixa nos dois lados, então fecha; a grafia está preservada para que o
+  arquivo saia idêntico ao do ACBr.
+
+> **A única condicional POR VERSÃO DE LEIAUTE do `.ini` da NF-e está no medicamento.** A 4.00
+> trocou o grupo inteiro: saiu o controle de lote (`nLote`, `qLote`, `dFab`, `dVal`), que
+> passou para o grupo `rastro`, e entraram `cProdANVISA` e `xMotivoIsencao`. O `vPMC` sai nas
+> duas. Gravar os dois conjuntos sempre produz arquivo que o validador recusa — e é por isso
+> que o gravador precisa receber a versão da nota, que vive em `InfNFe` e não no item.
+
+> **PIS e COFINS escolhem os campos pelo CST, e o `case` não tem `else`.** O 01 e o 02 saem
+> por alíquota (`vBC`, `pPIS`), o 03 por quantidade (`qBCProd`, `vAliqProd`), o 99 pelos dois;
+> qualquer outro CST grava **só o CST**. `vBC` e `qBCProd` são excludentes no leiaute, então
+> um gravador que emita os dois sempre produz `.ini` que a SEFAZ recusa — e o round-trip não
+> acusa, porque o leitor aceita os dois.
+
+**Extensão do `packages/rtc`.** O `TNFeIniReader` herda de `TDFeRTCIniReader`, e o `.ini` da
+NF-e usa cinco grupos da Reforma que o porte só tinha pela metade. Entraram:
+
+- **`gIBSCBSMono`** — a árvore inteira da monofasia, em `packages/rtc/ini_mono.go`. São quatro
+  ramos com a mesma forma (ad rem e ad valorem, para IBS e para CBS), e "ad rem" cobra por
+  QUANTIDADE enquanto "ad valorem" cobra por VALOR: `gMonoPadraoIBSQtde` contra
+  `gMonoPadraoIBSAliq`, seções distintas com campos distintos. O `Ler_IBSCBS` chama
+  `Ler_gIBSCBSMono` **incondicionalmente**, então o porte anterior perdia a monofasia em
+  silêncio em qualquer documento que a trouxesse;
+- **`ISel`/`ISTot`/`gMonoTot`** — o Imposto Seletivo. O `CSTIS` é lido como **string**, e não
+  como enum: o ACBr deixou a conversão comentada esperando a tabela oficial de CSTs do IS;
+- **`gCompraGov` completo** (o portado era o *Reduzido*) e **`gPagAntecipado` do `ide`**;
+- **`DFeReferenciado`** do item.
+
+> **O gravador do `IBSCBS` passou a receber o MODELO do documento.** O `Gerar_IBSCBS` do ACBr
+> despacha por `ModelosDFe` e depois pelo CST — a mesma tabela que o gerador de XML já tinha —,
+> e o porte do `.ini` a ignorava: gravava o que estivesse preenchido. A tabela foi extraída
+> para `rtc.GrupoDoCST`, **compartilhada pelos dois geradores**, porque duas cópias divergem em
+> silêncio: o build passa, o teste de cada lado passa, e o `.ini` deixa de casar com o XML do
+> mesmo documento. As sete funções por modelo do `xml_writer.go` foram substituídas pela
+> consulta à tabela.
+>
+> Efeito colateral em `packages/nfgas` e `packages/nfag`: com o despacho correto, os dois
+> passam a gravar o cabeçalho do IBSCBS e **não** o `gIBSCBS` quando o CST não é 000 — o
+> `Gerar_IBSCBSNFGas` e o `Gerar_IBSCBSNFAg` só emitem o grupo com esse CST. O arquivo de
+> exemplo do próprio ACBr (`testdata/nfgas_acbr.ini`) usa CST 200, e a LEITURA não tem essa
+> restrição: o grupo é lido inteiro e descartado na escrita. O teste de round-trip do `nfgas`
+> afirmava o contrário e foi corrigido — ele codificava o contrato do porte anterior, não o do
+> Delphi. O `nfag` não mudou de comportamento na prática, porque a fixture dele já usa CST 000;
+> os dois modelos entraram na tabela de `TestINI_IBSCBSSubgrupoDependeDoCSTeDoModelo`.
+
+**Conferência mecânica.** O `conferir-ini-dfe.py` extrai as CHAVES que cada lado lê e grava e
+compara nos dois sentidos: **485 chaves lidas, idênticas**, e **380 gravadas**, com a única
+divergência (`mod`, do ECF) declarada no comando com `--esperado`.
+
+O script também aponta a assimetria DENTRO do próprio ACBr, que é onde o round-trip perde dado:
+**113 chaves que ele lê e não grava** — quase todas os aliases em português, que são entrada e
+não saída — e **8 que ele grava e não lê**: `ID`, `nItem` e os seis do `[procNFe]`. Os dois
+primeiros são derivados na leitura (a chave vem dos campos, o número do item vem do índice do
+laço); o `[procNFe]` é o protocolo de autorização, que o `.ini` emite para exportação e nunca
+relê. Preservado nos dois casos — o `.ini` é um formato de ENTRADA para emissão, e ler o
+protocolo de volta deixaria um valor obsoleto vencer o que a SEFAZ devolveu.
+
+O que o script **não** confere, e por isso precisou de teste: nome e largura de seção (montados
+em variável nos dois lados) e a condicional em volta de cada grupo. Foram **44 cortes
+deliberados**, todos pegos por algum teste.
+
+**O que a revisão de fidelidade pegou, e o round-trip não pegaria.** Um defeito **bloqueante** e
+três regras sem rede:
+
+- **o `detExport` se perdia inteiro.** A sentinela do grupo é uma **cascata** de três `if`
+  (`:726-736`), e cada degrau testa também o COMPRIMENTO — não é a cadeia aninhada de
+  `ReadString` que o resto do formato usa. O porte tinha achatado as duas formas no mesmo
+  helper, que para na primeira chave PRESENTE, mesmo vazia. E o próprio gravador emite `nRe=` e
+  `chNFe=` vazios sempre que há drawback, que é o caso mais comum do grupo: **um `.ini` gerado
+  aqui deixava de ser lido aqui**;
+- **`lerInteiroAlias` e `lerFloatAlias` tinham a semântica trocada.** No Delphi o inteiro
+  encadeia no DEFAULT do `ReadInteger` (`StrToIntDef(ReadString(...,''), Default)`), então chave
+  presente e vazia **cede para o alias**; o decimal encadeia nos `ReadString` dentro de um
+  `StringToFloatDef`, então chave presente e vazia entrega **zero** sem consultar o alias. O
+  porte fazia o oposto nos dois;
+- **a sentinela concatenada do PISST/COFINSST estava parafraseada**, e a paráfrase perdia um
+  caso: chave presente-e-vazia com a outra ausente dá `"" + "IM" = "IM"`, que não é `"FIM"` e
+  tem comprimento maior que zero — o grupo É lido. Reescrita literalmente como a concatenação
+  do original, que é mais curta E mais fiel;
+- **a árvore da monofasia tinha metade dos campos zerados na fixture.** Dez campos cujo nome de
+  chave nunca era exercitado, nos quatro ramos de nomes quase iguais (`adRemIBSReten` ×
+  `adRemCBSReten`, `gMonoRetIBSQtde` × `gMonoRetIBSAliq`). Os quatro ramos estavam corretos,
+  mas nada os segurava: agora a fixture preenche tudo e o round-trip compara os quatro.
+
+**Mais três divergências, encontradas na revisão de fidelidade:**
+
+| # | Onde | O ACBr faz | O porte faz |
+|---|---|---|---|
+| 8 | `gpBioDiferencaCBS` | o gravador emite a chave com o nome do **IBS** (`RTC.IniWriter.pas:896`: `WriteFloat(sSecao, 'vIBSDiferenca', gpBioDiferenca.vCBSDiferenca)`) e o leitor procura `vCBSDiferenca`. É cópia-e-cola do grupo do IBS, e o ACBr perde o campo na própria ida e volta | grava `vCBSDiferenca` nos dois lados. **A consequência precisa ser sabida**: um `.ini` gerado aqui e lido pelo ACBr devolve o campo, mas um gerado pelo ACBr e lido aqui não — a chave que ele gravou tem outro nome. Corrigir o lado que lê seria pior: passaria a aceitar a chave errada como contrato |
+| 9 | `refDFeAnt` do `gCompraGov` | o `Ler_gCompraGov` **lê** a seção `[refDFeAntNNN]`, e o `Gerar_DFeRef` que a gravaria **não é chamado por ninguém** — nem pelo `Gerar_gCompraGov`, nem pelo gerador da NF-e | gravado junto com o `gCompraGov`, que é de onde a lista pertence |
+| 10 | `Gerar_DFeReferenciado` | grava a seção **sem condição**: todo item de uma NF-e produz `[DFeReferenciadoNNN]` com `chaveAcesso=` e `nItem=0` | guarda de grupo vazio, como o `GravarINIISel`. O `.ini` sai menor que o do ACBr, nunca diferente no conteúdo |
+
+E duas que o original faz e o porte não replica por decisão do `CLAUDE.md`:
+
+- **`StrToInt` cru em três campos** — `ISSQN.cMunFG` (`:1239`), `cana.dia` (`:1681`) e
+  `adi.nAdicao` (`:705`). O Delphi **levanta `EConvertError`** com chave ausente ou não
+  numérica; aqui o valor cai para zero. Biblioteca não entra em pânico com entrada torta: numa
+  importação em lote, um `.ini` torto viraria exceção e derrubaria os demais.
+- **O `vTroco` fora do laço de pagamento** (`:1356`) usa a variável de seção que sobrou da
+  última volta. Com a coleção vazia essa variável nunca foi atribuída — comportamento que
+  depende de memória não inicializada, e por isso não replicado.
+
+**Achado do próprio porte, fora do script.** A sentinela do item distingue chave **ausente** de
+chave **vazia**, e a primeira versão tratava as duas igual:
+
+```pascal
+sProdID := ReadString(sSecao, 'Codigo', ReadString(sSecao, 'cProd', 'FIM'))
+if sProdID = 'FIM' then break
+```
+
+Faltando as duas chaves o resultado é `'FIM'` e o laço acaba — e é assim que ele acaba, porque
+seção inexistente cai nesse caso. Mas um `cProd=` **presente e vazio** devolve string vazia,
+que não é `'FIM'`: o item entra na nota, e é a validação que o recusa depois.
+
+O helper `lerStringAlias` devolve `""` nos dois casos, então a cadeia precisou ser escrita à
+mão neste laço. A versão anterior compensava com um teste de `SecaoExiste` que criava um item
+vazio a mais antes de encerrar. Os dois cortes — tratar vazio como fim, e voltar ao helper —
+agora falham em teste.

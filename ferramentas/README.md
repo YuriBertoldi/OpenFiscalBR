@@ -438,3 +438,57 @@ em metade dos casos e não conferiria nada do que importa.
 4. **A comparação de ordem só olha as tags que os dois lados têm.** Uma tag
    faltando já foi acusada antes; compará-la de novo na ordem só produziria
    ruído.
+
+## `conferir-ini-dfe.py`
+
+Confere o porte do formato `.ini` contra o par `IniReader`/`IniWriter` do ACBr.
+
+```bash
+py ferramentas/conferir-ini-dfe.py \
+   "$ACBR_FONTES/ACBrDFe/ACBrNFe/Base/ACBrNFe.IniReader.pas" \
+   "$ACBR_FONTES/ACBrDFe/ACBrNFe/Base/ACBrNFe.IniWriter.pas" \
+   packages/nfe/ini_reader.go packages/nfe/ini_reader_total.go \
+   packages/nfe/ini_reader_det.go \
+   -- \
+   packages/nfe/ini_writer.go packages/nfe/ini_writer_det.go \
+   --esperado mod
+```
+
+O `.ini` do ACBr **não tem schema publicado**: o contrato é o próprio código. Isso torna o
+porte dele especialmente sujeito a erro silencioso — uma chave com nome trocado não quebra
+build, não quebra `vet`, e só aparece quando o cliente reclama que o campo sumiu.
+
+O script extrai as CHAVES de cada lado e compara nos dois sentidos. Faz mais uma coisa que os
+outros não fazem: aponta a **assimetria dentro do próprio ACBr** — chave que ele grava e não
+lê, ou lê e não grava. Cada uma dessas é um ponto onde a ida e volta pelo `.ini` perde
+informação, e é uma decisão que o porte precisa tomar conscientemente em vez de herdar sem
+perceber. Na NF-e são 113 só-leitura (quase todas os aliases em português, que são entrada e
+não saída) e 8 só-escrita (`ID`, `nItem` e os seis do `[procNFe]`).
+
+Divergência **intencional** se declara com `--esperado`, separando por vírgula. A lista aparece
+na saída e qualquer chave fora dela continua sendo acusada: o que se ganha é um comando que
+passa em CI enquanto as decisões do porte ficam visíveis no próprio comando.
+
+### Limites — leia antes de confiar no resultado
+
+Saída limpa **não** quer dizer porte correto. Quer dizer que nenhuma chave foi esquecida, que é
+o erro mais comum e o mais chato de achar à mão. Ficam de fora:
+
+- **nome e largura de SEÇÃO.** O Delphi monta o nome em variável
+  (`sSecao := 'NVE' + IntToStrZero(Idx,3) + ...`) e o Go com `Sprintf`; comparar isso exigiria
+  interpretar os dois. A largura do índice é justamente onde mais se erra — precisa de teste;
+- **a condicional em volta do grupo.** Uma chave pode estar nos dois lados e sair em situações
+  diferentes. Na NF-e isso é a maior parte do trabalho: sete condicionais de grupo inteiro,
+  duas por CST e uma por versão de leiaute;
+- **valor e precisão.**
+
+### O que a auditoria já pegou
+
+Na primeira execução contra a NF-e, quatro divergências — e **duas eram do próprio script**:
+o regex não lidava com vírgula dentro do primeiro argumento (`fmt.Sprintf("NVE%03d%03d", i, j)`
+tem duas), e era sensível a caixa, perdendo a chamada `Writestring` com `s` minúsculo que
+existe no `Gerar_ImpostoISSQN`. Os dois foram corrigidos — o primeiro argumento passou a ser
+percorrido contando parênteses.
+
+Fica a lição: **um script de auditoria que acusa também precisa ser auditado**. Antes de mexer
+no porte, confira se o achado não é do extrator.

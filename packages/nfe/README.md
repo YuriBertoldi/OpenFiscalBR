@@ -770,6 +770,69 @@ documento completo saem de quatro grupos aninhados, e a chave sai do atributo `I
 posições finais. O resultado tem de ser indistinguível — senão o consumidor precisa saber de
 onde o item veio para saber onde olhar.
 
+## Formato `.ini`
+
+`ini_reader.go`, `ini_reader_total.go`, `ini_reader_det.go`, `ini_writer.go` e
+`ini_writer_det.go` portam `TNFeIniReader` e `TNFeIniWriter`.
+
+É como a maioria dos ERP alimenta o ACBr: mais fácil de gerar que XML e sem namespace. O
+formato **não tem schema publicado** — o contrato é o próprio código do leitor.
+
+```go
+// Ler um .ini (aceita o caminho do arquivo ou o conteúdo).
+nota, err := nfe.LerINI(caminhoOuConteudo, cfg)
+
+// Gravar.
+texto, err := nfe.GravarINI(nota)
+err = nfe.GravarINIArquivo(nota, "nota.ini")
+```
+
+### Três convenções que escapam num porte
+
+| convenção | exemplo |
+|---|---|
+| **alias de seção** | `[Identificacao]` ou `[ide]`, `[Emitente]` ou `[emit]`, `[Produto]` ou `[det]` — escolhidos pela seção que EXISTE no arquivo |
+| **alias de chave** | `cNF`/`Codigo`, `natOp`/`NaturezaOperacao`, `xLgr`/`Logradouro`, `cMun`/`CidadeCod` — cadeia com ORDEM: a do leiaute vence |
+| **sentinela de fim** | não há contador; o grupo repetido acaba quando a chave sentinela daquele grupo falta |
+
+O gravador usa **sempre o nome longo** da seção, como o ACBr; o leitor aceita os dois.
+
+### A sentinela quase nunca é a primeira chave
+
+- `det` — `Codigo` ou `cProd`, e **só o literal "FIM" encerra**; vazio não encerra;
+- `ICMS` — `CST`, caindo para `CSOSN` (o Simples Nacional não tem CST);
+- `PISST` e `COFINSST` — a **concatenação** de duas leituras com defaults `"F"` e `"IM"`;
+- `ISSQN` — a base de cálculo, e ainda tem de ser **positiva**;
+- `volume` — **não tem**: o laço para quando os seis campos estão vazios.
+
+### A largura do índice varia por grupo
+
+`[det001]` e `[NVE001001]` usam três dígitos, `[gCred0011]` usa **um**, `[origComb00101]` usa
+dois, `[autXML01]` e `[defensivo01]` usam dois, `[LADI001001001]` usa três níveis. Errar a
+largura **não dá erro** — a seção não é encontrada e o grupo sai vazio.
+
+`autXML` é o único que aceita duas larguras: tenta três dígitos e, não achando, dois.
+
+### A única condicional por versão de leiaute
+
+Está no **medicamento**. A 4.00 trocou o grupo inteiro: saiu o controle de lote (`nLote`,
+`qLote`, `dFab`, `dVal`), que foi para o grupo `rastro`, e entraram `cProdANVISA` e
+`xMotivoIsencao`. O `vPMC` sai nas duas. É por isso que o gravador recebe a versão da nota.
+
+### PIS e COFINS escolhem os campos pelo CST
+
+O 01 e o 02 saem por alíquota, o 03 por quantidade, o 99 pelos dois; qualquer outro CST grava
+**só o CST**. `vBC` e `qBCProd` são excludentes no leiaute — emitir os dois produz arquivo que
+a SEFAZ recusa, e o round-trip não acusa.
+
+### Divergências do original
+
+Sete, registradas em `divergencias-acbr.md`. As que mudam a saída: o modelo do ECF passou a
+sair na chave que o leitor procura (`mod`, não `modelo`), a `[Retirada]` grava os quinze
+campos que o leitor lê (o ACBr grava oito), o `gMono` dos totais passou a ser gravado (o ACBr
+o lê e não o grava) e o `vTroco` não vai mais para uma seção de nome indefinido quando não há
+pagamento.
+
 ## Roteiro
 
 | # | Etapa | Estado |
@@ -784,6 +847,6 @@ onde o item veio para saber onde olhar.
 | 6a | status e consulta + endpoints dos web services | concluída |
 | 6b | autorização, inutilização, consulta cadastro, CSC | concluída |
 | 7 | eventos (31 tipos) + catálogo `TipoEvento` no `pcn` | concluída |
-| 8 | Distribuição DF-e | **nesta entrega** |
-| 9 | `ini_reader.go` + `ini_writer.go` | pendente |
+| 8 | Distribuição DF-e | concluída |
+| 9 | formato `.ini` (leitor e gravador) | **nesta entrega** |
 | 10 | demo em `demos/nfe` | pendente |

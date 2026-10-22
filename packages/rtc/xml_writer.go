@@ -66,6 +66,79 @@ const (
 	TdDesenquadramentodoSN                              // 08
 )
 
+// GrupoIBSCBS nomeia o subgrupo que sai DENTRO do IBSCBS do item.
+//
+// Os quatro sao mutuamente exclusivos, e qual deles sai depende de DUAS
+// coisas: o modelo do documento e o CST. A tabela esta espalhada por sete
+// procedures no ACBr (Gerar_IBSCBSBPe, ...CTe, ...NF3e, ...NFAg, ...NFCom,
+// ...NFe, ...NFGas) e repetida IDENTICA no gerador de XML e no de .ini.
+type GrupoIBSCBS int
+
+const (
+	// GrupoIBSCBSNenhum e o caso em que nada sai -- um CST que o modelo
+	// nao preve. Nenhuma das procedures do ACBr tem `else`.
+	GrupoIBSCBSNenhum       GrupoIBSCBS = iota
+	GrupoIBSCBSNormal                   // gIBSCBS
+	GrupoIBSCBSMono                     // gIBSCBSMono
+	GrupoIBSCBSTransfCred               // gTransfCred
+	GrupoIBSCBSAjusteCompet             // gAjusteCompet
+)
+
+// GrupoDoCST decide, pelo modelo e pelo CST, qual subgrupo sai dentro do
+// IBSCBS.
+//
+// Existe para que o gerador de XML e o de .ini NAO carreguem cada um a sua
+// copia da tabela. Duas copias divergem em silencio: o build passa, o teste
+// de cada lado passa, e o .ini deixa de casar com o XML do mesmo documento.
+//
+// So a NF-e e a NFC-e tem mais de uma saida possivel -- nos demais modelos
+// a pergunta e apenas se o gIBSCBS sai ou nao.
+func GrupoDoCST(modelo ModeloDFe, cst CSTIBSCBS) GrupoIBSCBS {
+	normalSe := func(permitidos ...CSTIBSCBS) GrupoIBSCBS {
+		for _, p := range permitidos {
+			if cst == p {
+				return GrupoIBSCBSNormal
+			}
+		}
+		return GrupoIBSCBSNenhum
+	}
+
+	switch modelo {
+	case ModeloBPe, ModeloBPeTA:
+		return normalSe(CST000, CST200, CST222)
+	case ModeloBPeTM:
+		return normalSe(CST200)
+	case ModeloCTe, ModeloCTeSimp:
+		return normalSe(CST000, CST200)
+	case ModeloCTeOS:
+		return normalSe(CST000, CST200, CST222)
+	case ModeloNF3e:
+		return normalSe(CST000, CST200, CST510, CST830)
+	case ModeloNFAg, ModeloNFGas:
+		return normalSe(CST000)
+	case ModeloNFCom:
+		return normalSe(CST000, CST200)
+
+	case ModeloNFe:
+		switch cst {
+		case CST620:
+			return GrupoIBSCBSMono
+		case CST800:
+			return GrupoIBSCBSTransfCred
+		case CST811:
+			return GrupoIBSCBSAjusteCompet
+		}
+		return normalSe(CST000, CST200, CST510, CST515, CST550, CST830)
+
+	case ModeloNFCe:
+		if cst == CST620 {
+			return GrupoIBSCBSMono
+		}
+		return normalSe(CST000, CST200)
+	}
+	return GrupoIBSCBSNenhum
+}
+
 // Writer gera os grupos XML da Reforma Tributaria.
 // Porte de TDFeRTCXmlWriter.
 type Writer struct {
@@ -145,21 +218,17 @@ func (w *Writer) GerarIBSCBS(ibscbs IBSCBS) *pcn.Elem {
 			e.Filho(pcn.NodeStr("indDoacao", "1", false))
 		}
 
-		switch w.Modelo {
-		case ModeloBPe, ModeloBPeTM, ModeloBPeTA:
-			e.Filho(w.gerarIBSCBSBPe(ibscbs))
-		case ModeloCTe, ModeloCTeOS, ModeloCTeSimp, ModeloGTVe:
-			e.Filho(w.gerarIBSCBSCTe(ibscbs))
-		case ModeloNF3e:
-			e.Filho(w.gerarIBSCBSNF3e(ibscbs))
-		case ModeloNFAg:
-			e.Filho(w.gerarIBSCBSNFAg(ibscbs))
-		case ModeloNFCom:
-			e.Filho(w.gerarIBSCBSNFCom(ibscbs))
-		case ModeloNFe, ModeloNFCe:
-			e.Filho(w.gerarIBSCBSNFe(ibscbs))
-		case ModeloNFGas:
-			e.Filho(w.gerarIBSCBSNFGas(ibscbs))
+		// A tabela de modelo x CST vive em GrupoDoCST, compartilhada com o
+		// gerador de .ini -- ver o comentario la.
+		switch GrupoDoCST(w.Modelo, ibscbs.CST) {
+		case GrupoIBSCBSNormal:
+			e.Filho(w.gerarGIBSCBS(ibscbs.GIBSCBS))
+		case GrupoIBSCBSMono:
+			e.Filho(w.gerarGIBSCBSMono(ibscbs.GIBSCBSMono))
+		case GrupoIBSCBSTransfCred:
+			e.Filho(w.gerarGTransfCred(ibscbs.GTransfCred))
+		case GrupoIBSCBSAjusteCompet:
+			e.Filho(w.gerarGAjusteCompet(ibscbs.GAjusteCompet))
 		}
 	}
 
@@ -179,91 +248,6 @@ func (w *Writer) GerarIBSCBS(ibscbs IBSCBS) *pcn.Elem {
 		}
 	}
 	return e
-}
-
-func (w *Writer) gerarIBSCBSBPe(ibscbs IBSCBS) *pcn.Elem {
-	switch w.Modelo {
-	case ModeloBPe, ModeloBPeTA:
-		switch ibscbs.CST {
-		case CST000, CST200, CST222:
-			return w.gerarGIBSCBS(ibscbs.GIBSCBS)
-		}
-	case ModeloBPeTM:
-		if ibscbs.CST == CST200 {
-			return w.gerarGIBSCBS(ibscbs.GIBSCBS)
-		}
-	}
-	return nil
-}
-
-func (w *Writer) gerarIBSCBSCTe(ibscbs IBSCBS) *pcn.Elem {
-	switch w.Modelo {
-	case ModeloCTe, ModeloCTeSimp:
-		switch ibscbs.CST {
-		case CST000, CST200:
-			return w.gerarGIBSCBS(ibscbs.GIBSCBS)
-		}
-	case ModeloCTeOS:
-		switch ibscbs.CST {
-		case CST000, CST200, CST222:
-			return w.gerarGIBSCBS(ibscbs.GIBSCBS)
-		}
-	}
-	return nil
-}
-
-func (w *Writer) gerarIBSCBSNF3e(ibscbs IBSCBS) *pcn.Elem {
-	switch ibscbs.CST {
-	case CST000, CST200, CST510, CST830:
-		return w.gerarGIBSCBS(ibscbs.GIBSCBS)
-	}
-	return nil
-}
-
-func (w *Writer) gerarIBSCBSNFAg(ibscbs IBSCBS) *pcn.Elem {
-	if ibscbs.CST == CST000 {
-		return w.gerarGIBSCBS(ibscbs.GIBSCBS)
-	}
-	return nil
-}
-
-func (w *Writer) gerarIBSCBSNFCom(ibscbs IBSCBS) *pcn.Elem {
-	switch ibscbs.CST {
-	case CST000, CST200:
-		return w.gerarGIBSCBS(ibscbs.GIBSCBS)
-	}
-	return nil
-}
-
-func (w *Writer) gerarIBSCBSNFe(ibscbs IBSCBS) *pcn.Elem {
-	switch w.Modelo {
-	case ModeloNFe:
-		switch ibscbs.CST {
-		case CST000, CST200, CST510, CST515, CST550, CST830:
-			return w.gerarGIBSCBS(ibscbs.GIBSCBS)
-		case CST620:
-			return w.gerarGIBSCBSMono(ibscbs.GIBSCBSMono)
-		case CST800:
-			return w.gerarGTransfCred(ibscbs.GTransfCred)
-		case CST811:
-			return w.gerarGAjusteCompet(ibscbs.GAjusteCompet)
-		}
-	case ModeloNFCe:
-		switch ibscbs.CST {
-		case CST000, CST200:
-			return w.gerarGIBSCBS(ibscbs.GIBSCBS)
-		case CST620:
-			return w.gerarGIBSCBSMono(ibscbs.GIBSCBSMono)
-		}
-	}
-	return nil
-}
-
-func (w *Writer) gerarIBSCBSNFGas(ibscbs IBSCBS) *pcn.Elem {
-	if ibscbs.CST == CST000 {
-		return w.gerarGIBSCBS(ibscbs.GIBSCBS)
-	}
-	return nil
 }
 
 func (w *Writer) gerarGIBSCBS(g GIBSCBS) *pcn.Elem {

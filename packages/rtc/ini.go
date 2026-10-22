@@ -20,13 +20,14 @@ import (
 // Leitura e escrita dos grupos da Reforma Tributaria no formato .ini do
 // ACBr. Porte de ACBrDFe.RTC.IniReader.pas e ACBrDFe.RTC.IniWriter.pas.
 //
-// ESCOPO: estao portados os grupos que a NFGas usa -- compra governamental,
-// pagamento antecipado do item, IBSCBS do item (arvore de gIBSCBS,
-// gEstornoCred, gTransfCred, gAjusteCompet, gCredPresOper e
-// gCredPresIBSZFM), IBSCBSTot e pagamento vinculado. Ficam FORA do .ini,
-// lidos e escritos apenas em XML: a monofasia (gIBSCBSMono) e o Imposto
-// Seletivo (gIS/ISTot). Quando outro componente precisar deles no .ini, e
-// aqui que entram.
+// ESCOPO: a compra governamental nas duas formas (completa e reduzida), o
+// pagamento antecipado nos dois niveis (ide e item), o IBSCBS do item com a
+// arvore de gIBSCBS, gEstornoCred, gTransfCred, gAjusteCompet,
+// gCredPresOper e gCredPresIBSZFM, o IBSCBSTot e o pagamento vinculado.
+//
+// A monofasia (gIBSCBSMono) e o Imposto Seletivo (gIS/ISTot/gMono) ficam em
+// ini_mono.go -- entraram com a NF-e, que e o primeiro documento do porte a
+// emiti-los no .ini.
 //
 // Nome de secao: o ACBr usa tres formas, conforme os indices.
 //
@@ -73,6 +74,58 @@ func LerINIGCompraGovReduzido(ini *pcn.INI, g *GCompraGovReduzido) {
 	}
 }
 
+// LerINIGCompraGov le o grupo gCompraGov COMPLETO -- o da NF-e.
+// Porte de Ler_gCompraGov.
+//
+// Nao confundir com LerINIGCompraGovReduzido: os dois leem a MESMA secao
+// [gCompraGov] e os MESMOS tres campos, e diferem apenas no tipo da lista
+// de documentos anteriores. O ACBr tambem mantem os dois (TgCompraGov x
+// TgCompraGovReduzido) -- BP-e, CT-e, NF3e, NFAg, NFCom e NFGas usam o
+// reduzido; a NF-e usa este.
+//
+// A lista vem de [refDFeAntNNN], com a chave na propria chave `refDFeAnt`.
+func LerINIGCompraGov(ini *pcn.INI, g *GCompraGov) {
+	if ini == nil || g == nil {
+		return
+	}
+	g.TpEnteGov, _ = ParseTpEnteGov(ini.LerString("gCompraGov", "tpEnteGov", ""))
+	g.PRedutor = ini.LerFloat("gCompraGov", "pRedutor", 0)
+	g.TpOperGov, _ = ParseTpOperGov(ini.LerString("gCompraGov", "tpOperGov", ""))
+
+	g.RefDFeAnt = nil
+	for i := 1; ; i++ {
+		secao := fmt.Sprintf("refDFeAnt%03d", i)
+		v := ini.LerString(secao, "refDFeAnt", "FIM")
+		if v == "FIM" {
+			break
+		}
+		g.RefDFeAnt = append(g.RefDFeAnt, DFeRef{RefDFeChave: v})
+	}
+}
+
+// LerINIGPagAntecipado le o gPagAntecipado do IDE -- a lista de notas que
+// pagaram a operacao antecipadamente. Porte de Ler_gPagAntecipado.
+//
+// A secao indexa com DOIS digitos ([gPagAntecipado01]), e nao tres como a
+// maioria dos grupos repetidos. A chave e `refNFe`.
+//
+// Nao confundir com LerINIGPagAntecipadoProd, que e o grupo do ITEM: aquele
+// tem secao propria por item e carrega chave MAIS numero do item.
+func LerINIGPagAntecipado(ini *pcn.INI, g *GPagAntecipado) {
+	if ini == nil || g == nil {
+		return
+	}
+	g.RefNFe = nil
+	for i := 1; ; i++ {
+		secao := fmt.Sprintf("gPagAntecipado%02d", i)
+		v := ini.LerString(secao, "refNFe", "FIM")
+		if v == "FIM" || v == "" {
+			break
+		}
+		g.RefNFe = append(g.RefNFe, RefDFePagAnt{RefDFeChave: v})
+	}
+}
+
 // LerINIGPagAntecipadoProd le o grupo gPagAntecipado do item.
 // Porte de Ler_gPagAntecipadoProd.
 //
@@ -109,6 +162,12 @@ func LerINIIBSCBS(ini *pcn.INI, v *IBSCBS, idx1, idx2 int) {
 
 	lerINIGIBSCBS(ini, &v.GIBSCBS, idx1, idx2)
 	lerINIGEstornoCred(ini, &v.GEstornoCred, idx1, idx2)
+
+	// A monofasia e lida SEMPRE, qualquer que seja o CST -- o `case` que
+	// escolhe entre gIBSCBS e gIBSCBSMono existe so na ESCRITA
+	// (Gerar_IBSCBSNFe). Na leitura os dois grupos convivem, e e a
+	// presenca da secao que decide.
+	LerINIGIBSCBSMono(ini, &v.GIBSCBSMono, idx1)
 
 	// Estes quatro grupos usam apenas o primeiro indice, com 3 digitos --
 	// e assim no TDFeRTCIniReader (Ler_gTransfCred etc. recebem so Idx).
@@ -339,6 +398,8 @@ func LerINIIBSCBSTot(ini *pcn.INI, v *IBSCBSTot) {
 		v.GCBS.VCredPresCondSus = ini.LerFloat("gCBSTot", "vCredPresCondSus", 0)
 	}
 
+	LerINIGMonoTot(ini, &v.GMono)
+
 	if ini.SecaoExiste("gEstornoCredTot") {
 		v.GEstornoCred.VIBSEstCred = ini.LerFloat("gEstornoCredTot", "vIBSEstCred", 0)
 		v.GEstornoCred.VCBSEstCred = ini.LerFloat("gEstornoCredTot", "vCBSEstCred", 0)
@@ -389,6 +450,51 @@ func GravarINIGCompraGovReduzido(ini *pcn.INI, g GCompraGovReduzido) {
 	}
 }
 
+// GravarINIGCompraGov grava o gCompraGov COMPLETO -- o da NF-e.
+// Porte de Gerar_gCompraGov.
+//
+// So sai com pRedutor POSITIVO, como no reduzido.
+//
+// ACRESCIMO: a lista de documentos anteriores tambem sai daqui. No ACBr o
+// Gerar_DFeRef e uma procedure separada que NAO E CHAMADA POR NINGUEM --
+// nem pelo Gerar_gCompraGov, nem pelo gerador da NF-e --, embora o
+// Ler_gCompraGov LEIA a secao [refDFeAntNNN]. E mais uma assimetria do
+// original: o grupo e lido e nunca gravado de volta.
+func GravarINIGCompraGov(ini *pcn.INI, g GCompraGov) {
+	if ini == nil || g.PRedutor <= 0 {
+		return
+	}
+	ini.GravarString("gCompraGov", "tpEnteGov", g.TpEnteGov.String())
+	ini.GravarFloat("gCompraGov", "pRedutor", g.PRedutor, 4)
+	ini.GravarString("gCompraGov", "tpOperGov", g.TpOperGov.String())
+
+	GravarINIDFeRef(ini, g.RefDFeAnt)
+}
+
+// GravarINIDFeRef grava [refDFeAntNNN]. Porte de Gerar_DFeRef.
+func GravarINIDFeRef(ini *pcn.INI, refs []DFeRef) {
+	if ini == nil {
+		return
+	}
+	for i, r := range refs {
+		ini.GravarString(fmt.Sprintf("refDFeAnt%03d", i+1), "refDFeAnt", r.RefDFeChave)
+	}
+}
+
+// GravarINIGPagAntecipado grava o gPagAntecipado do IDE.
+// Porte de Gerar_gPagAntecipado.
+//
+// A secao indexa com DOIS digitos e a chave e `refNFe` -- as duas coisas
+// diferem do grupo homonimo do item.
+func GravarINIGPagAntecipado(ini *pcn.INI, g GPagAntecipado) {
+	if ini == nil {
+		return
+	}
+	for i, r := range g.RefNFe {
+		ini.GravarString(fmt.Sprintf("gPagAntecipado%02d", i+1), "refNFe", r.RefDFeChave)
+	}
+}
+
 // GravarINIGPagAntecipadoProd grava o grupo gPagAntecipado do item.
 func GravarINIGPagAntecipadoProd(ini *pcn.INI, g GPagAntecipadoProd, idx1, idx2 int) {
 	if ini == nil || g == (GPagAntecipadoProd{}) {
@@ -399,127 +505,190 @@ func GravarINIGPagAntecipadoProd(ini *pcn.INI, g GPagAntecipadoProd, idx1, idx2 
 	ini.GravarInteiro(secao, "nItemPagAnt", g.NItemPagAnt)
 }
 
-// GravarINIIBSCBS grava o grupo IBSCBS do item.
-func GravarINIIBSCBS(ini *pcn.INI, v IBSCBS, idx1, idx2 int) {
+// OpcoesIBSCBS carrega o que o Gerar_IBSCBS do ACBr le de PROPRIEDADES do
+// writer, e nao do grupo que esta gravando.
+//
+// Sem isso o gravador nao tem como decidir o que sai: o subgrupo depende do
+// MODELO do documento, e o gEstornoCred de uma NF-e depende do tpNFDebito.
+type OpcoesIBSCBS struct {
+	// Modelo e o documento em geracao (FModelosDFe).
+	Modelo ModeloDFe
+
+	// TpNFDebito so e consultado quando Modelo e ModeloNFe.
+	TpNFDebito TpNFDebito
+}
+
+// GravarINIIBSCBS grava o grupo IBSCBS do item. Porte de Gerar_IBSCBS.
+//
+// Tres decisoes do original governam a escrita, e as tres dependem de algo
+// FORA do grupo:
+//
+//  1. qual subgrupo sai -- gIBSCBS, gIBSCBSMono, gTransfCred ou
+//     gAjusteCompet -- depende do modelo E do CST. A tabela esta em
+//     GrupoDoCST, compartilhada com o gerador de XML;
+//  2. o gEstornoCred sai com valor positivo OU, numa NF-e, quando o
+//     tpNFDebito e "perda em estoque" -- mesmo zerado;
+//  3. gCredPresOper e gCredPresIBSZFM so existem na NF-e, e sao
+//     EXCLUDENTES: havendo o primeiro, o segundo nao sai.
+//
+// DIVERGENCIA: o ACBr condiciona o bloco inteiro -- cabecalho e subgrupo --
+// a `IBSCBS.gIBSCBS.vBC > 0`. Um item monofasico (CST 620) costuma ter esse
+// vBC zerado, porque a base dele vive no gIBSCBSMono, e com a condicao do
+// original NADA seria gravado: nem o CST, nem a monofasia. O proprio ACBr
+// nao usa essa condicao no gerador de XML, que testa CST e cClassTrib
+// (Gerar_IBSCBS do XmlWriter) -- os dois lados dele discordam entre si. Aqui
+// vale a condicao do XML, para que o .ini e o XML do mesmo documento
+// contenham o mesmo grupo.
+func GravarINIIBSCBS(ini *pcn.INI, v IBSCBS, idx1, idx2 int, op OpcoesIBSCBS) {
 	if ini == nil {
 		return
 	}
-	if v.CST == CSTNenhum && v.CClassTrib == "" && v.GIBSCBS == (GIBSCBS{}) {
-		return
-	}
 
-	secao := NomeSecao("IBSCBS", idx1, idx2)
-	ini.GravarString(secao, "CST", v.CST.String())
-	ini.GravarString(secao, "cClassTrib", v.CClassTrib)
-	ini.GravarString(secao, "indDoacao", v.IndDoacao.String())
+	if v.CST != CSTNenhum || v.CClassTrib != "" {
+		secao := NomeSecao("IBSCBS", idx1, idx2)
+		ini.GravarString(secao, "CST", v.CST.String())
+		ini.GravarString(secao, "cClassTrib", v.CClassTrib)
+		ini.GravarString(secao, "indDoacao", v.IndDoacao.String())
 
-	g := v.GIBSCBS
-	if g != (GIBSCBS{}) {
-		s := NomeSecao("gIBSCBS", idx1, idx2)
-		ini.GravarFloat(s, "vBC", g.VBC, 2)
-		ini.GravarFloat(s, "vIBS", g.VIBS, 2)
-
-		if g.GIBSUF != (GIBSUFValores{}) {
-			s := NomeSecao("gIBSUF", idx1, idx2)
-			ini.GravarFloat(s, "pIBSUF", g.GIBSUF.PIBSUF, 4)
-			ini.GravarFloat(s, "vIBSUF", g.GIBSUF.VIBSUF, 2)
-			ini.GravarFloat(s, "pDif", g.GIBSUF.GDif.PDif, 4)
-			ini.GravarFloat(s, "vDif", g.GIBSUF.GDif.VDif, 2)
-			ini.GravarFloat(s, "pDevTrib", g.GIBSUF.GDevTrib.PDevTrib, 4)
-			ini.GravarFloat(s, "vDevTrib", g.GIBSUF.GDevTrib.VDevTrib, 2)
-			ini.GravarFloat(s, "pRedAliq", g.GIBSUF.GRed.PRedAliq, 4)
-			ini.GravarFloat(s, "pAliqEfet", g.GIBSUF.GRed.PAliqEfet, 2)
-		}
-		if g.GIBSMun != (GIBSMunValores{}) {
-			s := NomeSecao("gIBSMun", idx1, idx2)
-			ini.GravarFloat(s, "pIBSMun", g.GIBSMun.PIBSMun, 4)
-			ini.GravarFloat(s, "vIBSMun", g.GIBSMun.VIBSMun, 2)
-			ini.GravarFloat(s, "pDif", g.GIBSMun.GDif.PDif, 4)
-			ini.GravarFloat(s, "vDif", g.GIBSMun.GDif.VDif, 2)
-			ini.GravarFloat(s, "vDevTrib", g.GIBSMun.GDevTrib.VDevTrib, 2)
-			ini.GravarFloat(s, "pRedAliq", g.GIBSMun.GRed.PRedAliq, 4)
-			ini.GravarFloat(s, "pAliqEfet", g.GIBSMun.GRed.PAliqEfet, 2)
-		}
-		if g.GCBS != (GCBSValores{}) {
-			s := NomeSecao("gCBS", idx1, idx2)
-			ini.GravarFloat(s, "pCBS", g.GCBS.PCBS, 4)
-			ini.GravarFloat(s, "vCBS", g.GCBS.VCBS, 2)
-			ini.GravarFloat(s, "pDif", g.GCBS.GDif.PDif, 4)
-			ini.GravarFloat(s, "vDif", g.GCBS.GDif.VDif, 2)
-			ini.GravarFloat(s, "vDevTrib", g.GCBS.GDevTrib.VDevTrib, 2)
-			ini.GravarFloat(s, "pRedAliq", g.GCBS.GRed.PRedAliq, 4)
-			ini.GravarFloat(s, "pAliqEfet", g.GCBS.GRed.PAliqEfet, 2)
-
-			if g.GCBS.GALCZFMCBS != (GALCZFMCBS{}) {
-				s := NomeSecao("gALCZFMCBS", idx1, idx2)
-				ini.GravarString(s, "tpALCZFMCBS", g.GCBS.GALCZFMCBS.TpALCZFMCBS.String())
-				ini.GravarString(s, "nProcSuframa", g.GCBS.GALCZFMCBS.NProcSuframa)
-				ini.GravarFloat(s, "pAliqEfetRegCBS", g.GCBS.GALCZFMCBS.PAliqEfetRegCBS, 4)
-				ini.GravarFloat(s, "vTribRegCBS", g.GCBS.GALCZFMCBS.VTribRegCBS, 2)
-			}
-		}
-		if g.GTribRegular != (GTribRegular{}) {
-			s := NomeSecao("gTribRegular", idx1, idx2)
-			ini.GravarString(s, "CSTReg", g.GTribRegular.CSTReg.String())
-			ini.GravarString(s, "cClassTribReg", g.GTribRegular.CClassTribReg)
-			ini.GravarFloat(s, "pAliqEfetRegIBSUF", g.GTribRegular.PAliqEfetRegIBSUF, 4)
-			ini.GravarFloat(s, "vTribRegIBSUF", g.GTribRegular.VTribRegIBSUF, 2)
-			ini.GravarFloat(s, "pAliqEfetRegIBSMun", g.GTribRegular.PAliqEfetRegIBSMun, 4)
-			ini.GravarFloat(s, "vTribRegIBSMun", g.GTribRegular.VTribRegIBSMun, 2)
-			ini.GravarFloat(s, "pAliqEfetRegCBS", g.GTribRegular.PAliqEfetRegCBS, 4)
-			ini.GravarFloat(s, "vTribRegCBS", g.GTribRegular.VTribRegCBS, 2)
-		}
-		if g.GTribCompraGov != (GTribCompraGov{}) {
-			s := NomeSecao("gTribCompraGov", idx1, idx2)
-			ini.GravarFloat(s, "pAliqIBSUF", g.GTribCompraGov.PAliqIBSUF, 4)
-			ini.GravarFloat(s, "vTribIBSUF", g.GTribCompraGov.VTribIBSUF, 2)
-			ini.GravarFloat(s, "pAliqIBSMun", g.GTribCompraGov.PAliqIBSMun, 4)
-			ini.GravarFloat(s, "vTribIBSMun", g.GTribCompraGov.VTribIBSMun, 2)
-			ini.GravarFloat(s, "pAliqCBS", g.GTribCompraGov.PAliqCBS, 4)
-			ini.GravarFloat(s, "vTribCBS", g.GTribCompraGov.VTribCBS, 2)
+		switch GrupoDoCST(op.Modelo, v.CST) {
+		case GrupoIBSCBSNormal:
+			gravarINIGIBSCBS(ini, v.GIBSCBS, idx1, idx2)
+		case GrupoIBSCBSMono:
+			GravarINIGIBSCBSMono(ini, v.GIBSCBSMono, idx1)
+		case GrupoIBSCBSTransfCred:
+			gravarINIGTransfCred(ini, v.GTransfCred, idx1)
+		case GrupoIBSCBSAjusteCompet:
+			gravarINIGAjusteCompet(ini, v.GAjusteCompet, idx1)
 		}
 	}
 
-	if v.GEstornoCred != (GEstornoCred{}) {
+	if v.GEstornoCred.VIBSEstCred > 0 || v.GEstornoCred.VCBSEstCred > 0 ||
+		(op.Modelo == ModeloNFe && op.TpNFDebito == TdPerdaEmEstoque) {
 		s := NomeSecao("gEstornoCred", idx1, idx2)
 		ini.GravarFloat(s, "vIBSEstCred", v.GEstornoCred.VIBSEstCred, 2)
 		ini.GravarFloat(s, "vCBSEstCred", v.GEstornoCred.VCBSEstCred, 2)
 	}
 
-	if v.GTransfCred != (GTransfCred{}) {
-		s := secaoIdx3("gTransfCred", idx1)
-		ini.GravarFloat(s, "vIBS", v.GTransfCred.VIBS, 2)
-		ini.GravarFloat(s, "vCBS", v.GTransfCred.VCBS, 2)
-	}
-
-	if v.GAjusteCompet != (GAjusteCompet{}) {
-		s := secaoIdx3("gAjusteCompet", idx1)
-		if !v.GAjusteCompet.CompetApur.IsZero() {
-			ini.GravarString(s, "competApur", v.GAjusteCompet.CompetApur.Format("2006-01-02"))
+	if op.Modelo == ModeloNFe {
+		if v.GCredPresOper.CCredPres != CpNenhum {
+			gravarINIGCredPresOper(ini, v.GCredPresOper, idx1)
+		} else if v.GCredPresIBSZFM.TpCredPresIBSZFM != TcpNenhum {
+			gravarINIGCredPresIBSZFM(ini, v.GCredPresIBSZFM, idx1)
 		}
-		ini.GravarFloat(s, "vIBS", v.GAjusteCompet.VIBS, 2)
-		ini.GravarFloat(s, "vCBS", v.GAjusteCompet.VCBS, 2)
-	}
-
-	if v.GCredPresOper != (GCredPresOper{}) {
-		s := secaoIdx3("gCredPresOper", idx1)
-		ini.GravarFloat(s, "vBCCredPres", v.GCredPresOper.VBCCredPres, 2)
-		ini.GravarString(s, "cCredPres", v.GCredPresOper.CCredPres.String())
-
-		gravarINIGIBSCBSCredPres(ini, v.GCredPresOper.GIBSCredPres, "gIBSCredPres", idx1)
-		gravarINIGIBSCBSCredPres(ini, v.GCredPresOper.GCBSCredPres, "gCBSCredPres", idx1)
-	}
-
-	if v.GCredPresIBSZFM != (CredPresIBSZFM{}) {
-		s := secaoIdx3("gCredPresIBSZFM", idx1)
-		if !v.GCredPresIBSZFM.CompetApur.IsZero() {
-			ini.GravarString(s, "competApur", v.GCredPresIBSZFM.CompetApur.Format("2006-01-02"))
-		}
-		ini.GravarString(s, "tpCredPresIBSZFM", v.GCredPresIBSZFM.TpCredPresIBSZFM.String())
-		ini.GravarFloat(s, "vCredPresIBSZFM", v.GCredPresIBSZFM.VCredPresIBSZFM, 2)
 	}
 }
 
+// gravarINIGIBSCBS grava o gIBSCBS e os grupos aninhados nele.
+// Porte de Gerar_gIBSCBS e dos Gerar_gIBSUF/gIBSMun/gCBS que ele chama.
+func gravarINIGIBSCBS(ini *pcn.INI, g GIBSCBS, idx1, idx2 int) {
+	s := NomeSecao("gIBSCBS", idx1, idx2)
+	ini.GravarFloat(s, "vBC", g.VBC, 2)
+	ini.GravarFloat(s, "vIBS", g.VIBS, 2)
+
+	if g.GIBSUF != (GIBSUFValores{}) {
+		s := NomeSecao("gIBSUF", idx1, idx2)
+		ini.GravarFloat(s, "pIBSUF", g.GIBSUF.PIBSUF, 4)
+		ini.GravarFloat(s, "vIBSUF", g.GIBSUF.VIBSUF, 2)
+		ini.GravarFloat(s, "pDif", g.GIBSUF.GDif.PDif, 4)
+		ini.GravarFloat(s, "vDif", g.GIBSUF.GDif.VDif, 2)
+		ini.GravarFloat(s, "pDevTrib", g.GIBSUF.GDevTrib.PDevTrib, 4)
+		ini.GravarFloat(s, "vDevTrib", g.GIBSUF.GDevTrib.VDevTrib, 2)
+		ini.GravarFloat(s, "pRedAliq", g.GIBSUF.GRed.PRedAliq, 4)
+		ini.GravarFloat(s, "pAliqEfet", g.GIBSUF.GRed.PAliqEfet, 2)
+	}
+	if g.GIBSMun != (GIBSMunValores{}) {
+		s := NomeSecao("gIBSMun", idx1, idx2)
+		ini.GravarFloat(s, "pIBSMun", g.GIBSMun.PIBSMun, 4)
+		ini.GravarFloat(s, "vIBSMun", g.GIBSMun.VIBSMun, 2)
+		ini.GravarFloat(s, "pDif", g.GIBSMun.GDif.PDif, 4)
+		ini.GravarFloat(s, "vDif", g.GIBSMun.GDif.VDif, 2)
+		ini.GravarFloat(s, "vDevTrib", g.GIBSMun.GDevTrib.VDevTrib, 2)
+		ini.GravarFloat(s, "pRedAliq", g.GIBSMun.GRed.PRedAliq, 4)
+		ini.GravarFloat(s, "pAliqEfet", g.GIBSMun.GRed.PAliqEfet, 2)
+	}
+	if g.GCBS != (GCBSValores{}) {
+		s := NomeSecao("gCBS", idx1, idx2)
+		ini.GravarFloat(s, "pCBS", g.GCBS.PCBS, 4)
+		ini.GravarFloat(s, "vCBS", g.GCBS.VCBS, 2)
+		ini.GravarFloat(s, "pDif", g.GCBS.GDif.PDif, 4)
+		ini.GravarFloat(s, "vDif", g.GCBS.GDif.VDif, 2)
+		ini.GravarFloat(s, "vDevTrib", g.GCBS.GDevTrib.VDevTrib, 2)
+		ini.GravarFloat(s, "pRedAliq", g.GCBS.GRed.PRedAliq, 4)
+		ini.GravarFloat(s, "pAliqEfet", g.GCBS.GRed.PAliqEfet, 2)
+
+		if g.GCBS.GALCZFMCBS != (GALCZFMCBS{}) {
+			s := NomeSecao("gALCZFMCBS", idx1, idx2)
+			ini.GravarString(s, "tpALCZFMCBS", g.GCBS.GALCZFMCBS.TpALCZFMCBS.String())
+			ini.GravarString(s, "nProcSuframa", g.GCBS.GALCZFMCBS.NProcSuframa)
+			ini.GravarFloat(s, "pAliqEfetRegCBS", g.GCBS.GALCZFMCBS.PAliqEfetRegCBS, 4)
+			ini.GravarFloat(s, "vTribRegCBS", g.GCBS.GALCZFMCBS.VTribRegCBS, 2)
+		}
+	}
+	if g.GTribRegular != (GTribRegular{}) {
+		s := NomeSecao("gTribRegular", idx1, idx2)
+		ini.GravarString(s, "CSTReg", g.GTribRegular.CSTReg.String())
+		ini.GravarString(s, "cClassTribReg", g.GTribRegular.CClassTribReg)
+		ini.GravarFloat(s, "pAliqEfetRegIBSUF", g.GTribRegular.PAliqEfetRegIBSUF, 4)
+		ini.GravarFloat(s, "vTribRegIBSUF", g.GTribRegular.VTribRegIBSUF, 2)
+		ini.GravarFloat(s, "pAliqEfetRegIBSMun", g.GTribRegular.PAliqEfetRegIBSMun, 4)
+		ini.GravarFloat(s, "vTribRegIBSMun", g.GTribRegular.VTribRegIBSMun, 2)
+		ini.GravarFloat(s, "pAliqEfetRegCBS", g.GTribRegular.PAliqEfetRegCBS, 4)
+		ini.GravarFloat(s, "vTribRegCBS", g.GTribRegular.VTribRegCBS, 2)
+	}
+	if g.GTribCompraGov != (GTribCompraGov{}) {
+		s := NomeSecao("gTribCompraGov", idx1, idx2)
+		ini.GravarFloat(s, "pAliqIBSUF", g.GTribCompraGov.PAliqIBSUF, 4)
+		ini.GravarFloat(s, "vTribIBSUF", g.GTribCompraGov.VTribIBSUF, 2)
+		ini.GravarFloat(s, "pAliqIBSMun", g.GTribCompraGov.PAliqIBSMun, 4)
+		ini.GravarFloat(s, "vTribIBSMun", g.GTribCompraGov.VTribIBSMun, 2)
+		ini.GravarFloat(s, "pAliqCBS", g.GTribCompraGov.PAliqCBS, 4)
+		ini.GravarFloat(s, "vTribCBS", g.GTribCompraGov.VTribCBS, 2)
+	}
+}
+
+// gravarINIGTransfCred grava [gTransfCredNNN]. Porte de Gerar_gTransfCred.
+func gravarINIGTransfCred(ini *pcn.INI, g GTransfCred, idx int) {
+	s := secaoIdx3("gTransfCred", idx)
+	ini.GravarFloat(s, "vIBS", g.VIBS, 2)
+	ini.GravarFloat(s, "vCBS", g.VCBS, 2)
+}
+
+// gravarINIGAjusteCompet grava [gAjusteCompetNNN].
+// Porte de Gerar_gAjusteCompet.
+func gravarINIGAjusteCompet(ini *pcn.INI, g GAjusteCompet, idx int) {
+	s := secaoIdx3("gAjusteCompet", idx)
+	if !g.CompetApur.IsZero() {
+		ini.GravarString(s, "competApur", g.CompetApur.Format("2006-01-02"))
+	}
+	ini.GravarFloat(s, "vIBS", g.VIBS, 2)
+	ini.GravarFloat(s, "vCBS", g.VCBS, 2)
+}
+
+// gravarINIGCredPresOper grava [gCredPresOperNNN] e os dois subgrupos.
+// Porte de Gerar_gCredPresOper.
+func gravarINIGCredPresOper(ini *pcn.INI, g GCredPresOper, idx int) {
+	s := secaoIdx3("gCredPresOper", idx)
+	ini.GravarFloat(s, "vBCCredPres", g.VBCCredPres, 2)
+	ini.GravarString(s, "cCredPres", g.CCredPres.String())
+
+	gravarINIGIBSCBSCredPres(ini, g.GIBSCredPres, "gIBSCredPres", idx)
+	gravarINIGIBSCBSCredPres(ini, g.GCBSCredPres, "gCBSCredPres", idx)
+}
+
+// gravarINIGCredPresIBSZFM grava [gCredPresIBSZFMNNN].
+// Porte de Gerar_gCredPresIBSZFM.
+func gravarINIGCredPresIBSZFM(ini *pcn.INI, g CredPresIBSZFM, idx int) {
+	s := secaoIdx3("gCredPresIBSZFM", idx)
+	if !g.CompetApur.IsZero() {
+		ini.GravarString(s, "competApur", g.CompetApur.Format("2006-01-02"))
+	}
+	ini.GravarString(s, "tpCredPresIBSZFM", g.TpCredPresIBSZFM.String())
+	ini.GravarFloat(s, "vCredPresIBSZFM", g.VCredPresIBSZFM, 2)
+}
+
+// gravarINIGIBSCBSCredPres grava [gIBSCredPresNNN] ou [gCBSCredPresNNN] --
+// o mesmo conjunto de campos, em secao diferente por tributo.
+// Porte de Gerar_gIBSCBSCredPres.
 func gravarINIGIBSCBSCredPres(ini *pcn.INI, v GIBSCBSCredPres, grupo string, idx int) {
 	if v == (GIBSCBSCredPres{}) {
 		return
@@ -536,7 +705,7 @@ func GravarINIIBSCBSTot(ini *pcn.INI, v IBSCBSTot) {
 		return
 	}
 	if v.VBCIBSCBS == 0 && v.GIBS == (GIBS{}) && v.GCBS == (GCBS{}) &&
-		v.GEstornoCred == (GEstornoCred{}) {
+		v.GMono == (GMono{}) && v.GEstornoCred == (GEstornoCred{}) {
 		return
 	}
 
@@ -566,6 +735,12 @@ func GravarINIIBSCBSTot(ini *pcn.INI, v IBSCBSTot) {
 		ini.GravarFloat("gCBSTot", "vCredPres", v.GCBS.VCredPres, 2)
 		ini.GravarFloat("gCBSTot", "vCredPresCondSus", v.GCBS.VCredPresCondSus, 2)
 	}
+
+	// ACRESCIMO: o Gerar_IBSCBSTot do ACBr NAO grava o gMono, embora o
+	// Ler_IBSCBSTot o leia (:~). Uma ida e volta pelo .ini perderia o total
+	// da monofasia inteiro. Gravado aqui -- o leitor do proprio ACBr
+	// recupera a secao sem alteracao nenhuma do lado dele.
+	GravarINIGMonoTot(ini, v.GMono)
 
 	if v.GEstornoCred != (GEstornoCred{}) {
 		ini.GravarFloat("gEstornoCredTot", "vIBSEstCred", v.GEstornoCred.VIBSEstCred, 2)

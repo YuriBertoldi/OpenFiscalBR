@@ -1914,8 +1914,27 @@ func TestINI_RoundTrip(t *testing.T) {
 	if ir.RetTrib.VRetCOFINS != io.RetTrib.VRetCOFINS {
 		t.Errorf("vRetCOFINS: %v vs %v", ir.RetTrib.VRetCOFINS, io.RetTrib.VRetCOFINS)
 	}
-	if ir.IBSCBS.CST != io.IBSCBS.CST || ir.IBSCBS.GIBSCBS.VBC != io.IBSCBS.GIBSCBS.VBC {
+	// O cabecalho do IBSCBS vai e volta...
+	if ir.IBSCBS.CST != io.IBSCBS.CST || ir.IBSCBS.CClassTrib != io.IBSCBS.CClassTrib {
 		t.Errorf("IBSCBS: %+v vs %+v", ir.IBSCBS, io.IBSCBS)
+	}
+
+	// ...mas o gIBSCBS NAO, e isso e fidelidade ao ACBr, nao defeito do
+	// porte. O Gerar_IBSCBSNFGas so emite o grupo com CST 000
+	// (RTC.IniWriter.pas), e o arquivo de exemplo do proprio ACBr --
+	// testdata/nfgas_acbr.ini, de onde esta fixture saiu -- usa CST 200. A
+	// LEITURA nao tem essa restricao e traz o grupo inteiro (ver
+	// TestLerINI_ArquivoDoACBr); quem o descarta e a escrita.
+	//
+	// Travado aqui para que uma mudanca na tabela de GrupoDoCST apareca:
+	// se um dia o CST 200 entrar na lista da NFGas, este teste falha e
+	// obriga a revisar a decisao em vez de deixa-la passar em silencio.
+	if io.IBSCBS.GIBSCBS.VBC == 0 {
+		t.Fatal("a fixture precisa ter vBC preenchido para o caso fazer sentido")
+	}
+	if ir.IBSCBS.GIBSCBS != (rtc.GIBSCBS{}) {
+		t.Errorf("a NFGas com CST 200 nao grava o gIBSCBS; veio %+v",
+			ir.IBSCBS.GIBSCBS)
 	}
 	if pr.GPagAntecipado != po.GPagAntecipado {
 		t.Errorf("gPagAntecipado: %+v vs %+v", pr.GPagAntecipado, po.GPagAntecipado)
