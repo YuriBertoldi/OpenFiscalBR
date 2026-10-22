@@ -492,3 +492,45 @@ percorrido contando parênteses.
 
 Fica a lição: **um script de auditoria que acusa também precisa ser auditado**. Antes de mexer
 no porte, confira se o achado não é do extrator.
+
+## `conferir-enums-dfe.py`
+
+Confere os enums portados de um DFe contra a unit de conversão do ACBr.
+
+```bash
+py ferramentas/conferir-enums-dfe.py    "$ACBR_FONTES/ACBrDFe/ACBrCTe/PCNCTe/pcteConversaoCTe.pas"    packages/cte/conversao.go packages/cte/types.go    --par TpcteTipoCTe=tipoCTeCodigos --par TpInfManu=tpInfManuCodigos
+```
+
+Enum é onde o porte erra barato e caro ao mesmo tempo: trocar um código ou deslocar um ordinal
+não quebra build, não quebra `vet`, e o documento sai com o valor do vizinho. A SEFAZ aceita —
+o campo é válido — e o erro só aparece na fiscalização.
+
+O script compara a **quantidade** de membros e a **sequência** de códigos, posição a posição.
+Lê o Delphi nas duas formas que o ACBr usa: a `XxxArrayStrings` do topo da unit e a lista
+literal dentro do `StrToEnumerado`. Quando as duas divergem, **vale a da função** — é ela que o
+código chama — e o script avisa.
+
+Esse aviso achou coisa real no CT-e: a `TpInfManuV2ArrayStrings` diverge da função, e é o
+rastro de um defeito do original (o ACBr grava com uma tabela e lê com a outra).
+
+O par `--par TipoDelphi=tabelaGo` é obrigatório porque o nome da tabela Go não se deduz do nome
+do tipo Delphi. Declarar explicitamente é melhor que adivinhar: adivinhação errada vira "enum
+não encontrado", que é fácil de ignorar.
+
+### Limites — leia antes de confiar no resultado
+
+- não confere o **nome** do membro: renomear não muda o documento;
+- não confere **semântica**: dois códigos trocados entre si passam, se as duas tabelas
+  estiverem trocadas do mesmo jeito. É para isso que servem os cortes deliberados;
+- não alcança enum cujo código é **derivado do nome do membro** — o `TSchemaCTe` do CT-e usa
+  `GetEnumName`, e ali não há tabela a comparar.
+
+### O que a auditoria já pegou
+
+Na primeira execução contra o CT-e, quatro "divergências" — e **todas eram do próprio script**:
+ele escolhia a função por ordem alfabética e pegava `tpMotivoToDesc` (descrições) em vez de
+`tpMotivoToStr` (códigos). A escolha passou a preferir a função de código, e o filtro de avisos
+passou a ignorar array de descrição.
+
+Mesma lição do `conferir-ini-dfe.py`: **um script de auditoria que acusa também precisa ser
+auditado.** Antes de mexer no porte, confira se o achado não é do extrator.
