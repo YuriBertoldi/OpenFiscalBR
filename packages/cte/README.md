@@ -7,7 +7,7 @@ Porte do componente **ACBrCTe** — Conhecimento de Transporte Eletrônico.
 | Componente Delphi | `ACBrDFe/ACBrCTe/` |
 | Modelos | 57 (CT-e), 64 (GTV-e), 67 (CT-e OS), 57 (CT-e Simplificado) |
 | Leiaute | 2.00, 3.00, 4.00 |
-| Estado | etapa 1 de 11 — tipos e conversão |
+| Estado | etapa 2a de 11 — classes de dados |
 
 ## Quatro documentos, um componente
 
@@ -28,7 +28,57 @@ distinguir olha o `tpCTe`, onde o Simplificado tem valor próprio (`TcCTeSimp`).
 
 `rodoviário`, `aéreo`, `aquaviário`, `ferroviário`, `dutoviário` e `multimodal` — árvores de
 classe separadas e mutuamente exclusivas. É o análogo do grupo `det` da NF-e em peso, mas com
-seis variantes em vez de uma. Entram nas etapas 2b, 4b e 9b.
+seis variantes em vez de uma. Entram nas etapas 2b, 4b e 9.
+
+Na etapa 2a eles estão **declarados vazios** em `classes_modais.go`, junto com o `RodoOS` (a
+variante do rodoviário usada no CT-e OS). A alternativa seria omitir os campos `rodo`, `aereo`
+e companhia do `InfCTeNorm` até a 2b — mas isso faria a raiz portada divergir do `TCTe` por uma
+etapa inteira, e struct raiz incompleto é o tipo de coisa que não quebra build nem teste e
+produz documento sem modal nenhum.
+
+## Reaproveitamento: o que *não* está neste package
+
+| O que | Onde vive | Por quê |
+|---|---|---|
+| Os **14 grupos da Reforma Tributária** (`gIBSCBS`, `IBSCBS`, `gCompraGovReduzido`, `gRed`, `gDif`, `gEstornoCred`, …) | `packages/rtc` | o ACBr os redeclara no topo do `ACBrCTe.Classes.pas`, mas são os mesmos tipos do `ACBrDFe.RTC`. Os 14 foram conferidos um a um antes de decidir. **O `rtc.IBSCBS` é superconjunto**: traz cinco grupos que o CT-e não aceita, anotados no campo `Imp.IBSCBS` |
+| `Modal`, `UnidMed`, `UnidTransp`, `UnidCarga` | `packages/pcn` | vêm de `ACBrDFe.Conversao.pas`, a unit **compartilhada**, e o próprio ACBr marca dois deles com `// CTe e MDFe`. Declará-los aqui obrigaria o MDF-e a redeclarar |
+| `TipoAmbiente`, `TipoEmissao`, `TipoImpressao`, `ProcessoEmissao`, `IndIEDest`, `CSTIcms`, `Indicador`, `ProcDFe`, `Signature` | `packages/pcn` | idem — base comum a todos os DFe |
+
+## Quatro aliases que não são tipo
+
+Só se acham lendo o `.pas`; portá-los como tipo próprio cria structs que o original não tem:
+
+| No ACBr | Linha | No porte |
+|---|---|---|
+| `TObsFiscoCollection = TObsContCollection` | `:621` | `Compl.ObsFisco` é `[]ObsCont` |
+| `TlacUnidTranspCollection` e `TlacUnidCargaCollection` = `TLacreCollection` | `:1156`, `:1158` | os dois são `[]Lacre` |
+| `TinfUnidCargaNFCollection = TinfUnidCargaCollection` | `:1214` | mesmo `[]InfUnidCarga` de sempre |
+| `TLacRodoCollection = TLacreCollection` | `:1630` | `[]Lacre` — **da etapa 2b** |
+
+O primeiro foi achado **pela conferência mecânica**, depois de já estar portado errado. Os quatro
+estão travados por `TestClasses_AliasesDoACBr` — um alias não aparece em lista de classe nenhuma,
+nem a conferência o alcança, então o que segura a decisão é a atribuição deixar de compilar.
+
+## Armadilhas das classes
+
+| Onde | O que surpreende |
+|---|---|
+| `Peri` | tem **dois donos**, decididos pela versão: `infCTeNorm.peri` só na 2.00 (`XmlWriter.pas:1792`), `aereo.peri` da 3.00 em diante (`:3727`). O tipo mora no `classes.go` porque os dois precisam dele — e a **2b tem de declarar `Peri []Peri` dentro do `Aereo`** |
+| `Peri` | `qTotProd`, `qVolTipo` e `qTotEmb` são **string** porque o ACBr assim declara e escreve com `tcStr`. Na 2.00 o schema aceita texto livre; da 3.00 em diante o `qTotProd` é `TDec_1104` dentro do `infTotAP` e precisa chegar formatado |
+| `CTe.infCteComp` | duas properties que saem com a **mesma tag** `infCteComp`. O singular vale até a **3.00 inclusive**, a coleção da **4.00** (`if VersaoDF <= ve300`, `XmlWriter.pas:493`). Dentro do singular a tag interna muda: `chave` na 2.00, `chCTe` na 3.00 |
+| `CTe.infCteAnu` | sai no **mesmo `if`** do `infCteComp`: na 4.00 o ACBr não o emite |
+| `LocColeta`, `LocEnt`, `ICMSUFFim.pICMSInterPart` | **não saem em XML nenhum** — zero ocorrências no `XmlWriter`/`XmlReader` e ausência de qualquer XSD. Vivem só no `.ini`. Mantidos por fidelidade; a etapa do `.ini` vai precisar deles |
+| `Ide`, `InfNF`, `RefNF` | a property chama `modelo` e a tag é `mod` |
+| `Endereco` × `EnderEmit` | o segundo **não tem** `cPais`/`xPais` (emitente é sempre nacional) e **tem** `fone` |
+| `LocColeta`, `LocEnt` | além disso, são endereço reduzido: sem CEP, sem país, sem fone |
+| `Emit` | só aceita **CNPJ**, não `CNPJCPF` — transportador é sempre pessoa jurídica |
+| `ICMS` | **sete** grupos mutuamente exclusivos em tipos separados, não um struct achatado como o `det` da NF-e. `SituTrib` escolhe |
+| `CST45` | o grupo chama 45, mas carrega CST **40, 41 ou 51** — o leiaute juntou três situações |
+| `ICMSSN.indSN` | é **inteiro**, não enum |
+| `Entrega` | seis subgrupos mais `TipoData`/`TipoHora`, que **não são tags** — são o seletor que o gerador consulta |
+| `InfModal` (Simplificado) | tem **três** modais, não seis: só rodoviário, aéreo e aquaviário (`:2661`) |
+| `IDDocAntEle` | dois campos de chave, `chave` e `chCTe`, que o ACBr mantém separados — o leiaute mudou de nome entre versões |
+| `TCTe` | está em `:2724` com **um** espaço de indentação, não dois. Foi o que fez a raiz escapar da primeira varredura |
 
 ## Origem dos enums: `PCNCTe/pcteConversaoCTe.pas`
 
@@ -117,12 +167,38 @@ acima — tabela de código divergindo de tabela de código dentro do próprio A
 
 **13 cortes deliberados**, todos pegos por algum teste.
 
+As classes da etapa 2a:
+
+```bash
+py ferramentas/conferir-classes-dfe.py \
+   "$ACBR_FONTES/ACBrDFe/ACBrCTe/Base/ACBrCTe.Classes.pas" \
+   packages/cte/classes.go packages/cte/classes_modais.go \
+   --par TinfDocAntCollectionItem=InfDocAntDet \
+   --par TInfCteCompCollectionItem=InfCteCompItem
+```
+
+**98 classes casadas, zero divergência de campo**, e **nenhuma struct no Go sem classe no
+Delphi** — nada inventado.
+
+As 7 divergências que o relatório mostra são exatamente os modais declarados vazios, e as 33
+classes "sem struct no Go" são 14 da Reforma Tributária (que vivem no `packages/rtc`) mais 19
+subclasses dos modais. A dívida da 2b fica visível no próprio relatório em vez de escondida —
+quando a 2b entrar, os dois números zeram.
+
+**9 cortes deliberados**, todos acusados — campo removido, campo inventado, struct inteira
+removida, `ObsFisco` de volta como tipo próprio, grupo pendurado na struct errada, escalar
+trocado, **alvo de slice trocado** (`[]InfNFe` → `[]InfNF`), aridade trocada, e struct tag
+acrescentada sem cegar o leitor.
+
+> O script confere nome, tipo escalar, aridade e alvo de slice, mas **não confere ordem** nem
+> alcança alias. Veja `ferramentas/README.md` para os limites.
+
 ## Roteiro
 
 | # | Etapa | Estado |
 |---|---|---|
-| 1 | `types.go` + `conversao.go` | **nesta entrega** |
-| 2a | `classes.go` — cabeçalho, prestação, documentos | pendente |
+| 1 | `types.go` + `conversao.go` | pronta |
+| 2a | `classes.go` — cabeçalho, prestação, documentos | **nesta entrega** |
 | 2b | `classes_modais.go` — os seis modais | pendente |
 | 3 | `xml_reader.go` | pendente |
 | 4a | `xml_writer.go` — cabeçalho e prestação | pendente |

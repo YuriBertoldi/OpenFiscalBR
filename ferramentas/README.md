@@ -534,3 +534,80 @@ passou a ignorar array de descrição.
 
 Mesma lição do `conferir-ini-dfe.py`: **um script de auditoria que acusa também precisa ser
 auditado.** Antes de mexer no porte, confira se o achado não é do extrator.
+
+## `conferir-classes-dfe.py`
+
+Confere as **structs de dados** de um package DFe contra as classes do `Classes.pas` do ACBr.
+
+```bash
+py ferramentas/conferir-classes-dfe.py \
+   "$ACBR_FONTES/ACBrDFe/ACBrCTe/Base/ACBrCTe.Classes.pas" \
+   packages/cte/classes.go packages/cte/classes_modais.go \
+   --par TinfDocAntCollectionItem=InfDocAntDet \
+   --par TInfCteCompCollectionItem=InfCteCompItem
+```
+
+É a auditoria da etapa de classes, a mesma necessidade que volta a cada DFe novo. O que ela
+cobre é o que o `CLAUDE.md` chama de **contagem de campos não é auditoria**: confere nome a
+nome e hierarquia a hierarquia, não a quantidade.
+
+O casamento de **classe** é por nome, sem caixa, descartando os sufixos `Collection` e
+`CollectionItem` — no Go uma coleção vira slice e não tem tipo próprio.
+
+O casamento de **campo** usa o comentário de tag que as structs portadas já carregam:
+
+```go
+CMunIni  int     // cMunIni
+Modelo   int     // mod
+CNPJCPF  string  // CNPJ ou CPF
+```
+
+Um campo responde pelo **nome** e pela **tag**: casa se qualquer um dos dois bater com a
+property do Delphi. Isso existe porque os dois divergem de verdade — a tag XML é `mod` e a
+property é `modelo` — e exigir a tag acusava `Ide`, `InfNF` e `RefNF` sem haver campo faltando
+em nenhuma.
+
+Além do nome, confere o **tipo** — e o achado que mais importa ali não é escalar trocado, é
+**alvo de slice trocado**: `Det.InfNFe []InfNF` no lugar de `[]InfNFe` casa pelo nome do campo e
+passaria limpo. É a "hierarquia trocada" que o `CLAUDE.md` manda conferir. Três classes de
+achado:
+
+| achado | quando sai |
+|---|---|
+| `TIPO DIVERGE` | escalar contra escalar — `Currency` × `string`, `Integer` × `float64` |
+| `ARIDADE DIVERGE` | coleção do Delphi contra campo único no Go, ou o contrário |
+| `ALVO DIVERGE` | os dois são struct portada e apontam para structs diferentes |
+
+Enum não entra na comparação de alvo: `TpcteTipoCTe` e `TipoCTe` não casam por nome, e forçar
+um mapa só para isso seria mais ruído que sinal. Para enum, só a aridade é conferida.
+
+### Limites — leia antes de confiar no resultado
+
+- **não confere ordem.** Para struct não importa; para writer importa, e quem confere é o
+  `conferir-gerador-dfe.py`;
+- **não alcança alias.** `TObsFiscoCollection = TObsContCollection` não é classe: não aparece
+  em lista nenhuma. Alias só se acha lendo o `.pas` — e, uma vez achado, o que o trava é um
+  teste de atribuição, não esta ferramenta;
+- **não compara nome de enum**, pelo motivo acima.
+
+### O que a auditoria já pegou
+
+Na primeira execução contra o CT-e, 21 "divergências" — **todas do próprio script**:
+`TXxxCollectionItem` e `TXxxCollection` normalizavam para o mesmo nome, a Collection vinha
+depois no arquivo e sobrescrevia o item. Como a Collection só tem `Items[Index]`, que não é
+property nomeada, a lista de campos do item ficava vazia e a struct Go inteira aparecia como
+sobra. Passou a vencer quem tem mais properties.
+
+Corrigido isso, sobraram cinco achados — e **um era real**: o `ObsFisco` do CT-e, que eu havia
+portado como tipo próprio quando o ACBr o declara como alias de `TObsContCollection`.
+
+A revisão da etapa achou um segundo defeito, mais sério porque é **falso negativo**: quando dois
+nomes colidiam ao normalizar e empatavam em quantidade de properties, o perdedor sumia das
+*duas* listas — não aparecia como classe sem struct, não gerava divergência, nada. Grupo inteiro
+não portado passava batido, que é justamente o que a ferramenta existe para pegar. Agora colisão
+vira aviso, e o `--par` serve para **silenciar** um aviso, não para descobri-lo. A colisão normal
+entre `TXxxCollectionItem` e `TXxxCollection` é filtrada — ela acontece 21 vezes só no CT-e e
+afogaria o aviso útil.
+
+Terceira vez que a mesma lição aparece neste arquivo: **um script de auditoria que acusa também
+precisa ser auditado.** E a correlata, desta vez: *um que não acusa, também.*

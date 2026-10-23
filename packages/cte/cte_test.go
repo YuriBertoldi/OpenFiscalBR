@@ -566,3 +566,47 @@ func TestEnums_ParseInvalido(t *testing.T) {
 		t.Error("o modelo 55 e da NF-e, nao do CT-e")
 	}
 }
+
+// TestClasses_AliasesDoACBr trava os quatro tipos que o ACBr declara como
+// ALIAS e que o porte precisa manter como UM tipo so.
+//
+// Um alias nao aparece em lista de classe nenhuma -- nem a conferencia
+// mecanica o alcanca -- e o `TObsFiscoCollection` ja foi portado errado uma
+// vez, como tipo proprio. O que trava a decisao e a atribuicao: se alguem
+// "melhorar" qualquer um dos campos para um tipo exclusivo, este arquivo
+// deixa de compilar.
+//
+//	TObsFiscoCollection      = TObsContCollection      (Classes.pas:621)
+//	TlacUnidTranspCollection = TLacreCollection        (:1156)
+//	TlacUnidCargaCollection  = TLacreCollection        (:1158)
+//	TinfUnidCargaNFCollection = TinfUnidCargaCollection (:1214)
+func TestClasses_AliasesDoACBr(t *testing.T) {
+	// ObsFisco e ObsCont sao a MESMA colecao: so a tag os separa.
+	compl := Compl{ObsCont: []ObsCont{{XCampo: "a"}}}
+	compl.ObsFisco = compl.ObsCont
+	if len(compl.ObsFisco) != 1 {
+		t.Fatal("ObsFisco tem de aceitar []ObsCont")
+	}
+
+	// Os dois lacres sao []Lacre, e cada um e atribuivel ao outro.
+	lacres := []Lacre{{NLacre: "001"}}
+	carga := InfUnidCarga{LacUnidCarga: lacres}
+	transp := InfUnidTransp{LacUnidTransp: carga.LacUnidCarga}
+	if len(transp.LacUnidTransp) != 1 {
+		t.Fatal("lacUnidTransp e lacUnidCarga sao ambos []Lacre")
+	}
+
+	// O infUnidCarga de dentro do infNF e o mesmo tipo de sempre.
+	infNF := InfNF{InfUnidCarga: []InfUnidCarga{carga}}
+	transp.InfUnidCarga = infNF.InfUnidCarga
+	if len(transp.InfUnidCarga) != 1 {
+		t.Fatal("infUnidCargaNF e alias de infUnidCarga")
+	}
+
+	// O detalhamento do Simplificado NAO usa a colecao do docAnt: sao dois
+	// grupos diferentes com nomes quase iguais no ACBr.
+	det := Det{InfDocAnt: []InfDocAntDet{{ChCTe: "x"}}}
+	if det.InfDocAnt[0].ChCTe != "x" {
+		t.Fatal("Det.InfDocAnt e []InfDocAntDet, nao []IDDocAnt")
+	}
+}

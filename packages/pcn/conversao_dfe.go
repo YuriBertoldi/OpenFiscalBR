@@ -813,3 +813,192 @@ func ParseSituacaoDFe(s string) (SituacaoDFe, error) {
 	}
 	return SnAutorizado, erroEnum("SituacaoDFe", s)
 }
+
+// ===========================================================================
+// Modal (TModal) -- tag modal do CT-e e do MDF-e
+// ===========================================================================
+
+// Modal e o meio de transporte da prestacao.
+// Porte de TModal (ACBrDFe.Conversao.pas:188).
+//
+// Vive aqui, e nao no packages/cte, porque e da unit COMPARTILHADA do ACBr
+// e DOIS componentes o usam: o CT-e e o MDF-e. Declara-lo no CT-e
+// obrigaria o MDF-e a redeclarar, e enum duplicado entre packages e
+// exatamente o que o alinhamento por ordinal do TpNFDebito mostrou custar
+// caro.
+//
+// ATENCAO: o ACBr mantem um TpcteModal ANTIGO em PCNComum/pcnConversao.pas,
+// marcado `deprecated` com a mensagem "Use o metodo da Unit
+// ACBrDFe.Conversao.pas". A declaracao viva e a de la, e e esta.
+type Modal int
+
+const (
+	MdRodoviario  Modal = iota // 01
+	MdAereo                    // 02
+	MdAquaviario               // 03
+	MdFerroviario              // 04
+	MdDutoviario               // 05
+	MdMultimodal               // 06
+	// _fimModal conta os membros declarados; nao e valor do leiaute.
+	_fimModal
+)
+
+var modalCodigos = [...]string{"01", "02", "03", "04", "05", "06"}
+
+// modalDescricoes e o texto de impressao do DACTE/DAMDFE, nao o do XML.
+var modalDescricoes = [...]string{
+	"RODOVIÁRIO", "AÉREO", "AQUAVIÁRIO", "FERROVIÁRIO",
+	"DUTOVIÁRIO", "MULTIMODAL",
+}
+
+// String retorna o codigo do leiaute, com DOIS digitos.
+//
+// A largura importa: o schema declara o campo com dois caracteres, e
+// emitir "1" em vez de "01" e rejeicao.
+func (v Modal) String() string {
+	if int(v) < 0 || int(v) >= len(modalCodigos) {
+		return ""
+	}
+	return modalCodigos[v]
+}
+
+// Descricao retorna o texto de impressao.
+func (v Modal) Descricao() string {
+	if int(v) < 0 || int(v) >= len(modalDescricoes) {
+		return ""
+	}
+	return modalDescricoes[v]
+}
+
+// ParseModal converte o codigo do leiaute no enum.
+func ParseModal(s string) (Modal, error) {
+	for i, c := range modalCodigos {
+		if c == s {
+			return Modal(i), nil
+		}
+	}
+	return MdRodoviario, erroEnum("Modal", s)
+}
+
+// ===========================================================================
+// UnidMed, UnidTransp e UnidCarga -- compartilhados por CT-e e MDF-e
+// ===========================================================================
+//
+// Os tres vem de ACBrDFe.Conversao.pas, e o proprio ACBr marca dois deles
+// com o comentario `// CTe e MDFe` (:459 e :465). Vivem aqui pela mesma
+// razao do Modal: declara-los no packages/cte obrigaria o MDF-e a
+// redeclarar.
+
+// UnidMed e a unidade de medida da carga. Porte de TUnidMed (:474).
+//
+// ATENCAO a largura: os codigos tem DOIS digitos e comecam em "00". Um
+// enum de seis membros numerados de zero convida a tratar como inteiro, e
+// o schema recusa "0" no lugar de "00".
+type UnidMed int
+
+const (
+	UM3      UnidMed = iota // 00
+	UKG                     // 01
+	UTON                    // 02
+	UUnidade                // 03
+	ULitros                 // 04
+	UMMBTU                  // 05
+	// _fimUnidMed conta os membros declarados; nao e valor do leiaute.
+	_fimUnidMed
+)
+
+var unidMedCodigos = [...]string{"00", "01", "02", "03", "04", "05"}
+
+// unidMedDescricoes e o texto de impressao do DACTE/DAMDFE, copiado
+// LITERAL de TUnidMedDescricaoArrayStrings (ACBrDFe.Conversao.pas:480).
+//
+// Duas sao abreviacoes: "UND" e "LT", nao "UNIDADE" e "LITROS". Escrever
+// por extenso parece melhoria e nao e -- o DACTE tem campo de largura fixa,
+// e o que cabe e a abreviacao.
+var unidMedDescricoes = [...]string{
+	"M3", "KG", "TON", "UND", "LT", "MMBTU",
+}
+
+// String retorna o codigo do leiaute, com dois digitos.
+func (v UnidMed) String() string { return codigoEmDFe(unidMedCodigos[:], int(v)) }
+
+// Descricao retorna o texto de impressao.
+func (v UnidMed) Descricao() string { return codigoEmDFe(unidMedDescricoes[:], int(v)) }
+
+// ParseUnidMed converte o codigo do leiaute no enum.
+func ParseUnidMed(s string) (UnidMed, error) {
+	for i, c := range unidMedCodigos {
+		if c == s {
+			return UnidMed(i), nil
+		}
+	}
+	return UM3, erroEnum("UnidMed", s)
+}
+
+// UnidTransp e o tipo da unidade de transporte. Porte de TUnidTransp (:451).
+//
+// Diferente do UnidMed, aqui os codigos tem UM digito e comecam em "1".
+// As duas formas convivem no mesmo documento.
+type UnidTransp int
+
+const (
+	UtRodoTracao  UnidTransp = iota // 1
+	UtRodoReboque                   // 2
+	UtNavio                         // 3
+	UtBalsa                         // 4
+	UtAeronave                      // 5
+	UtVagao                         // 6
+	UtOutros                        // 7
+	// _fimUnidTransp conta os membros declarados; nao e valor do leiaute.
+	_fimUnidTransp
+)
+
+var unidTranspCodigos = [...]string{"1", "2", "3", "4", "5", "6", "7"}
+
+// String retorna o codigo do leiaute.
+func (v UnidTransp) String() string { return codigoEmDFe(unidTranspCodigos[:], int(v)) }
+
+// ParseUnidTransp converte o codigo do leiaute no enum.
+func ParseUnidTransp(s string) (UnidTransp, error) {
+	for i, c := range unidTranspCodigos {
+		if c == s {
+			return UnidTransp(i), nil
+		}
+	}
+	return UtRodoTracao, erroEnum("UnidTransp", s)
+}
+
+// UnidCarga e o tipo da unidade de carga. Porte de TUnidCarga (:460).
+type UnidCarga int
+
+const (
+	UcContainer UnidCarga = iota // 1
+	UcULD                        // 2
+	UcPallet                     // 3
+	UcOutros                     // 4
+	// _fimUnidCarga conta os membros declarados; nao e valor do leiaute.
+	_fimUnidCarga
+)
+
+var unidCargaCodigos = [...]string{"1", "2", "3", "4"}
+
+// String retorna o codigo do leiaute.
+func (v UnidCarga) String() string { return codigoEmDFe(unidCargaCodigos[:], int(v)) }
+
+// ParseUnidCarga converte o codigo do leiaute no enum.
+func ParseUnidCarga(s string) (UnidCarga, error) {
+	for i, c := range unidCargaCodigos {
+		if c == s {
+			return UnidCarga(i), nil
+		}
+	}
+	return UcContainer, erroEnum("UnidCarga", s)
+}
+
+// codigoEmDFe devolve o codigo da posicao i, ou vazio se fora de faixa.
+func codigoEmDFe(tabela []string, i int) string {
+	if i < 0 || i >= len(tabela) {
+		return ""
+	}
+	return tabela[i]
+}

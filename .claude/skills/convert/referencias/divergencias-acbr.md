@@ -1095,3 +1095,74 @@ O helper `lerStringAlias` devolve `""` nos dois casos, então a cadeia precisou 
 mão neste laço. A versão anterior compensava com um teste de `SecaoExiste` que criava um item
 vazio a mais antes de encerrar. Os dois cortes — tratar vazio como fim, e voltar ao helper —
 agora falham em teste.
+
+---
+
+# CT-e — etapa 2a (classes: cabeçalho, prestação, documentos)
+
+**Nenhuma divergência de conteúdo.** As 98 classes casadas pela conferência mecânica saem com
+exatamente as mesmas propriedades do `ACBrCTe.Classes.pas`.
+
+O que a etapa registra são **decisões de estrutura**, não divergências de campo:
+
+| # | Onde | O ACBr faz | O porte faz |
+|---|---|---|---|
+| 1 | 14 grupos da Reforma Tributária | redeclara `TgIBSCBS`, `TIBSCBS`, `TgCompraGovReduzido` e companhia no topo do `ACBrCTe.Classes.pas` — os mesmos tipos que já existem no `ACBrDFe.RTC` | reusa `packages/rtc`. Os 14 foram verificados um a um antes de decidir. Redeclarar aqui seria duplicar o que o `CLAUDE.md` manda reaproveitar, e deslocaria um ordinal de enum o dia em que os dois lados divergissem |
+| 2 | `Modal`, `UnidMed`, `UnidTransp`, `UnidCarga` | declara em `ACBrDFe.Conversao.pas`, a unit compartilhada, e marca dois deles com o comentário `// CTe e MDFe` | vão para `packages/pcn`, não para `packages/cte`. Declará-los no CT-e obrigaria o MDF-e a redeclarar |
+| 3 | `TinfDocAntCollectionItem` | convive com `TIdDocAntCollection`, nome quase igual e grupo diferente: um é do `docAnt`, o outro do detalhamento do Simplificado | o segundo virou `InfDocAntDet`. Manter os dois com o mesmo nome em Go é colisão de tipo |
+| 4 | os 6 modais + `RodoOS` | — | declarados **vazios** em `classes_modais.go`, para a etapa 2b preencher. A raiz `CTe` e o `InfCTeNorm` ficam completos desde já; a dívida aparece no relatório da conferência como 7 classes com divergência de campo, e some quando a 2b entrar |
+
+**Três aliases que não são tipo** — só se acham lendo o `.pas`, e portá-los como tipo próprio
+teria criado três structs que o original não tem:
+
+- `TObsFiscoCollection = TObsContCollection` (`:621`) → `Compl.ObsFisco` é `[]ObsCont`
+- `TlacUnidTranspCollection = TLacreCollection` (`:1156`) e
+  `TlacUnidCargaCollection = TLacreCollection` (`:1158`) → os dois são `[]Lacre`
+- `TinfUnidCargaNFCollection = TinfUnidCargaCollection` (`:1214`)
+
+O primeiro foi **achado pela conferência mecânica**: eu havia portado `ObsFisco` como struct
+própria antes de ver o alias.
+
+**Dois fatos do original que o porte preserva de propósito:**
+
+- **`infCteComp` sai com a mesma tag em duas formas.** O `TCTe` tem as properties `infCteComp`
+  (`TInfCteComp`, uma chave só) e `infCteComp10` (coleção), e o writer emite **as duas com a
+  tag `infCteComp`** (`XmlWriter.pas:2665` e `:2694`) — uma por versão de leiaute. O porte
+  mantém os dois campos e o aviso de tag repetida continua aparecendo na conferência, porque
+  é informação verdadeira.
+- **`Peri` tem as quantidades em `string`.** `qTotProd`, `qVolTipo` e `qTotEmb` são declarados
+  `string` no original; o leiaute aceita texto livre ali (`"5 CAIXAS"`). Converter para número
+  perderia o que o campo carrega.
+
+**Posição enganosa de declaração.** O `TPeriCollectionItem` está em `:1788`, no meio da faixa
+dos modais (`:1548`–`:2131`), mas o grupo `peri` pende do `infCTeNorm` — não é modal. Cortar a
+etapa 2a/2b por faixa de linha teria mandado o `Peri` para o arquivo errado.
+
+Pelo mesmo motivo, a raiz quase escapou: `TCTe` está em `:2724` com **um** espaço de
+indentação, não dois, e o regex de varredura não a alcançava.
+
+## CT-e 2a — o que a revisão de fidelidade acrescentou
+
+Sete achados, **nenhum deles de campo** — as 98 classes continuam batendo nome a nome, tipo a
+tipo e alvo a alvo. Seis eram de **comentário afirmando fato que o `XmlWriter` contradiz**, que
+é o perfil exato do defeito dominante descrito no `CLAUDE.md`: não quebra build, não quebra
+`vet`, não quebra teste, e dirige mal a etapa seguinte.
+
+| # | Onde | O que estava escrito | O que o fonte diz |
+|---|---|---|---|
+| 11 | `UnidMed.Descricao()` (código, não comentário) | `UNIDADE` e `LITROS` | `TUnidMedDescricaoArrayStrings` (`ACBrDFe.Conversao.pas:480`) é `'UND'` e `'LT'`. O DACTE tem campo de largura fixa e `UNIDADE` não cabe onde `UND` cabia. **Corrigido para o literal e travado por teste** — o teste anterior conferia só o *tamanho* da tabela |
+| 12 | `Peri` | "o grupo `peri` pende do `infCTeNorm`, não de modal nenhum" | `TAereo.peri` existe (`Classes.pas:1829`), e o dono muda por versão: `infCTeNorm.peri` **só** na `ve200` (`XmlWriter.pas:1792`), `aereo.peri` da `ve300` em diante (`:3727`). O comentário instruía a 2b a não declarar o campo — CT-e aéreo 4.00 sairia sem produto perigoso nenhum |
+| 13 | `InfCteComp` / `InfCteCompItem` | "forma antiga" / "da 3.00 em diante" | `if VersaoDF <= ve300` (`XmlWriter.pas:493`, `:554`): o singular vale até a **3.00 inclusive**, a coleção da **4.00**. Estava uma versão deslocado. No mesmo `if`, o **`infCteAnu` também não é emitido na 4.00** — não havia registro disso |
+| 14 | `Peri.QTotProd` | "o leiaute aceita texto livre" | vale na 2.00 (`TString`); na 4.00 o campo é `TDec_1104` dentro do `infTotAP`. O ACBr mantém `string` e escreve com `tcStr`, então o porte mantém — mas o valor precisa chegar já formatado |
+| 15 | `LocColeta`, `LocEnt` | o doc-comment afirmava que o grupo é emitido | **zero** ocorrências no `XmlWriter` e no `XmlReader` do CT-e, e não existem em XSD nenhum. Vivem só no `.ini` (12 ocorrências no `IniWriter`). São grupos mortos do ACBr |
+| 16 | `ICMSUFFim.pICMSInterPart` | nada | o `Gerar_ICMSUFFim` **nunca o emite**; só existe no leiaute 2.00 e no `.ini` |
+| 17 | `Imp.IBSCBS` | nada | o `rtc.IBSCBS` é **superconjunto** do `TIBSCBS` do CT-e: traz cinco grupos a mais (`GIBSCBSMono`, `GTransfCred`, `GAjusteCompet`, `GCredPresOper`, `GCredPresIBSZFM`) que o CT-e não aceita. O reuso continua certo; o excedente agora está anotado no campo |
+
+Todos verificados no fonte antes de aplicar — relatório de revisão é hipótese, não veredito.
+
+**Quarto alias, para a 2b**: `TLacRodoCollection = TLacreCollection` (`Classes.pas:1630`). O
+`lacRodo` do modal rodoviário é `[]Lacre`, como os outros três.
+
+**Dívida registrada**: o `pcn.ProcDFe` não cobre `XML_CTe` e `XML_prot` do `TProcCTe`
+(`pcteProcCTe.pas:47-91`, marcados *"Usando na Montagem do cteProc"*) nem os três caminhos de
+arquivo. Problema da etapa de web services, anotado no campo.
